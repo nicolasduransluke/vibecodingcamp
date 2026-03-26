@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Game Lab · Vibe Coding Camp — Weston, FL · Marzo 28</title>
+<meta name="description" content="Tu hijo crea su propio videojuego con IA en un día. Sin experiencia previa. Weston, FL · Sábado 28 de Marzo · $59 incluye pizza.">
+<meta property="og:title" content="AI Game Lab 🎮 · Vibe Coding Camp">
+<meta property="og:description" content="Tu hijo crea su propio videojuego con IA en un día. Sábado 28 de Marzo · Weston, FL · $59 🍕">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #08080f;
+    --surface: #0e0e1c;
+    --surface2: #13132a;
+    --border: rgba(255,255,255,0.07);
+    --purple: #7c3aed;
+    --purple-light: #a78bfa;
+    --pink: #f472b6;
+    --green: #4ade80;
+    --yellow: #fbbf24;
+    --text: #e8e8f8;
+    --muted: #5a5a7a;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-mono); min-height: 100vh; overflow-x: hidden; }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: 0.5;
+  }
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(124,58,237,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(124,58,237,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none; z-index: 0;
+  }
+
+  .orb { position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
+  .orb-1 { width: 500px; height: 500px; background: rgba(124,58,237,0.12); top: -100px; left: -100px; }
+  .orb-2 { width: 400px; height: 400px; background: rgba(244,114,182,0.08); bottom: 200px; right: -80px; }
+  .orb-3 { width: 300px; height: 300px; background: rgba(74,222,128,0.06); top: 60%; left: 30%; }
+
+  .page { position: relative; z-index: 1; }
+
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 40px; border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 100;
+    background: rgba(8,8,15,0.7);
+  }
+  .nav-logo { font-family: var(--font-display); font-size: 15px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; line-height: 1.2; }
+  .nav-logo .sub { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: 1px; display: block; }
+  .nav-logo span { color: var(--purple-light); }
+  .nav-pill { background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.25); color: var(--green); font-size: 11px; letter-spacing: 1.5px; padding: 5px 14px; border-radius: 100px; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: blink 1.5s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  .hero { padding: 80px 40px 60px; max-width: 920px; margin: 0 auto; text-align: center; }
+  .hero-eyebrow { display: inline-flex; align-items: center; gap: 8px; background: rgba(124,58,237,0.12); border: 1px solid rgba(124,58,237,0.3); color: var(--purple-light); font-size: 11px; letter-spacing: 2px; padding: 6px 16px; border-radius: 100px; text-transform: uppercase; margin-bottom: 32px; animation: fadeUp 0.6s ease-out both; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+  .hero h1 { font-family: var(--font-display); font-size: clamp(46px, 9vw, 82px); font-weight: 800; line-height: 0.95; letter-spacing: -3px; color: var(--text); margin-bottom: 8px; animation: fadeUp 0.6s ease-out 0.1s both; }
+  .hero h1 .grad { background: linear-gradient(135deg, var(--purple-light), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .hero h1 .small { font-size: clamp(20px, 3.5vw, 32px); color: var(--muted); display: block; letter-spacing: -1px; margin-top: 10px; font-weight: 700; -webkit-text-fill-color: var(--muted); }
+
+  .hero-desc { font-size: 15px; color: var(--muted); max-width: 540px; margin: 24px auto 36px; line-height: 1.7; animation: fadeUp 0.6s ease-out 0.2s both; }
+  .hero-meta { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; animation: fadeUp 0.6s ease-out 0.25s both; }
+  .meta-chip { display: flex; align-items: center; gap: 7px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 16px; font-size: 13px; color: var(--text); }
+
+  .price-block { margin-top: 36px; display: flex; flex-direction: column; align-items: center; gap: 6px; animation: fadeUp 0.6s ease-out 0.3s both; }
+  .price-big { font-family: var(--font-display); font-size: 60px; font-weight: 800; color: var(--green); letter-spacing: -3px; line-height: 1; }
+  .price-sub { font-size: 12px; color: var(--muted); }
+
+  .cta-btn { display: inline-block; margin-top: 28px; background: linear-gradient(135deg, var(--purple), var(--purple-light)); color: white; font-family: var(--font-display); font-size: 16px; font-weight: 800; padding: 16px 40px; border-radius: 14px; text-decoration: none; box-shadow: 0 4px 28px rgba(124,58,237,0.35); transition: all 0.2s; animation: fadeUp 0.6s ease-out 0.35s both; }
+  .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 36px rgba(124,58,237,0.5); }
+
+  .full-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); }
+  .section { max-width: 920px; margin: 0 auto; padding: 64px 40px; }
+  .section-label { font-size: 10px; letter-spacing: 3px; color: var(--purple-light); text-transform: uppercase; margin-bottom: 36px; display: flex; align-items: center; gap: 10px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .objective-box { background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(244,114,182,0.05)); border: 1px solid rgba(124,58,237,0.2); border-radius: 20px; padding: 32px 36px; display: flex; gap: 20px; align-items: flex-start; }
+  .obj-icon { font-size: 36px; flex-shrink: 0; }
+  .obj-title { font-family: var(--font-display); font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+  .obj-text { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+  .schedule-list { display: flex; flex-direction: column; }
+  .schedule-item { display: grid; grid-template-columns: 90px 1fr; border-bottom: 1px solid var(--border); }
+  .schedule-item:last-child { border-bottom: none; }
+  .s-left { padding: 24px 20px 24px 0; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; border-right: 1px solid var(--border); }
+  .s-time { font-size: 11px; color: var(--purple-light); text-align: right; white-space: nowrap; }
+  .s-duration { font-size: 10px; color: var(--muted); text-align: right; }
+  .s-right { padding: 24px 0 24px 24px; }
+  .s-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .s-emoji { font-size: 20px; }
+  .s-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--text); }
+  .s-desc { font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 10px; }
+  .s-bullets { display: flex; flex-wrap: wrap; gap: 6px; }
+  .s-bullet { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 6px; padding: 4px 10px; font-size: 11px; color: #c4c4e0; }
+  .s-result { display: inline-flex; align-items: center; gap: 6px; background: rgba(74,222,128,0.07); border: 1px solid rgba(74,222,128,0.15); border-radius: 100px; padding: 4px 12px; font-size: 11px; color: var(--green); margin-top: 10px; }
+  .break-item { background: rgba(251,191,36,0.03); }
+  .break-item .s-title { color: var(--yellow); }
+
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 22px; transition: border-color 0.2s, transform 0.2s; }
+  .card:hover { border-color: rgba(167,139,250,0.3); transform: translateY(-2px); }
+  .card-icon { font-size: 26px; margin-bottom: 12px; }
+  .card-title { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+  .card-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+  .tools-row { display: flex; flex-wrap: wrap; gap: 10px; }
+  .tool-chip { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; font-size: 13px; color: var(--text); }
+
+  .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+  .result-item { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; display: flex; gap: 12px; align-items: flex-start; }
+  .result-check { color: var(--green); font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .result-text { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  .tutors-row { display: flex; gap: 18px; flex-wrap: wrap; }
+  .tutor-card { flex: 1; min-width: 200px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 24px; display: flex; align-items: center; gap: 16px; }
+  .tutor-avatar { width: 54px; height: 54px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--pink)); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 18px; font-weight: 800; color: white; flex-shrink: 0; }
+  .tutor-name { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--text); }
+  .tutor-role { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.6; max-width: 220px; }
+
+  .parent-box { background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(244,114,182,0.04)); border: 1px solid rgba(124,58,237,0.2); border-radius: 20px; padding: 36px; text-align: center; }
+  .parent-icon { font-size: 36px; margin-bottom: 16px; }
+  .parent-title { font-family: var(--font-display); font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 12px; }
+  .parent-text { font-size: 14px; color: var(--muted); line-height: 1.8; max-width: 500px; margin: 0 auto; }
+
+  .req-row { display: flex; flex-wrap: wrap; gap: 12px; }
+  .req-chip { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px; font-size: 13px; color: var(--text); }
+
+  .form-section { max-width: 600px; margin: 0 auto; padding: 60px 40px 100px; }
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; overflow: hidden; box-shadow: 0 0 80px rgba(124,58,237,0.08); }
+  .form-top { padding: 32px 36px 24px; background: linear-gradient(135deg, rgba(124,58,237,0.1), rgba(244,114,182,0.05)); border-bottom: 1px solid var(--border); }
+  .spots-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .spots-label { font-size: 10px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
+  .spots-count { font-family: var(--font-display); font-size: 26px; font-weight: 800; color: var(--pink); }
+  .spots-waiting { font-size: 11px; color: var(--muted); text-align: right; line-height: 1.4; }
+  .progress-track { height: 4px; background: rgba(255,255,255,0.06); border-radius: 100px; overflow: hidden; margin-bottom: 24px; }
+  .progress-bar { height: 100%; width: 30%; background: linear-gradient(90deg, var(--purple-light), var(--pink)); border-radius: 100px; animation: growBar 1.2s ease-out forwards; } @keyframes growBar { from{width:0} to{width:60%} }
+  
+  .form-title { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+  .form-sub { font-size: 12px; color: var(--muted); }
+
+  .form-body { padding: 28px 36px; display: flex; flex-direction: column; gap: 20px; }
+  .field { display: flex; flex-direction: column; gap: 7px; }
+  .field label { font-size: 10px; color: var(--purple-light); letter-spacing: 1.5px; text-transform: uppercase; }
+  .field input, .field select { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.09); border-radius: 10px; padding: 13px 15px; font-family: var(--font-mono); font-size: 13px; color: var(--text); outline: none; transition: border-color 0.2s, box-shadow 0.2s; width: 100%; }
+  .field input::placeholder { color: var(--muted); }
+  .field input:focus, .field select:focus { border-color: rgba(167,139,250,0.45); box-shadow: 0 0 0 3px rgba(167,139,250,0.08); }
+  .field select option { background: #1a1a2e; color: var(--text); }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field-hint { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  .radio-group, .check-group { display: flex; flex-direction: column; gap: 8px; }
+  .radio-opt, .check-opt { display: flex; align-items: flex-start; gap: 10px; padding: 11px 14px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+  .radio-opt:hover, .check-opt:hover { border-color: rgba(167,139,250,0.3); background: rgba(167,139,250,0.05); }
+  .radio-opt input, .check-opt input { accent-color: var(--purple-light); width: 15px; height: 15px; flex-shrink: 0; margin-top: 1px; }
+  .radio-opt span, .check-opt span { font-size: 12px; color: #c4c4e0; line-height: 1.4; }
+
+  .error-msg { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2); color: #f87171; font-size: 12px; padding: 10px 14px; border-radius: 8px; display: none; }
+
+  .submit-btn { width: 100%; padding: 17px; background: linear-gradient(135deg, var(--purple), var(--purple-light)); border: none; border-radius: 12px; font-family: var(--font-display); font-size: 17px; font-weight: 800; color: white; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 28px rgba(124,58,237,0.35); margin-top: 4px; }
+  .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 36px rgba(124,58,237,0.5); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .form-note { font-size: 10px; color: var(--muted); text-align: center; padding: 0 36px 28px; }
+
+  .success-view { display: none; flex-direction: column; align-items: center; text-align: center; padding: 56px 36px; gap: 16px; }
+  .success-emoji { font-size: 52px; animation: pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
+  @keyframes pop { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+  .success-title { font-family: var(--font-display); font-size: 26px; font-weight: 800; color: var(--text); }
+  .success-sub { font-size: 13px; color: var(--muted); line-height: 1.7; max-width: 320px; }
+  .success-box { background: rgba(74,222,128,0.07); border: 1px solid rgba(74,222,128,0.2); border-radius: 14px; padding: 16px 22px; font-size: 13px; color: var(--green); line-height: 1.7; margin-top: 6px; max-width: 340px; }
+
+  footer { text-align: center; padding: 32px 40px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+  footer a { color: var(--purple-light); text-decoration: none; }
+
+  @media (max-width: 600px) {
+    nav { padding: 16px 20px; }
+    .hero { padding: 48px 20px 40px; }
+    .section { padding: 40px 20px; }
+    .form-section { padding: 40px 20px 60px; }
+    .form-top, .form-body { padding-left: 22px; padding-right: 22px; }
+    .form-note { padding-left: 22px; padding-right: 22px; }
+    .field-row { grid-template-columns: 1fr; }
+    .tutors-row, .objective-box { flex-direction: column; gap: 12px; }
+    .schedule-item { grid-template-columns: 70px 1fr; }
+    .s-left { padding: 18px 12px 18px 0; }
+    .s-right { padding: 18px 0 18px 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+<div class="page">
+
+  <nav>
+    <div class="nav-logo">AI GAME <span>LAB</span><span class="sub">Vibe Coding Camp</span></div>
+    <a href="/games.html" style="font-family:var(--font-mono);font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border);border-radius:100px;padding:6px 14px;transition:all 0.2s" onmouseover="this.style.color='var(--text)';this.style.borderColor='rgba(167,139,250,0.4)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='rgba(255,255,255,0.07)'">🎮 Juegos</a><div class="nav-pill"><span class="live-dot"></span> Cupos disponibles</div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-eyebrow">🌎 Weston, FL · Sábado 28 de Marzo, 2026</div>
+    <h1>
+      TU HIJO CREA<br>
+      <span class="grad">SU VIDEOJUEGO</span>
+      <span class="small">con Inteligencia Artificial · en 1 día</span>
+    </h1>
+    <p class="hero-desc">Sin experiencia previa. Sin código. Solo creatividad y una IA que construye lo que imaginen. Cada niño se va con su propio juego funcional y la confianza de que puede crear tecnología.</p>
+    <div class="hero-meta">
+      <div class="meta-chip">📅 Sábado 28 de Marzo</div>
+      <div class="meta-chip">🕙 10:00 AM – 2:00 PM</div>
+      <div class="meta-chip">📍 991 Crestview Cir, Weston FL 33327</div>
+      <div class="meta-chip">🧒 8 a 12 años</div>
+      <div class="meta-chip">👥 Máx. 10 niños</div>
+      <div class="meta-chip">🍕 Pizza incluida</div>
+    </div>
+    <div class="price-block">
+      <div style="display:flex;gap:24px;align-items:flex-end;justify-content:center;flex-wrap:wrap;">
+        <div style="text-align:center">
+          <div class="price-big">$59</div>
+          <div class="price-sub">1 niño · todo incluido</div>
+        </div>
+        <div style="font-size:28px;color:var(--muted);padding-bottom:12px;">·</div>
+        <div style="text-align:center">
+          <div class="price-big" style="color:var(--pink)">$89</div>
+          <div class="price-sub">2 niños · ahorras $29 🎉</div>
+        </div>
+      </div>
+    </div>
+    <a href="#waitlist" class="cta-btn">🎮 Reservar mi lugar</a>
+  </section>
+
+  <div class="full-divider"></div>
+
+  <section class="section">
+    <div class="section-label">Objetivo del camp</div>
+    <div class="objective-box">
+      <div class="obj-icon">🧠</div>
+      <div>
+        <div class="obj-title">No es un curso de programación. Es una experiencia de creación.</div>
+        <div class="obj-text">Que cada niño cree su propio videojuego funcional usando IA (Claude), sin necesidad de saber programar, mientras desarrolla creatividad, lógica y confianza digital. En un mundo donde la IA será parte del día a día, este camp enseña a los niños no solo a usar tecnología — sino a <strong style="color:var(--text)">crear con ella</strong>.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="full-divider"></div>
+
+  <section class="section">
+    <div class="section-label">Estructura del día · 4 horas</div>
+    <div class="schedule-list">
+
+      <div class="schedule-item">
+        <div class="s-left"><div class="s-time">10:00 AM</div><div class="s-duration">20 min</div></div>
+        <div class="s-right">
+          <div class="s-header"><div class="s-emoji">🚀</div><div class="s-title">Bienvenida + Setup</div></div>
+          <div class="s-desc">Presentación del camp, ejemplos de juegos creados con IA y setup técnico. Cada niño elige qué quiere construir.</div>
+          <div class="s-bullets"><span class="s-bullet">Ejemplos en vivo</span><span class="s-bullet">Abrir herramientas</span><span class="s-bullet">Elegir tipo de juego</span></div>
+          <div class="s-result">👉 Niños motivados y listos</div>
+        </div>
+      </div>
+
+      <div class="schedule-item">
+        <div class="s-left"><div class="s-time">10:20 AM</div><div class="s-duration">30 min</div></div>
+        <div class="s-right">
+          <div class="s-header"><div class="s-emoji">🧠</div><div class="s-title">Intro a Vibe Coding con IA</div></div>
+          <div class="s-desc">Qué es la inteligencia artificial explicado simple. Cómo hablarle a la IA (prompts). Demo en vivo: crear un juego en minutos.</div>
+          <div class="s-bullets"><span class="s-bullet">Primer juego grupal</span><span class="s-bullet">Aprender a dar prompts</span></div>
+          <div class="s-result">👉 Primer "wow moment" ✨</div>
+        </div>
+      </div>
+
+      <div class="schedule-item">
+        <div class="s-left"><div class="s-time">10:50 AM</div><div class="s-duration">60 min</div></div>
+        <div class="s-right">
+          <div class="s-header"><div class="s-emoji">🎮</div><div class="s-title">Construcción del juego base</div></div>
+          <div class="s-desc">Cada niño elige su tipo de juego: carreras, plataformas, shooter, quiz... Lo generan con IA, lo prueban y hacen cambios.</div>
+          <div class="s-bullets"><span class="s-bullet">Cambiar colores</span><span class="s-bullet">Cambiar personaje</span><span class="s-bullet">Ajustar velocidad</span></div>
+          <div class="s-result">👉 Juego funcional ✅</div>
+        </div>
+      </div>
+
+      <div class="schedule-item break-item">
+        <div class="s-left"><div class="s-time">11:50 AM</div><div class="s-duration">20 min</div></div>
+        <div class="s-right">
+          <div class="s-header"><div class="s-emoji">🍕</div><div class="s-title">Break · Pizza time</div></div>
+          <div class="s-desc">Recargamos energía. Los que quieran siguen iterando su juego.</div>
+        </div>
+      </div>
+
+      <div class="schedule-item">
+        <div class="s-left"><div class="s-time">12:10 PM</div><div class="s-duration">40 min</div></div>
+        <div class="s-right">
+          <div class="s-header"><div class="s-emoji">🧩</div><div class="s-title">Iteración + Personalización</div></div>
+          <div class="s-desc">Mejoras al juego con IA: puntaje, game over, sonidos, pantalla de inicio. Cada niño define nombre, tema y estilo visual.</div>
+          <div class="s-bullets"><span class="s-bullet">Espacio 🚀</span><span class="s-bullet">Dinosaurios 🦕</span><span class="s-bullet">Zombies 🧟</span><span class="s-bullet">Lo que imaginen</span></div>
+          <div class="s-result">👉 Juego único y personal 🎨</div>
+        </div>
+      </div>
+
+      <div class="schedule-item">
+        <div class="s-left"><div class="s-time">12:50 PM</div><div class="s-duration">30 min</div></div>
+        <div class="s-right">
+          <div class="s-header"><div class="s-emoji">🏆</div><div class="s-title">Demo final + Presentación</div></div>
+          <div class="s-desc">Cada niño presenta su juego, explica qué hizo y muestra cómo se juega. Premios simbólicos para cerrar con brillo.</div>
+          <div class="s-bullets"><span class="s-bullet">🏅 Más creativo</span><span class="s-bullet">😂 Más divertido</span><span class="s-bullet">📈 Mejor progreso</span></div>
+          <div class="s-result">👉 Cierre con orgullo y confianza 🎉</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="full-divider"></div>
+
+  <section class="section">
+    <div class="section-label">¿Qué tipo de juego pueden crear?</div>
+    <div class="cards-grid">
+      <div class="card"><div class="card-icon">🏎️</div><div class="card-title">Carreras</div><div class="card-desc">Autos, naves, personajes — a toda velocidad.</div></div>
+      <div class="card"><div class="card-icon">🕹️</div><div class="card-title">Plataformas</div><div class="card-desc">Saltar, esquivar, coleccionar — el clásico reinventado.</div></div>
+      <div class="card"><div class="card-icon">🔫</div><div class="card-title">Shooter</div><div class="card-desc">Defender una base, eliminar enemigos, sobrevivir.</div></div>
+      <div class="card"><div class="card-icon">🧠</div><div class="card-title">Quiz / Puzzle</div><div class="card-desc">Preguntas, acertijos, laberintos — para los estrategas.</div></div>
+    </div>
+  </section>
+
+  <div class="full-divider"></div>
+
+  <section class="section">
+    <div class="section-label">Herramientas que usaremos</div>
+    <div class="tools-row">
+      <div class="tool-chip">💻 Laptop (traer propia)</div>
+      <div class="tool-chip">🌐 Navegador web</div>
+      <div class="tool-chip">🤖 Claude AI</div>
+      <div class="tool-chip">⚡ Replit / CodePen</div>
+    </div>
+  </section>
+
+  <div class="full-divider"></div>
+
+  <section class="section">
+    <div class="section-label">Al finalizar, cada niño...</div>
+    <div class="results-grid">
+      <div class="result-item"><div class="result-check">✅</div><div class="result-text">Tendrá su propio videojuego funcional para compartir</div></div>
+      <div class="result-item"><div class="result-check">✅</div><div class="result-text">Entenderá cómo usar IA para crear, no solo consumir</div></div>
+      <div class="result-item"><div class="result-check">✅</div><div class="result-text">Habrá desarrollado lógica, creatividad y confianza digital</div></div>
+      <div class="result-item"><div class="result-check">✅</div><div class="result-text">Se llevará un proyecto que puede seguir mejorando en casa</div></div>
+    </div>
+  </section>
+
+  <div class="full-divider"></div>
+
+  <section class="section">
+    <div class="section-label">Tus tutores</div>
+    <div class="tutors-row">
+      <div class="tutor-card">
+        <img src="data:image/jpeg;base64,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" style="width:60px;height:60px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+        <div><div class="tutor-name">Nicolás Durán</div><div class="tutor-role">CEO &amp; Founder de Cotalker · Automatización inteligente para empresas Fortune 500 · Enseña a la próxima generación a construir con IA</div></div>
+      </div>
+      <div class="tutor-card">
+        <img src="data:image/jpeg;base64,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" style="width:60px;height:60px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+        <div><div class="tutor-name">Nicolás Jaramillo</div><div class="tutor-role">Co-Founder de Arch · Plataforma de gestión de activos digitales para inversores · Cree que los builders de mañana se forman hoy</div></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="full-divider"></div>
+
+  <section class="section">
+    <div class="section-label">Requisitos</div>
+    <div class="req-row">
+      <div class="req-chip">🧒 Edad: 8 a 12 años</div>
+      <div class="req-chip">💻 Traer laptop</div>
+      <div class="req-chip">📍 991 Crestview Cir, Weston FL 33327</div>
+      <div class="req-chip">✅ No se necesita experiencia previa</div>
+    </div>
+  </section>
+
+  <div class="full-divider"></div>
+
+  <section class="section">
+    <div class="parent-box">
+      <div class="parent-icon">🚀</div>
+      <div class="parent-title">Para los papás y mamás</div>
+      <div class="parent-text">
+        En un mundo donde la IA será parte del día a día,
+        <strong style="color:var(--text)">este camp enseña a los niños no solo a usar tecnología, sino a crear con ella.</strong>
+        <br><br>
+        No importa si su hijo nunca ha tocado código. Al final del día, va a mostrarle a toda la familia el videojuego que él mismo imaginó y construyó.
+      </div>
+    </div>
+  </section>
+
+  <div class="full-divider"></div>
+
+
+
+    <section class="form-section" id="waitlist">
+    <div class="form-card">
+      <div class="form-top">
+        <div class="spots-row">
+          <div><div class="spots-label">Cupos disponibles</div><div class="spots-count">4 / 10</div></div>
+          <div class="spots-waiting">6 ya registrados<br>en lista de espera</div>
+        </div>
+        <div class="progress-track"><div class="progress-bar"></div></div>
+        <div class="form-title">Únete al Waiting List</div>
+        <div class="form-sub">Confirmaremos tu lugar en menos de 24 horas por WhatsApp.</div>
+      </div>
+
+      <form id="waitlistForm" action="https://formspree.io/f/mlgpqlde" method="POST">
+        <!-- Pre-declared hidden fields so Netlify detects them at deploy time -->
+        <input type="hidden" name="total_ninos" id="h_total">
+        <input type="hidden" name="kid_name_1" id="h_name_1">
+        <input type="hidden" name="kid_age_1" id="h_age_1">
+        <input type="hidden" name="kid_experience_1" id="h_exp_1">
+        <input type="hidden" name="kid_idea_1" id="h_idea_1">
+        <input type="hidden" name="kid_name_2" id="h_name_2">
+        <input type="hidden" name="kid_age_2" id="h_age_2">
+        <input type="hidden" name="kid_experience_2" id="h_exp_2">
+        <input type="hidden" name="kid_idea_2" id="h_idea_2">
+        <input type="hidden" name="kid_name_3" id="h_name_3">
+        <input type="hidden" name="kid_age_3" id="h_age_3">
+        <input type="hidden" name="kid_experience_3" id="h_exp_3">
+        <input type="hidden" name="kid_idea_3" id="h_idea_3">
+
+        <div class="form-body">
+          <div id="errorMsg" class="error-msg"></div>
+
+          <div class="field-row">
+            <div class="field">
+              <label>👤 Tu nombre (papá / mamá)</label>
+              <input type="text" name="parent_name" id="parentName" placeholder="Tu nombre completo" required>
+            </div>
+            <div class="field">
+              <label>📱 WhatsApp</label>
+              <input type="tel" name="phone" id="phone" placeholder="+1 (954) 000-0000" required>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>✉️ Email</label>
+            <input type="email" name="email" id="email" placeholder="tu@email.com" required>
+          </div>
+
+          <!-- KIDS CONTAINER -->
+          <div id="kidsContainer"></div>
+
+          <button type="button" id="addKidBtn" onclick="addKid()" style="
+            display:flex; align-items:center; gap:8px; width:100%;
+            background:rgba(167,139,250,0.06); border:1px dashed rgba(167,139,250,0.3);
+            border-radius:10px; padding:12px 14px; cursor:pointer;
+            font-family:var(--font-mono); font-size:12px; color:var(--purple-light);
+            transition:all 0.2s; margin-top:-4px;
+          ">
+            <span style="font-size:16px">＋</span> Agregar otro niño/a
+          </button>
+
+          <div class="field">
+            <label>📅 Confirmaciones</label>
+            <div class="check-group">
+              <label class="check-opt"><input type="checkbox" name="confirm_date" id="confirmDate" value="si" required><span>✅ Confirmamos disponibilidad el <strong>Sábado 28 de Marzo, 10 AM – 2 PM</strong></span></label>
+              <label class="check-opt"><input type="checkbox" name="confirm_laptop" id="confirmLaptop" value="si" required><span>💻 Cada niño traerá su propia laptop</span></label>
+              <label class="check-opt"><input type="checkbox" name="confirm_price" id="confirmPrice" value="si" required><span>💳 Entendemos que el costo es <strong>$59 por niño</strong> (se paga al confirmar)</span></label>
+            </div>
+            <div class="field-hint">El pago se coordina por WhatsApp una vez confirmado tu lugar.</div>
+          </div>
+        </div>
+
+        <div style="padding: 0 36px 12px">
+          <button type="submit" class="submit-btn" id="submitBtn">🎮 Quiero mi lugar</button>
+        </div>
+        <div class="form-note">Solo 10 cupos · Confirmación por orden de llegada · Pago al confirmar</div>
+      </form>
+
+      <div class="success-view" id="successView">
+        <div class="success-emoji">🎉</div>
+        <div class="success-title">¡Ya están en la lista!</div>
+        <div class="success-sub">Te escribiremos a tu WhatsApp en menos de 24 horas para confirmar los cupos y coordinar el pago.</div>
+        <div class="success-box" id="successBox"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    AI Game Lab · Vibe Coding Camp · 991 Crestview Cir, Weston FL 33327 · Sábado 28 de Marzo 2026 ·
+    <a href="#waitlist">Únete al waitlist ↑</a>
+  </footer>
+
+</div>
+<script>
+  const form = document.getElementById('waitlistForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const errorMsg = document.getElementById('errorMsg');
+  let kidCount = 0;
+
+  const ageOptions = `
+    <option value="">Seleccionar...</option>
+    <option value="menor-8">Menos de 8 años</option>
+    <option value="8">8 años</option>
+    <option value="9">9 años</option>
+    <option value="10">10 años</option>
+    <option value="11">11 años</option>
+    <option value="12">12 años</option>
+    <option value="13-mas">13 años o más</option>
+  `;
+
+  const expOptions = [
+    ['ninguna', 'Ninguna — es su primera vez con código'],
+    ['basica', 'Básica — usa apps y navega bien'],
+    ['intermedia', 'Intermedia — ha probado Scratch o algo de código'],
+    ['avanzada', 'Avanzada — ya sabe programar'],
+  ];
+
+  function addKid() {
+    kidCount++;
+    const idx = kidCount;
+    const container = document.getElementById('kidsContainer');
+
+    const card = document.createElement('div');
+    card.id = `kid-${idx}`;
+    card.style.cssText = 'background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:18px 16px;display:flex;flex-direction:column;gap:14px;position:relative;';
+
+    const header = `
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:10px;color:var(--purple-light);letter-spacing:1.5px;text-transform:uppercase;">🧒 Niño/a #${idx}</span>
+        ${idx > 1 ? `<button type="button" onclick="removeKid(${idx})" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:0;">×</button>` : ''}
+      </div>
+    `;
+
+    const nameAge = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="field">
+          <label>Nombre</label>
+          <input type="text" name="ui_kid_name_${idx}" placeholder="Nombre del niño/a" required style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:11px 13px;font-family:var(--font-mono);font-size:13px;color:var(--text);outline:none;width:100%;">
+        </div>
+        <div class="field">
+          <label>Edad</label>
+          <select name="ui_kid_age_${idx}" required style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:11px 13px;font-family:var(--font-mono);font-size:13px;color:var(--text);outline:none;width:100%;">
+            ${ageOptions}
+          </select>
+        </div>
+      </div>
+    `;
+
+    const expRadios = expOptions.map(([val, label]) => `
+      <label class="radio-opt">
+        <input type="radio" name="experience_${idx}" value="${val}" ${val === 'ninguna' ? 'required' : ''}>
+        <span>${label}</span>
+      </label>
+    `).join('');
+
+    const exp = `
+      <div class="field">
+        <label>💻 Experiencia</label>
+        <div class="radio-group">${expRadios}</div>
+      </div>
+    `;
+
+    const idea = `
+      <div class="field">
+        <label>🎮 ¿Qué juego le gustaría crear?</label>
+        <input type="text" name="ui_project_idea_${idx}" placeholder="ej. Naves espaciales, dinosaurios..." style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:11px 13px;font-family:var(--font-mono);font-size:13px;color:var(--text);outline:none;width:100%;">
+        <div class="field-hint">Opcional</div>
+      </div>
+    `;
+
+    card.innerHTML = header + nameAge + exp + idea;
+    container.appendChild(card);
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function removeKid(idx) {
+    document.getElementById(`kid-${idx}`)?.remove();
+  }
+
+  // Add first kid on load
+  addKid();
+
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorMsg.style.display = 'block';
+    errorMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    setTimeout(() => { errorMsg.style.display = 'none'; }, 5000);
+  }
+
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const confirmDate = document.getElementById('confirmDate').checked;
+    const confirmLaptop = document.getElementById('confirmLaptop').checked;
+    const confirmPrice = document.getElementById('confirmPrice').checked;
+    const phone = document.getElementById('phone').value.trim();
+
+    // Validate all kids
+    const kidCards = document.querySelectorAll('[id^="kid-"]');
+    if (kidCards.length === 0) { showError('Agrega al menos un niño/a.'); return; }
+
+    let kidsSummary = [];
+    for (const card of kidCards) {
+      const idxMatch = card.id.match(/kid-(\d+)/);
+      if (!idxMatch) continue;
+      const idx = idxMatch[1];
+      const nameInput = card.querySelector(`[name="ui_kid_name_${idx}"]`);
+      const ageSelect = card.querySelector(`select[name="ui_kid_age_${idx}"]`);
+      const expChecked = card.querySelector(`[name="experience_${idx}"]:checked`);
+      const ideaInput = card.querySelector(`input[name="ui_project_idea_${idx}"]`);
+
+      if (!nameInput?.value.trim()) { showError(`Por favor ingresa el nombre del niño/a #${idx}.`); return; }
+      if (!ageSelect?.value) { showError(`Por favor selecciona la edad del niño/a #${idx}.`); return; }
+      if (ageSelect.value === 'menor-8') { showError(`Lo sentimos — el camp es para niños de 8 años en adelante (niño/a #${idx}). ¡Esperamos verte en una edición futura! 🙌`); return; }
+      if (!expChecked) { showError(`Por favor indica la experiencia del niño/a #${idx}.`); return; }
+
+      kidsSummary.push({ name: nameInput.value.trim(), idea: ideaInput?.value.trim() || '' });
+    }
+
+    if (!confirmDate || !confirmLaptop || !confirmPrice) { showError('Por favor marca todas las confirmaciones para continuar.'); return; }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Registrando...';
+
+    // Fill hidden fields so Netlify captures all kid data
+    document.getElementById('h_total').value = kidCards.length;
+    kidCards.forEach((card, i) => {
+      const n = i + 1;
+      const idxMatch = card.id.match(/kid-(\d+)/);
+      if (!idxMatch) return;
+      const idx = idxMatch[1];
+      document.getElementById('h_name_' + n).value = card.querySelector('[name="ui_kid_name_' + idx + '"]')?.value || '';
+      document.getElementById('h_age_' + n).value  = card.querySelector('[name="ui_kid_age_' + idx + '"]')?.value || '';
+      document.getElementById('h_exp_' + n).value  = card.querySelector('[name="experience_' + idx + '"]:checked')?.value || '';
+      document.getElementById('h_idea_' + n).value = card.querySelector('[name="ui_project_idea_' + idx + '"]')?.value || '';
+    });
+
+    try {
+      const formData = new FormData(form);
+      await fetch('https://formspree.io/f/mlgpqlde', { method: 'POST', headers: { 'Accept': 'application/json' }, body: formData });
+    } catch(e) {}
+
+    form.style.display = 'none';
+    const successView = document.getElementById('successView');
+    successView.style.display = 'flex';
+
+    const kidsHTML = kidsSummary.map(k =>
+      `🎮 <strong>${k.name}</strong>${k.idea ? ` — "${k.idea}"` : ''}`
+    ).join('<br>');
+
+    document.getElementById('successBox').innerHTML =
+      `${kidsHTML}<br><br>Te escribimos al <strong>${phone}</strong> 🚀`;
+  });
+</script>
+</body>
+</html>
