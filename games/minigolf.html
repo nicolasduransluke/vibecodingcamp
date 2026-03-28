@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Golf</title>
+<style>
+  body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #1a1a1a; font-family: sans-serif; color: #fff; }
+  #ui { display: flex; justify-content: space-between; align-items: center; width: 600px; margin-bottom: 8px; }
+  #ui span { font-size: 14px; color: #aaa; }
+  #ui span b { color: #fff; }
+  canvas { border-radius: 12px; border: 1px solid #444; cursor: crosshair; background: #2d5a27; display: block; }
+  #msg { margin-top: 8px; font-size: 13px; color: #aaa; min-height: 18px; }
+  button { margin-top: 8px; font-size: 13px; padding: 6px 16px; border-radius: 8px; border: 1px solid #555; background: transparent; color: #fff; cursor: pointer; }
+  button:hover { background: #333; }
+</style>
+</head>
+<body>
+<div id="ui">
+  <span>Mini Golf</span>
+  <div style="display:flex;gap:16px;">
+    <span>Hole: <b id="holeNum">1/5</b></span>
+    <span>Strokes: <b id="strokeCount">0</b></span>
+    <span>Total: <b id="totalScore">0</b></span>
+  </div>
+</div>
+<canvas id="golf" width="600" height="400"></canvas>
+<div id="msg"></div>
+<button onclick="restartGame()">Restart</button>
+
+<script>
+const canvas = document.getElementById('golf');
+const ctx = canvas.getContext('2d');
+
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playHoleSound() {
+  const ac = getAudio();
+  const notes = [523.25, 659.25, 783.99, 1046.50];
+  notes.forEach((freq, i) => {
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, ac.currentTime + i * 0.12);
+    gain.gain.setValueAtTime(0, ac.currentTime + i * 0.12);
+    gain.gain.linearRampToValueAtTime(0.3, ac.currentTime + i * 0.12 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + i * 0.12 + 0.35);
+    osc.start(ac.currentTime + i * 0.12);
+    osc.stop(ac.currentTime + i * 0.12 + 0.36);
+  });
+}
+
+function playHitSound() {
+  const ac = getAudio();
+  const osc = ac.createOscillator();
+  const gain = ac.createGain();
+  osc.connect(gain); gain.connect(ac.destination);
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(180, ac.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(60, ac.currentTime + 0.08);
+  gain.gain.setValueAtTime(0.25, ac.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.12);
+  osc.start(ac.currentTime); osc.stop(ac.currentTime + 0.13);
+}
+
+function playWallSound() {
+  const ac = getAudio();
+  const osc = ac.createOscillator();
+  const gain = ac.createGain();
+  osc.connect(gain); gain.connect(ac.destination);
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(220, ac.currentTime);
+  gain.gain.setValueAtTime(0.08, ac.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.07);
+  osc.start(ac.currentTime); osc.stop(ac.currentTime + 0.08);
+}
+
+const holes = [
+  { ball:{x:80,y:200}, hole:{x:520,y:200}, par:2, obstacles:[{x:250,y:155,w:20,h:60,type:'wall'}] },
+  { ball:{x:80,y:300}, hole:{x:520,y:100}, par:3, obstacles:[{x:200,y:80,w:80,h:20,type:'wall'},{x:350,y:200,w:20,h:120,type:'wall'},{x:150,y:220,w:120,h:20,type:'wall'}] },
+  { ball:{x:80,y:200}, hole:{x:520,y:200}, par:3, obstacles:[{type:'windmill',x:280,y:175,w:20,h:50}] },
+  { ball:{x:80,y:350}, hole:{x:520,y:50}, par:4, obstacles:[{x:180,y:200,w:20,h:180,type:'wall'},{x:180,y:50,w:200,h:20,type:'wall'},{x:360,y:50,w:20,h:180,type:'wall'},{x:360,y:200,w:160,h:20,type:'wall'}] },
+  { ball:{x:300,y:350}, hole:{x:300,y:60}, par:3, obstacles:[{type:'circle',x:180,y:200,r:40},{type:'circle',x:420,y:200,r:40},{type:'circle',x:300,y:150,r:30}] }
+];
+
+let currentHole=0, strokes=0, totalScore=0, holeScores=[];
+let ball={}, vx=0, vy=0, dragging=false, dragStart=null, moving=false, inHole=false, windmillAngle=0;
+let lastBounced=false;
+
+const BALL_R=8, HOLE_R=10, FRICTION=0.985, STOP_SPEED=0.15, BORDER=20, MAX_POWER=12;
+
+function getHoleData() { return holes[currentHole]; }
+
+function setupHole() {
+  const h = getHoleData();
+  ball = {...h.ball}; vx=0; vy=0; moving=false; inHole=false; strokes=0; lastBounced=false;
+  document.getElementById('strokeCount').textContent = strokes;
+  document.getElementById('holeNum').textContent = `${currentHole+1}/${holes.length}`;
+  setMsg(`Hole ${currentHole+1} — Par ${h.par}. Click and drag to aim!`);
+}
+
+function setMsg(t) { document.getElementById('msg').textContent = t; }
+
+function drawGrass() {
+  ctx.fillStyle='#2d5a27'; ctx.fillRect(0,0,600,400);
+  ctx.fillStyle='#275224';
+  for(let i=0;i<30;i++) { let gx=(i*73)%560+20, gy=(i*97)%360+20; ctx.fillRect(gx,gy,60,60); }
+}
+
+function drawBoundary() { ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.strokeRect(BORDER,BORDER,600-BORDER*2,400-BORDER*2); }
+
+function drawHole(h) {
+  ctx.beginPath(); ctx.arc(h.hole.x,h.hole.y,HOLE_R,0,Math.PI*2); ctx.fillStyle='#111'; ctx.fill();
+  ctx.beginPath(); ctx.arc(h.hole.x,h.hole.y,HOLE_R+2,0,Math.PI*2); ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle='#fff'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('⛳', h.hole.x, h.hole.y - HOLE_R - 5);
+}
+
+function drawObstacles(h) {
+  for (const o of h.obstacles) {
+    if (o.type === 'wall') {
+      ctx.fillStyle='#8B4513'; ctx.fillRect(o.x,o.y,o.w,o.h);
+      ctx.strokeStyle='#6B3410'; ctx.lineWidth=1; ctx.strokeRect(o.x,o.y,o.w,o.h);
+    } else if (o.type === 'windmill') {
+      ctx.fillStyle='#8B4513'; ctx.fillRect(o.x,o.y,o.w,o.h);
+      ctx.save(); ctx.translate(o.x+o.w/2, o.y); ctx.rotate(windmillAngle); ctx.fillStyle='#d4a853';
+      for(let i=0;i<4;i++) { ctx.save(); ctx.rotate(i*Math.PI/2); ctx.fillRect(-3,-28,6,28); ctx.restore(); }
+      ctx.restore();
+    } else if (o.type === 'circle') {
+      ctx.beginPath(); ctx.arc(o.x,o.y,o.r,0,Math.PI*2);
+      ctx.fillStyle='#8B4513'; ctx.fill(); ctx.strokeStyle='#6B3410'; ctx.lineWidth=1; ctx.stroke();
+    }
+  }
+}
+
+function drawBall() {
+  ctx.beginPath(); ctx.arc(ball.x,ball.y,BALL_R,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+  ctx.strokeStyle='#ccc'; ctx.lineWidth=1; ctx.stroke();
+  ctx.beginPath(); ctx.arc(ball.x-2,ball.y-2,2.5,0,Math.PI*2); ctx.fillStyle='rgba(180,180,180,0.5)'; ctx.fill();
+}
+
+function drawAim() {
+  if (!dragging || moving || inHole) return;
+  const dx=dragStart.x-ball.x, dy=dragStart.y-ball.y, dist=Math.sqrt(dx*dx+dy*dy);
+  if (dist < 5) return;
+  const power=Math.min(dist/4,MAX_POWER), angle=Math.atan2(dy,dx);
+  ctx.save(); ctx.strokeStyle='rgba(255,255,100,0.7)'; ctx.lineWidth=2; ctx.setLineDash([6,4]);
+  ctx.beginPath(); ctx.moveTo(ball.x,ball.y); ctx.lineTo(ball.x-Math.cos(angle)*power*8, ball.y-Math.sin(angle)*power*8); ctx.stroke();
+  ctx.setLineDash([]); ctx.restore();
+  ctx.fillStyle='rgba(255,255,100,0.85)'; ctx.font='11px sans-serif'; ctx.textAlign='left';
+  ctx.fillText(`Power: ${Math.round(power*100/MAX_POWER)}%`, ball.x+14, ball.y-14);
+}
+
+function wallsFromHole(h) {
+  const rects = [
+    {x:BORDER,y:BORDER,w:600-BORDER*2,h:BORDER},
+    {x:BORDER,y:400-BORDER*2,w:600-BORDER*2,h:BORDER},
+    {x:BORDER,y:BORDER,w:BORDER,h:400-BORDER*2},
+    {x:600-BORDER*2,y:BORDER,w:BORDER,h:400-BORDER*2}
+  ];
+  for (const o of h.obstacles) { if (o.type==='wall'||o.type==='windmill') rects.push({x:o.x,y:o.y,w:o.w,h:o.h}); }
+  return rects;
+}
+
+function collideBallRect(bx,by,bvx,bvy,r) {
+  const h = getHoleData();
+  const rects = wallsFromHole(h);
+  let nx=bx+bvx, ny=by+bvy, bounced=false;
+  for (const rect of rects) {
+    const rx=rect.x,ry=rect.y,rw=rect.w,rh=rect.h;
+    const closestX=Math.max(rx,Math.min(nx,rx+rw)), closestY=Math.max(ry,Math.min(ny,ry+rh));
+    const dx=nx-closestX, dy=ny-closestY, dist=Math.sqrt(dx*dx+dy*dy);
+    if (dist < r) {
+      const overlapX=Math.abs(nx-(rx+rw/2))-rw/2-r, overlapY=Math.abs(ny-(ry+rh/2))-rh/2-r;
+      if (overlapX > overlapY) bvx=-bvx*0.7; else bvy=-bvy*0.7;
+      bounced=true;
+    }
+  }
+  for (const o of h.obstacles) {
+    if (o.type==='circle') {
+      const dx=nx-o.x, dy=ny-o.y, dist=Math.sqrt(dx*dx+dy*dy);
+      if (dist < r+o.r) {
+        const nx2=dx/dist, ny2=dy/dist, dot=bvx*nx2+bvy*ny2;
+        bvx=(bvx-2*dot*nx2)*0.7; bvy=(bvy-2*dot*ny2)*0.7; bounced=true;
+      }
+    }
+  }
+  if (bounced && !lastBounced) playWallSound();
+  lastBounced = bounced;
+  return {vx:bvx, vy:bvy};
+}
+
+function draw() {
+  drawGrass(); drawBoundary();
+  const h = getHoleData(); drawObstacles(h); drawHole(h); drawBall(); drawAim();
+}
+
+function update() {
+  if (!moving) return;
+  const res = collideBallRect(ball.x,ball.y,vx,vy,BALL_R);
+  vx=res.vx; vy=res.vy;
+  ball.x+=vx; ball.y+=vy;
+  ball.x=Math.max(BORDER+BALL_R,Math.min(600-BORDER-BALL_R,ball.x));
+  ball.y=Math.max(BORDER+BALL_R,Math.min(400-BORDER-BALL_R,ball.y));
+  vx*=FRICTION; vy*=FRICTION;
+  const h=getHoleData();
+  const dx=ball.x-h.hole.x, dy=ball.y-h.hole.y, dist=Math.sqrt(dx*dx+dy*dy);
+  if (dist < HOLE_R+2) {
+    moving=false; inHole=true; ball.x=h.hole.x; ball.y=h.hole.y;
+    playHoleSound();
+    const score=strokes-h.par;
+    let label=score===0?'Par!':(score<0?(score===-1?'Birdie!':'Eagle!'):(score===1?'Bogey':'Double Bogey+'));
+    setMsg(`${label} — ${strokes} strokes (par ${h.par})`);
+    totalScore+=strokes; holeScores.push(strokes);
+    document.getElementById('totalScore').textContent=totalScore;
+    setTimeout(()=>{ if(currentHole<holes.length-1){currentHole++;setupHole();}else{showFinal();} }, 1800);
+    return;
+  }
+  if (Math.abs(vx)<STOP_SPEED && Math.abs(vy)<STOP_SPEED) { vx=0;vy=0;moving=false;setMsg('Ball stopped. Take your shot!'); }
+  windmillAngle+=0.04;
+}
+
+function loop() { update(); draw(); requestAnimationFrame(loop); }
+
+function showFinal() {
+  ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(0,0,600,400);
+  ctx.fillStyle='#fff'; ctx.font='bold 24px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('Game Over!',300,140);
+  ctx.font='16px sans-serif'; ctx.fillText(`Total Score: ${totalScore}`,300,180);
+  const totalPar=holes.reduce((a,h)=>a+h.par,0), diff=totalScore-totalPar;
+  ctx.fillText(`vs Par (${totalPar}): ${diff>=0?'+':''}${diff}`,300,210);
+  ctx.font='13px sans-serif';
+  holeScores.forEach((s,i)=>{ const p=holes[i].par,d=s-p; ctx.fillText(`Hole ${i+1}: ${s} strokes (${d>=0?'+':''}${d})`,300,245+i*22); });
+  ctx.font='14px sans-serif'; ctx.fillStyle='#aed581';
+  ctx.fillText('Click Restart to play again',300,380);
+  setMsg('Thanks for playing!');
+}
+
+canvas.addEventListener('mousedown',e=>{
+  if(inHole||moving) return;
+  const r=canvas.getBoundingClientRect(); dragStart={x:e.clientX-r.left,y:e.clientY-r.top};
+  const dx=dragStart.x-ball.x,dy=dragStart.y-ball.y; if(Math.sqrt(dx*dx+dy*dy)<40) dragging=true;
+});
+canvas.addEventListener('mousemove',e=>{
+  if(!dragging) return; const r=canvas.getBoundingClientRect(); dragStart={x:e.clientX-r.left,y:e.clientY-r.top};
+});
+canvas.addEventListener('mouseup',e=>{
+  if(!dragging) return; dragging=false;
+  const r=canvas.getBoundingClientRect(); const mx=e.clientX-r.left,my=e.clientY-r.top;
+  const dx=ball.x-mx,dy=ball.y-my,dist=Math.sqrt(dx*dx+dy*dy);
+  if(dist>5){
+    const power=Math.min(dist/4,MAX_POWER),angle=Math.atan2(dy,dx);
+    vx=Math.cos(angle)*power; vy=Math.sin(angle)*power; moving=true; strokes++;
+    document.getElementById('strokeCount').textContent=strokes; setMsg(''); playHitSound();
+  }
+  dragStart=null;
+});
+canvas.addEventListener('touchstart',e=>{
+  e.preventDefault(); if(inHole||moving) return;
+  const r=canvas.getBoundingClientRect(),t=e.touches[0];
+  dragStart={x:t.clientX-r.left,y:t.clientY-r.top};
+  const dx=dragStart.x-ball.x,dy=dragStart.y-ball.y; if(Math.sqrt(dx*dx+dy*dy)<50) dragging=true;
+},{passive:false});
+canvas.addEventListener('touchmove',e=>{
+  e.preventDefault(); if(!dragging) return;
+  const r=canvas.getBoundingClientRect(),t=e.touches[0]; dragStart={x:t.clientX-r.left,y:t.clientY-r.top};
+},{passive:false});
+canvas.addEventListener('touchend',e=>{
+  e.preventDefault(); if(!dragging) return; dragging=false;
+  const r=canvas.getBoundingClientRect(),t=e.changedTouches[0];
+  const mx=t.clientX-r.left,my=t.clientY-r.top;
+  const dx=ball.x-mx,dy=ball.y-my,dist=Math.sqrt(dx*dx+dy*dy);
+  if(dist>5){
+    const power=Math.min(dist/4,MAX_POWER),angle=Math.atan2(dy,dx);
+    vx=Math.cos(angle)*power; vy=Math.sin(angle)*power; moving=true; strokes++;
+    document.getElementById('strokeCount').textContent=strokes; setMsg(''); playHitSound();
+  }
+  dragStart=null;
+},{passive:false});
+
+function restartGame() { currentHole=0;totalScore=0;holeScores=[];document.getElementById('totalScore').textContent=0;setupHole(); }
+
+setupHole();
+loop();
+</script>
+</body>
+</html>
