@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚽ Fútbol 2D</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0f0f1a; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: monospace; }
+#gc { width: 100%; max-width: 700px; position: relative; background: #1a1a2e; border-radius: 12px; overflow: hidden; user-select: none; }
+canvas { display: block; width: 100%; height: 480px; }
+#hud { position: absolute; top: 0; left: 0; right: 0; pointer-events: none; z-index: 2; }
+#hud > div { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; }
+.hud-box { background: rgba(0,0,0,0.7); border-radius: 8px; padding: 5px 14px; color: #fff; font-size: 15px; font-weight: 700; }
+#score span.you { color: #4fc3f7; }
+#score span.cpu { color: #ef5350; }
+#msg { background: rgba(0,0,0,0.7); border-radius: 8px; padding: 5px 10px; color: #ffe082; font-size: 11px; text-align: center; }
+#timer { background: rgba(0,0,0,0.7); border-radius: 8px; padding: 5px 12px; color: #aaa; font-size: 12px; }
+#btns { position: absolute; bottom: 10px; right: 10px; z-index: 3; display: flex; gap: 6px; }
+.btn { border-radius: 8px; padding: 6px 12px; font-family: monospace; font-size: 12px; font-weight: 700; cursor: pointer; background: rgba(20,20,50,0.92); display: none; }
+#slidebtn { border: 1.5px solid #ff7043; color: #ff7043; }
+#switchbtn { border: 1.5px solid #4fc3f7; color: #4fc3f7; }
+#ov { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); z-index: 5; }
+#ov h1 { color: #ffe082; font-size: 28px; margin-bottom: 10px; }
+#ov p { color: #aaa; font-size: 12px; line-height: 2.2; text-align: center; }
+#ov p span { color: #ff7043; font-weight: 700; }
+#playbtn { margin-top: 22px; background: #4fc3f7; color: #000; border: none; border-radius: 8px; padding: 13px 44px; font-size: 18px; font-family: monospace; font-weight: 700; cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="gc">
+  <canvas id="c"></canvas>
+  <div id="hud">
+    <div>
+      <div class="hud-box" id="score"><span class="you">TU</span> <span id="sa">0</span> — <span id="sb">0</span> <span class="cpu">CPU</span></div>
+      <div id="msg">WASD · Esp=Tiro · E=Pase · F=Barrida · Q=Cambiar</div>
+      <div id="timer">2:00</div>
+    </div>
+  </div>
+  <div id="btns">
+    <div id="slidebtn" class="btn">F · BARRIDA</div>
+    <div id="switchbtn" class="btn">Q · CAMBIAR</div>
+  </div>
+  <div id="ov">
+    <h1>⚽ FÚTBOL 2D</h1>
+    <p>WASD / Flechas = Mover<br>Espacio = Disparar · E = Pasar<br><span>F = Barrida · Q = Cambiar jugador</span></p>
+    <button id="playbtn">▶ JUGAR</button>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const gc = document.getElementById('gc');
+const ctx = canvas.getContext('2d');
+
+function resize() { canvas.width = gc.clientWidth || 600; canvas.height = 480; }
+resize(); window.addEventListener('resize', resize);
+
+const FW = 600, FH = 400;
+function wx(x) { return x / FW * canvas.width; }
+function wy(y) { return y / FH * canvas.height; }
+
+const PR = 5, BR = 3.5;
+
+const pF = [{x:45,y:200},{x:130,y:80},{x:130,y:200},{x:130,y:320},{x:220,y:120},{x:270,y:200}];
+const cF = [{x:555,y:200},{x:470,y:80},{x:470,y:200},{x:470,y:320},{x:380,y:120},{x:330,y:200}];
+cF[5] = {x:330,y:280};
+
+let running=false, gameTime=120, scoreA=0, scoreB=0, ci=5;
+let keys={}, kcd=0, pcd=0, switchcd=0, dribbleMode=false, lm='';
+
+function mkPl(x,y,col,col2) { return {x,y,hx:x,hy:y,col,col2,r:PR,sliding:false,slideTimer:0,slideDirX:0,slideDirY:0,slideCD:0,angle:0}; }
+const pT=[], cT=[];
+for(let i=0;i<6;i++) pT.push(mkPl(pF[i].x,pF[i].y,i===0?'#ffcc00':'#4fc3f7','#1a3060'));
+for(let i=0;i<6;i++) cT.push(mkPl(cF[i].x,cF[i].y,i===0?'#44ff88':'#ef5350','#601a1a'));
+
+const ball = {x:280,y:200,vx:0,vy:0,r:BR};
+const dust = [];
+
+function spawnDust(x,y) {
+  for(let i=0;i<7;i++) dust.push({x,y,vx:(Math.random()-.5)*60,vy:(Math.random()-.5)*60,life:.5,maxLife:.5,r:2+Math.random()*3});
+}
+
+function reset() {
+  ball.x=pT[5].hx+12; ball.y=pT[5].hy; ball.vx=0; ball.vy=0;
+  for(let i=0;i<6;i++) {
+    pT[i].x=pF[i].x; pT[i].y=pF[i].y; pT[i].sliding=false; pT[i].slideCD=0;
+    cT[i].x=cF[i].x; cT[i].y=cF[i].y; cT[i].sliding=false; cT[i].slideCD=0;
+  }
+  ci=5; switchcd=0; dribbleMode=false;
+  setMsg('WASD · Esp=Tiro · E=Pase · F=Barrida · Q=Cambiar');
+}
+
+function setMsg(m,d) {
+  lm=m; document.getElementById('msg').textContent=m;
+  if(d) setTimeout(()=>{ lm=''; document.getElementById('msg').textContent='WASD · Esp=Tiro · E=Pase · F=Barrida · Q=Cambiar'; }, d);
+}
+function flashMsg(m,d) {
+  document.getElementById('msg').textContent=m;
+  if(d) setTimeout(()=>document.getElementById('msg').textContent=lm||'WASD · Esp=Tiro · E=Pase · F=Barrida · Q=Cambiar', d);
+}
+
+document.addEventListener('keydown', e=>{
+  keys[e.code]=true;
+  if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+  if(e.code==='KeyQ'&&running&&switchcd<=0) doSwitch();
+  if(e.code==='KeyF'&&running) doSlide();
+});
+document.addEventListener('keyup', e=>keys[e.code]=false);
+document.getElementById('switchbtn').addEventListener('click', ()=>{ if(running&&switchcd<=0) doSwitch(); });
+document.getElementById('slidebtn').addEventListener('click', ()=>{ if(running) doSlide(); });
+document.getElementById('playbtn').addEventListener('click', ()=>{
+  document.getElementById('ov').style.display='none';
+  document.getElementById('slidebtn').style.display='block';
+  document.getElementById('switchbtn').style.display='block';
+  running=true; reset();
+});
+
+function doSwitch() { switchcd=.4; ci=(ci+1)%pT.length; flashMsg('🔄 #'+(ci+1), 800); }
+function doSlide() {
+  const cp=pT[ci]; if(cp.sliding||cp.slideCD>0) return;
+  const dx=ball.x-cp.x, dy=ball.y-cp.y, d=Math.hypot(dx,dy)||1;
+  cp.slideDirX=d<200?dx/d:Math.cos(cp.angle);
+  cp.slideDirY=d<200?dy/d:Math.sin(cp.angle);
+  cp.sliding=true; cp.slideTimer=.5; cp.slideCD=1.2;
+  spawnDust(cp.x,cp.y); flashMsg('🤸 ¡BARRIDA!', 600);
+}
+
+function bestPass() {
+  let best=null, bs=-999;
+  for(let i=0;i<pT.length;i++) {
+    if(i===ci) continue;
+    let md=999; for(const c of cT) md=Math.min(md,Math.hypot(c.x-pT[i].x,c.y-pT[i].y));
+    const sc=md+(600-pT[i].x)*.5;
+    if(sc>bs) { bs=sc; best={idx:i,p:pT[i]}; }
+  }
+  return best;
+}
+
+function collide() {
+  const all=[...pT,...cT];
+  for(let i=0;i<all.length;i++) {
+    const pl=all[i]; if(i===ci&&dribbleMode) continue;
+    const dx=ball.x-pl.x, dy=ball.y-pl.y, d=Math.hypot(dx,dy), minD=pl.r+ball.r;
+    if(d<minD&&d>.01) {
+      const nx=dx/d, ny=dy/d, ov=minD-d;
+      ball.x+=nx*ov; ball.y+=ny*ov;
+      const dot=ball.vx*nx+ball.vy*ny;
+      if(dot<0) { ball.vx-=2*dot*nx; ball.vy-=2*dot*ny; ball.vx*=.7; ball.vy*=.7; }
+      if(Math.hypot(ball.vx,ball.vy)<15) { ball.vx+=nx*25; ball.vy+=ny*25; }
+      if(i>=pT.length&&i>pT.length+2) {
+        const a=Math.atan2(ball.y-200,-ball.x);
+        ball.vx=Math.cos(a)*220+(Math.random()-.5)*40;
+        ball.vy=Math.sin(a)*220+(Math.random()-.5)*40;
+      }
+    }
+  }
+}
+
+function update(dt) {
+  if(!running) return;
+  switchcd=Math.max(0,switchcd-dt); kcd=Math.max(0,kcd-dt); pcd=Math.max(0,pcd-dt);
+  gameTime-=dt;
+  if(gameTime<=0) { gameTime=0; running=false; showEnd(); return; }
+  const m=Math.floor(gameTime/60), s=Math.floor(gameTime%60);
+  document.getElementById('timer').textContent=m+':'+(s<10?'0':'')+s;
+
+  for(let i=dust.length-1;i>=0;i--) {
+    const d=dust[i]; d.life-=dt; d.x+=d.vx*dt; d.y+=d.vy*dt;
+    if(d.life<=0) dust.splice(i,1);
+  }
+
+  const cp=pT[ci]; let mx=0,my=0;
+  if(!cp.sliding) {
+    if(keys['ArrowLeft']||keys['KeyA']) mx-=1; if(keys['ArrowRight']||keys['KeyD']) mx+=1;
+    if(keys['ArrowUp']||keys['KeyW']) my-=1; if(keys['ArrowDown']||keys['KeyS']) my+=1;
+  }
+  const moving=mx!==0||my!==0;
+  if(moving) {
+    const ml=Math.hypot(mx,my); mx/=ml; my/=ml;
+    cp.x=Math.max(32,Math.min(568,cp.x+mx*220*dt));
+    cp.y=Math.max(32,Math.min(368,cp.y+my*220*dt));
+    cp.angle=Math.atan2(my,mx);
+  }
+
+  cp.slideCD=Math.max(0,cp.slideCD-dt);
+  if(cp.sliding) {
+    cp.slideTimer-=dt;
+    const prog=1-(cp.slideTimer/.5), spd=280*Math.max(0,1-prog*prog);
+    cp.x=Math.max(32,Math.min(568,cp.x+cp.slideDirX*spd*dt));
+    cp.y=Math.max(32,Math.min(368,cp.y+cp.slideDirY*spd*dt));
+    const d=Math.hypot(ball.x-cp.x,ball.y-cp.y);
+    if(d<cp.r+ball.r+5) { ball.vx=cp.slideDirX*300+(Math.random()-.5)*60; ball.vy=cp.slideDirY*300+(Math.random()-.5)*60; spawnDust(cp.x,cp.y); flashMsg('💨 ¡BARRIDA EXITOSA!',900); cp.sliding=false; }
+    if(cp.slideTimer<=0) cp.sliding=false;
+  }
+
+  const db=Math.hypot(ball.x-cp.x,ball.y-cp.y);
+  if(db<cp.r+ball.r+3&&moving&&!cp.sliding&&!keys['Space']&&!keys['KeyE']) {
+    dribbleMode=true;
+    ball.x+=(cp.x+mx*(cp.r+ball.r+1.5)-ball.x)*.28;
+    ball.y+=(cp.y+my*(cp.r+ball.r+1.5)-ball.y)*.28;
+    ball.vx*=.5; ball.vy*=.5;
+  } else if(!cp.sliding) { dribbleMode=false; }
+
+  if(keys['Space']&&kcd<=0&&db<cp.r+ball.r+14&&!cp.sliding) {
+    kcd=.45; dribbleMode=false;
+    if(Math.abs(cp.x-570)<160) {
+      const ty=200+(Math.random()-.5)*50, dx2=570-ball.x, dy2=ty-ball.y, dl=Math.hypot(dx2,dy2)||1;
+      ball.vx=dx2/dl*480; ball.vy=dy2/dl*480; flashMsg('🔥 ¡A POR EL GOL!',1200);
+    } else {
+      const dx2=ball.x-cp.x, dy2=ball.y-cp.y, dl=Math.hypot(dx2,dy2)||1;
+      ball.vx=(dl<1?Math.cos(cp.angle):dx2/dl)*440;
+      ball.vy=(dl<1?Math.sin(cp.angle):dy2/dl)*440;
+      flashMsg('💥 ¡TIRO!',800);
+    }
+  }
+
+  if(keys['KeyE']&&pcd<=0&&db<cp.r+ball.r+18&&!cp.sliding) {
+    pcd=.65; dribbleMode=false;
+    const tg=bestPass();
+    if(tg) {
+      const dx2=tg.p.x-ball.x, dy2=tg.p.y-ball.y, dl=Math.hypot(dx2,dy2)||1;
+      const pp=Math.min(300,dl*1.1+80);
+      ball.vx=dx2/dl*pp; ball.vy=dy2/dl*pp;
+      const ri=tg.idx; setTimeout(()=>ci=ri, 350);
+      flashMsg('↗ ¡PASE!',1000);
+    }
+  }
+
+  if(!dribbleMode) {
+    ball.x+=ball.vx*dt; ball.y+=ball.vy*dt;
+    ball.vx*=Math.pow(.97,dt*60); ball.vy*=Math.pow(.97,dt*60);
+    if(ball.y-ball.r<32) { ball.y=32+ball.r; ball.vy=Math.abs(ball.vy)*.6; }
+    if(ball.y+ball.r>368) { ball.y=368-ball.r; ball.vy=-Math.abs(ball.vy)*.6; }
+    if(ball.x-ball.r<32&&(ball.y<170||ball.y>230)) { ball.x=32+ball.r; ball.vx=Math.abs(ball.vx)*.6; }
+    if(ball.x+ball.r>568&&(ball.y<170||ball.y>230)) { ball.x=568-ball.r; ball.vx=-Math.abs(ball.vx)*.6; }
+    collide();
+  }
+
+  if(ball.x-ball.r<18&&ball.y>170&&ball.y<230) { scoreB++; document.getElementById('sb').textContent=scoreB; setMsg('😬 ¡GOL CPU!',2000); reset(); }
+  if(ball.x+ball.r>582&&ball.y>170&&ball.y<230) { scoreA++; document.getElementById('sa').textContent=scoreA; setMsg('🎉 ¡GOOOOL!',2000); reset(); }
+
+  if(!dribbleMode&&!cp.sliding&&!keys['Space']&&!keys['KeyE']&&pcd<.3&&switchcd<=0) {
+    const cd=Math.hypot(pT[ci].x-ball.x,pT[ci].y-ball.y);
+    for(let i=0;i<pT.length;i++) {
+      if(i===ci) continue;
+      const dd=Math.hypot(pT[i].x-ball.x,pT[i].y-ball.y);
+      if(dd<cd-10&&dd<50) { ci=i; break; }
+    }
+  }
+
+  for(let i=0;i<pT.length;i++) {
+    if(i===ci) continue;
+    const pl=pT[i], bp=0.12;
+    pl.x+=(pl.hx*(1-bp)+ball.x*bp-pl.x)*dt*1.8;
+    pl.y+=(pl.hy*(1-bp)+ball.y*bp-pl.y)*dt*1.8;
+    pl.x=Math.max(32,Math.min(568,pl.x)); pl.y=Math.max(32,Math.min(368,pl.y));
+  }
+
+  const gk=cT[0];
+  gk.x+=(cF[0].x-gk.x)*dt*3;
+  gk.y+=(ball.y*.5+200*.5-gk.y)*dt*4;
+  gk.y=Math.max(160,Math.min(240,gk.y));
+
+  for(let i=1;i<cT.length;i++) {
+    const cpu=cT[i]; cpu.slideCD=Math.max(0,cpu.slideCD-dt);
+    const bd=Math.hypot(cpu.x-ball.x,cpu.y-ball.y);
+    if(!cpu.sliding) {
+      const chase=bd<100, bp=chase?(i>3?.7:.3):.08;
+      cpu.x+=(cpu.hx*(1-bp)+ball.x*bp-cpu.x)*dt*(chase?3.5:1.8);
+      cpu.y+=(cpu.hy*(1-bp)+ball.y*bp-cpu.y)*dt*(chase?3.5:1.8);
+      cpu.x=Math.max(32,Math.min(568,cpu.x)); cpu.y=Math.max(32,Math.min(368,cpu.y));
+      if(bd<cpu.r+ball.r+10&&ball.x>60) {
+        const a=Math.atan2(ball.y-200,-ball.x);
+        ball.vx=Math.cos(a)*260+(Math.random()-.5)*50;
+        ball.vy=Math.sin(a)*260+(Math.random()-.5)*50;
+      }
+      if(bd<70&&cpu.slideCD<=0&&Math.random()<.006&&ball.x<300) {
+        cpu.sliding=true; cpu.slideTimer=.5; cpu.slideCD=2;
+        const dx2=ball.x-cpu.x, dy2=ball.y-cpu.y, dl=Math.hypot(dx2,dy2)||1;
+        cpu.slideDirX=dx2/dl; cpu.slideDirY=dy2/dl; spawnDust(cpu.x,cpu.y);
+      }
+    } else {
+      cpu.slideTimer-=dt;
+      const prog=1-(cpu.slideTimer/.5), spd=260*Math.max(0,1-prog*prog);
+      cpu.x=Math.max(32,Math.min(568,cpu.x+cpu.slideDirX*spd*dt));
+      cpu.y=Math.max(32,Math.min(368,cpu.y+cpu.slideDirY*spd*dt));
+      if(Math.hypot(ball.x-cpu.x,ball.y-cpu.y)<cpu.r+ball.r+5) {
+        const a=Math.atan2(ball.y-200,-ball.x);
+        ball.vx=Math.cos(a)*290+(Math.random()-.5)*60;
+        ball.vy=Math.sin(a)*290+(Math.random()-.5)*60;
+        spawnDust(cpu.x,cpu.y); cpu.sliding=false;
+      }
+      if(cpu.slideTimer<=0) cpu.sliding=false;
+    }
+  }
+}
+
+function drawField() {
+  const cw=canvas.width, ch=canvas.height;
+  ctx.fillStyle='#2d7a32'; ctx.fillRect(0,0,cw,ch);
+  for(let i=0;i<10;i++) { if(i%2===0) { ctx.fillStyle='rgba(0,0,0,0.05)'; ctx.fillRect(i*cw/10,0,cw/10,ch); } }
+  const mx=wx(30), my=wy(30), fw=wx(540), fh=wy(340);
+  ctx.strokeStyle='rgba(255,255,255,0.85)'; ctx.lineWidth=2; ctx.strokeRect(mx,my,fw,fh);
+  ctx.beginPath(); ctx.moveTo(cw/2,my); ctx.lineTo(cw/2,my+fh); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cw/2,ch/2,wx(45),0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle='white'; ctx.beginPath(); ctx.arc(cw/2,ch/2,3,0,Math.PI*2); ctx.fill();
+  ctx.lineWidth=2.5; ctx.strokeStyle='rgba(255,255,255,0.9)';
+  const gox=wx(18), goy=wy(170), gow=wx(12), goh=wy(60);
+  ctx.strokeRect(gox,goy,gow,goh); ctx.fillStyle='rgba(255,255,255,0.07)'; ctx.fillRect(gox,goy,gow,goh);
+  ctx.strokeRect(wx(570),goy,-gow,goh); ctx.fillRect(wx(570)-gow,goy,gow,goh);
+  ctx.lineWidth=1.5; ctx.strokeStyle='rgba(255,255,255,0.45)';
+  ctx.strokeRect(mx,wy(110),wx(90),wy(180)); ctx.strokeRect(cw-mx-wx(90),wy(110),wx(90),wy(180));
+  ctx.fillStyle='rgba(255,255,255,0.5)';
+  ctx.beginPath(); ctx.arc(wx(100),ch/2,2,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(wx(500),ch/2,2,0,Math.PI*2); ctx.fill();
+}
+
+function drawDust() {
+  for(const d of dust) {
+    ctx.fillStyle=`rgba(200,169,110,${(d.life/d.maxLife)*.7})`;
+    ctx.beginPath(); ctx.arc(wx(d.x),wy(d.y),d.r,0,Math.PI*2); ctx.fill();
+  }
+}
+
+function drawBall() {
+  const bx=wx(ball.x), by=wy(ball.y), br=ball.r/FW*canvas.width*3.2;
+  ctx.fillStyle='rgba(0,0,0,0.18)'; ctx.beginPath(); ctx.ellipse(bx,by+br*.5,br*.9,br*.35,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='white'; ctx.beginPath(); ctx.arc(bx,by,br,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#444'; ctx.lineWidth=.8; ctx.beginPath(); ctx.arc(bx,by,br,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle='#222';
+  for(let i=0;i<5;i++) { const a=i/5*Math.PI*2; ctx.beginPath(); ctx.arc(bx+Math.cos(a)*br*.55,by+Math.sin(a)*br*.55,br*.28,0,Math.PI*2); ctx.fill(); }
+}
+
+function drawPlayer(pl,isControlled) {
+  const px=wx(pl.x), py=wy(pl.y), pr=pl.r/FW*canvas.width*3.2;
+  ctx.save(); ctx.translate(px,py);
+  if(pl.sliding) ctx.rotate(pl.angle+Math.PI/2);
+  ctx.fillStyle='rgba(0,0,0,0.15)'; ctx.beginPath(); ctx.ellipse(0,pr*.4,pr*.85,pr*.32,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=pl.col; ctx.beginPath(); ctx.arc(0,0,pr,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,0.3)'; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(0,0,pr,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle=pl.col2; ctx.beginPath(); ctx.arc(0,0,pr*.48,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#ffcc88'; ctx.beginPath(); ctx.arc(0,-pr*.4,pr*.36,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+  if(isControlled) {
+    ctx.strokeStyle='#ffff00'; ctx.lineWidth=2; ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.arc(px,py,pr+3.5,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+  }
+  if(pl.sliding) {
+    ctx.fillStyle='rgba(255,112,67,0.35)';
+    ctx.beginPath(); ctx.ellipse(px,py,pr*2,pr*.6,pl.angle,0,Math.PI*2); ctx.fill();
+  }
+}
+
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawField(); drawDust();
+  for(let i=0;i<cT.length;i++) drawPlayer(cT[i],false);
+  for(let i=0;i<pT.length;i++) drawPlayer(pT[i],i===ci);
+  drawBall();
+}
+
+let last=0;
+function loop(ts) { requestAnimationFrame(loop); const dt=Math.min((ts-last)/1000,.05); last=ts; update(dt); draw(); }
+requestAnimationFrame(loop);
+draw();
+
+function showEnd() {
+  document.getElementById('slidebtn').style.display='none';
+  document.getElementById('switchbtn').style.display='none';
+  const ov=document.getElementById('ov'); ov.style.display='flex';
+  ov.innerHTML='<h1 style="color:#ffe082;font-size:24px;font-family:monospace;font-weight:700;margin-bottom:8px;">FIN DEL PARTIDO</h1>'
+    +'<div style="color:#fff;font-size:34px;font-family:monospace;font-weight:700;margin-bottom:12px;">'+scoreA+' — '+scoreB+'</div>'
+    +'<div style="color:#aaa;font-size:15px;font-family:monospace;margin-bottom:20px;">'+(scoreA>scoreB?'🏆 ¡GANASTE!':scoreA<scoreB?'😢 Perdiste':'🤝 Empate')+'</div>'
+    +'<button id="rb" style="background:#4fc3f7;color:#000;border:none;border-radius:8px;padding:13px 40px;font-size:18px;font-family:monospace;font-weight:700;cursor:pointer;">▶ JUGAR DE NUEVO</button>';
+  document.getElementById('rb').addEventListener('click',()=>{
+    scoreA=0; scoreB=0; gameTime=120;
+    document.getElementById('sa').textContent='0'; document.getElementById('sb').textContent='0';
+    reset(); ov.style.display='none'; running=true;
+    document.getElementById('slidebtn').style.display='block';
+    document.getElementById('switchbtn').style.display='block';
+  });
+}
+</script>
+</body>
+</html>
