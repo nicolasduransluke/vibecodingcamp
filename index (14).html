@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VibeCodingCamp · Weston, FL</title>
+<meta name="description" content="Learn to build with AI in Weston, FL. Programs for kids and adults.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#08080f;--surface:#0e0e1c;--border:rgba(255,255,255,0.07);
+    --purple:#7c3aed;--pl:#a78bfa;--pink:#f472b6;--green:#4ade80;
+    --text:#e8e8f8;--muted:#5a5a7a;
+    --fd:'Syne',sans-serif;--fm:'DM Mono',monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:var(--fm);min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(124,58,237,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(124,58,237,0.03) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+  .orb{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+
+  /* NAV */
+  nav{display:flex;align-items:center;justify-content:space-between;padding:20px 48px;border-bottom:1px solid var(--border);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100;background:rgba(8,8,15,0.8)}
+  .nav-logo{font-family:var(--fd);font-size:18px;font-weight:800;color:var(--text);letter-spacing:-0.5px}
+  .nav-logo span{color:var(--pl)}
+  .nav-links{display:flex;align-items:center;gap:8px}
+  .nav-link{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border);border-radius:100px;padding:7px 16px;transition:all 0.2s}
+  .nav-link:hover{color:var(--text);border-color:rgba(167,139,250,0.4)}
+  .lang-toggle{font-size:11px;color:var(--muted);cursor:pointer;border:1px solid var(--border);border-radius:100px;padding:5px 12px;transition:all 0.2s;background:none}
+  .lang-toggle:hover{color:var(--text);border-color:rgba(167,139,250,0.4)}
+
+  /* HERO */
+  .hero{position:relative;z-index:1;padding:100px 48px 80px;max-width:1200px;margin:0 auto}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.25);color:var(--pl);font-size:11px;letter-spacing:2px;padding:6px 16px;border-radius:100px;text-transform:uppercase;margin-bottom:32px;animation:fadeUp 0.6s both}
+  h1{font-family:var(--fd);font-size:clamp(52px,8vw,100px);font-weight:800;line-height:0.92;letter-spacing:-4px;color:var(--text);margin-bottom:28px;animation:fadeUp 0.6s 0.1s both}
+  h1 .grad{background:linear-gradient(135deg,var(--pl),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .hero-desc{font-size:clamp(15px,1.8vw,19px);color:var(--muted);max-width:580px;line-height:1.7;margin-bottom:48px;animation:fadeUp 0.6s 0.2s both}
+  .hero-stats{display:flex;gap:40px;flex-wrap:wrap;animation:fadeUp 0.6s 0.3s both}
+  .stat{display:flex;flex-direction:column;gap:4px}
+  .stat-num{font-family:var(--fd);font-size:32px;font-weight:800;color:var(--text);letter-spacing:-1px}
+  .stat-label{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+
+  /* SECTIONS */
+  .sec{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 48px 80px}
+  .sec-label{font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:32px;display:flex;align-items:center;gap:12px}
+  .sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
+  .divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);max-width:1200px;margin:0 auto 80px}
+
+  /* PRODUCTS */
+  .products-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  .pc{border-radius:24px;overflow:hidden;border:1px solid var(--border);transition:transform 0.3s,border-color 0.3s}
+  .pc:hover{transform:translateY(-4px)}
+  .pc-game{background:linear-gradient(135deg,#0d0820,#130d2a);border-color:rgba(167,139,250,0.2)}
+  .pc-game:hover{border-color:rgba(167,139,250,0.5)}
+  .pc-work{background:linear-gradient(135deg,#08120d,#0d1a12);border-color:rgba(74,222,128,0.15)}
+  .pc-work:hover{border-color:rgba(74,222,128,0.4)}
+  .pi{padding:44px 44px 40px}
+  .badge{display:inline-flex;align-items:center;gap:8px;border-radius:100px;padding:6px 14px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:28px;font-family:var(--fm)}
+  .badge-g{background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.25);color:var(--pl)}
+  .badge-w{background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.25);color:var(--green)}
+  .card-icon{font-size:52px;margin-bottom:20px;display:block}
+  .card-title{font-family:var(--fd);font-size:clamp(32px,3.5vw,48px);font-weight:800;line-height:1.0;letter-spacing:-2px;margin-bottom:8px}
+  .ct-g{color:var(--pl)} .ct-w{color:var(--green)}
+  .card-sub{font-family:var(--fd);font-size:14px;color:var(--muted);letter-spacing:1px;margin-bottom:20px;text-transform:uppercase}
+  .card-desc{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:28px;max-width:380px}
+  .card-features{display:flex;flex-direction:column;gap:10px;margin-bottom:32px}
+  .feature{display:flex;align-items:center;gap:10px;font-size:13px;color:#c4c4e0}
+  .fd-g{width:6px;height:6px;border-radius:50%;background:var(--pl);flex-shrink:0}
+  .fd-w{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+  .card-meta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px}
+  .chip{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--muted)}
+
+  /* DATE BADGE */
+  .date-section{margin-bottom:28px}
+  .date-label{font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+  .no-date{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 16px;font-size:13px;color:var(--muted)}
+
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;border-radius:14px;font-family:var(--fd);font-size:16px;font-weight:800;text-decoration:none;transition:all 0.2s;border:none;cursor:pointer}
+  .btn-g{background:linear-gradient(135deg,var(--purple),var(--pl));color:white;box-shadow:0 4px 24px rgba(124,58,237,0.3)}
+  .btn-g:hover{box-shadow:0 8px 36px rgba(124,58,237,0.5);transform:translateY(-1px)}
+  .btn-w{background:linear-gradient(135deg,#16a34a,var(--green));color:#08120d;box-shadow:0 4px 24px rgba(74,222,128,0.2)}
+  .btn-w:hover{box-shadow:0 8px 36px rgba(74,222,128,0.35);transform:translateY(-1px)}
+
+  /* GAMES ROW */
+  .games-row{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px}
+  .games-row::-webkit-scrollbar{height:4px}
+  .games-row::-webkit-scrollbar-track{background:var(--surface);border-radius:100px}
+  .games-row::-webkit-scrollbar-thumb{background:var(--border);border-radius:100px}
+  .gt{flex-shrink:0;width:160px;height:100px;border-radius:12px;overflow:hidden;border:1px solid var(--border);position:relative;transition:transform 0.2s,border-color 0.2s;text-decoration:none}
+  .gt:hover{transform:scale(1.04);border-color:rgba(167,139,250,0.4)}
+  .gt-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px}
+  .gt-ov{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 60%)}
+  .gt-name{position:absolute;bottom:8px;left:10px;font-family:var(--fd);font-size:11px;font-weight:700;color:white}
+  .see-all{flex-shrink:0;width:160px;height:100px;border-radius:12px;border:1px dashed rgba(255,255,255,0.1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-decoration:none;transition:all 0.2s}
+  .see-all:hover{border-color:rgba(167,139,250,0.4);background:rgba(167,139,250,0.05)}
+
+  /* MANIFESTO */
+  .manifesto-box{background:linear-gradient(135deg,rgba(124,58,237,0.08),rgba(244,114,182,0.05));border:1px solid rgba(124,58,237,0.15);border-radius:24px;padding:56px 64px;text-align:center}
+  .manifesto-title{font-family:var(--fd);font-size:clamp(28px,4vw,48px);font-weight:800;color:var(--text);letter-spacing:-1.5px;margin-bottom:20px}
+  .manifesto-text{font-size:16px;color:var(--muted);line-height:1.8;max-width:600px;margin:0 auto}
+
+  /* FORMS */
+  .form-wrap{max-width:600px;margin:0 auto;padding:0 40px 80px}
+  .form-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;overflow:hidden}
+  .form-top{padding:28px 32px 20px;border-bottom:1px solid var(--border)}
+  .form-body{padding:24px 32px;display:flex;flex-direction:column;gap:18px}
+  .field{display:flex;flex-direction:column;gap:7px}
+  .field label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase}
+  .fi{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:13px 15px;font-family:var(--fm);font-size:13px;color:var(--text);outline:none;transition:border-color 0.2s,box-shadow 0.2s;width:100%}
+  .fi:focus{border-color:rgba(167,139,250,0.45)!important;box-shadow:0 0 0 3px rgba(167,139,250,0.08)}
+  .fi::placeholder{color:var(--muted)}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .chk{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;cursor:pointer}
+  .chk input{accent-color:var(--pl);width:15px;height:15px;flex-shrink:0;margin-top:1px}
+  .chk span{font-size:12px;color:#c4c4e0;line-height:1.4}
+  .radio-opt{display:flex;align-items:center;gap:8px;padding:9px 12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;cursor:pointer;transition:all 0.2s}
+  .radio-opt:hover{border-color:rgba(167,139,250,0.3);background:rgba(167,139,250,0.05)}
+  .radio-opt input{accent-color:var(--pl)}
+  .radio-opt span{font-size:12px;color:#c4c4e0}
+  .add-kid-btn{display:flex;align-items:center;gap:8px;width:100%;background:rgba(167,139,250,0.06);border:1px dashed rgba(167,139,250,0.3);border-radius:10px;padding:12px 14px;cursor:pointer;font-family:var(--fm);font-size:12px;color:var(--pl);transition:all 0.2s}
+  .submit-btn{width:100%;padding:17px;border:none;border-radius:12px;font-family:var(--fd);font-size:17px;font-weight:800;cursor:pointer;transition:all 0.2s}
+  .success-view{display:none;flex-direction:column;align-items:center;text-align:center;padding:56px 36px;gap:16px}
+  .success-emoji{font-size:52px;animation:pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both}
+  .success-box{background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:14px;padding:16px 22px;font-size:13px;color:var(--green);line-height:1.7;max-width:340px}
+
+  footer{position:relative;z-index:1;text-align:center;padding:32px 48px;border-top:1px solid var(--border);font-size:11px;color:var(--muted)}
+  footer a{color:var(--pl);text-decoration:none}
+
+  @media(max-width:768px){
+    nav{padding:16px 20px}
+    .hero,.sec{padding-left:20px;padding-right:20px}
+    .products-grid{grid-template-columns:1fr}
+    .pi{padding:28px 24px}
+    .manifesto-box{padding:36px 24px}
+    .form-wrap{padding-left:20px;padding-right:20px}
+    .field-row{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<div class="orb" style="width:600px;height:600px;background:rgba(124,58,237,0.1);top:-150px;left:-150px"></div>
+<div class="orb" style="width:500px;height:500px;background:rgba(74,222,128,0.06);top:400px;right:-150px"></div>
+<div class="orb" style="width:400px;height:400px;background:rgba(244,114,182,0.06);bottom:200px;left:20%"></div>
+
+<nav>
+  <div class="nav-logo">VIBE<span>CODING</span>CAMP</div>
+  <div class="nav-links">
+    <a href="/showcase.html" class="nav-link" data-i="nav_showcase">✨ Showcase</a>
+    <a href="https://discord.gg/8HH7EJWM" target="_blank" class="nav-link" style="color:#818cf8;border-color:rgba(129,140,248,0.3)">💬 Discord</a>
+    <a href="#programs" class="nav-link" data-i="nav_programs">Programas</a>
+    <button class="lang-toggle" id="langToggle" onclick="toggleLang()">EN / ES</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="eyebrow" data-i="eyebrow">📍 Weston, FL · Est. 2026</div>
+  <h1 data-i="h1_line1">BUILD WITH AI.<br><span class="grad" data-i="h1_line2">CREATE REAL THINGS.</span></h1>
+  <p class="hero-desc" data-i="hero_desc">VibeCodingCamp is a platform where people learn to build using Artificial Intelligence. We run focused programs for kids and adults — more coming soon.</p>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">10</div><div class="stat-label" data-i="stat1">Kids · 1st session</div></div>
+    <div class="stat"><div class="stat-num" style="color:var(--pl)">10</div><div class="stat-label" data-i="stat2">Games built</div></div>
+    <div class="stat"><div class="stat-num" style="color:var(--green)">4h</div><div class="stat-label" data-i="stat3">Per session</div></div>
+    <div class="stat"><div class="stat-num" style="color:var(--pink)">2</div><div class="stat-label" data-i="stat4">Programs</div></div>
+  </div>
+</section>
+
+<!-- PROGRAMS -->
+<section class="sec" id="programs">
+  <div class="sec-label" data-i="sec_programs">Our programs</div>
+  <div class="products-grid">
+
+    <!-- AI GAME LAB -->
+    <div class="pc pc-game">
+      <div class="pi">
+        <div class="badge badge-g" data-i="badge_game">🎮 For kids</div>
+        <span class="card-icon">🕹️</span>
+        <div class="card-title ct-g">AI Game Lab</div>
+        <div class="card-sub" data-i="game_sub">Vibe Coding Camp</div>
+        <p class="card-desc" data-i="game_desc">Kids ages 8–12 build their own video game using AI — no coding experience needed. In 4 hours they leave with a real, playable game and the confidence that they can create with technology.</p>
+        <div class="card-features">
+          <div class="feature"><div class="fd-g"></div><span data-i="gf1">Build games with Claude AI</span></div>
+          <div class="feature"><div class="fd-g"></div><span data-i="gf2">No prior experience needed</span></div>
+          <div class="feature"><div class="fd-g"></div><span data-i="gf3">Game deployed with its own URL</span></div>
+          <div class="feature"><div class="fd-g"></div><span data-i="gf4">Max 10 kids per session</span></div>
+        </div>
+        <div class="card-meta">
+          <div class="chip" data-i="gm1">📅 Saturdays</div>
+          <div class="chip">🕙 10 AM – 2 PM</div>
+          <div class="chip" data-i="gm2">🧒 Ages 8–12</div>
+          <div class="chip" data-i="gm3">🍕 Pizza included</div>
+        </div>
+        <div class="date-section">
+          <div class="date-label" data-i="next_date">Next date</div>
+          <div class="no-date" id="game-date-display">📣 Opening soon — join the waitlist</div>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-family:var(--fd);font-size:40px;font-weight:800;color:var(--pl);letter-spacing:-2px">$59</div>
+          <div style="font-size:12px;color:var(--muted)" data-i="game_price_sub">per kid · $89 for 2 kids</div>
+        </div>
+        <a href="#waitlist-game" class="btn btn-g" data-i="game_cta">✅ Register</a>
+        <a href="https://discord.gg/8HH7EJWM" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border-radius:14px;font-family:var(--fd);font-size:14px;font-weight:800;color:#818cf8;text-decoration:none;border:1px solid rgba(129,140,248,0.25);background:rgba(129,140,248,0.08);transition:all 0.2s;margin-top:8px" onmouseover="this.style.background='rgba(129,140,248,0.15)'" onmouseout="this.style.background='rgba(129,140,248,0.08)'">💬 <span data-i="discord_cta">Join our Discord community</span></a>
+      </div>
+    </div>
+
+    <!-- AI WORK LAB -->
+    <div class="pc pc-work">
+      <div class="pi">
+        <div class="badge badge-w" data-i="badge_work">💼 For adults</div>
+        <span class="card-icon">⚡</span>
+        <div class="card-title ct-w">AI Work Lab</div>
+        <div class="card-sub" data-i="work_sub">Automate with Claude Code</div>
+        <p class="card-desc" data-i="work_desc">Learn to automate your repetitive tasks and workflows using Claude Code — no coding background required. In one day, you change how you work.</p>
+        <div class="card-features">
+          <div class="feature"><div class="fd-w"></div><span data-i="wf1">Automate repetitive tasks with AI</span></div>
+          <div class="feature"><div class="fd-w"></div><span data-i="wf2">Claude Code from scratch</span></div>
+          <div class="feature"><div class="fd-w"></div><span data-i="wf3">Real use cases from your own work</span></div>
+          <div class="feature"><div class="fd-w"></div><span data-i="wf4">Max 10 people per session</span></div>
+        </div>
+        <div class="card-meta">
+          <div class="chip" data-i="wm1">📅 TBD</div>
+          <div class="chip">📍 Weston, FL</div>
+          <div class="chip" data-i="wm2">👤 Adults</div>
+        </div>
+        <div class="date-section">
+          <div class="date-label" data-i="next_date2">Next date</div>
+          <div class="no-date" id="work-date-display">📣 Opening soon — join the waitlist</div>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-family:var(--fd);font-size:40px;font-weight:800;color:var(--green);letter-spacing:-2px">$99</div>
+          <div style="font-size:12px;color:var(--muted)" data-i="work_price_sub">per person</div>
+        </div>
+        <a href="#waitlist-work" class="btn btn-w" data-i="work_cta">✅ Register</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- GAMES PREVIEW -->
+<section class="sec">
+  <div class="sec-label" data-i="sec_games">Games built in session 1 · AI Game Lab</div>
+  <div class="games-row">
+    <a href="https://dinosave.vercel.app/" target="_blank" class="gt"><div class="gt-inner" style="background:linear-gradient(135deg,#1a2e1a,#0d1a0d)">🦕</div><div class="gt-ov"></div><div class="gt-name">DinoSave</div></a>
+    <a href="https://vibecodingcamp.vercel.app/games/julymonckeberggimnasia.html" target="_blank" class="gt"><div class="gt-inner" style="background:linear-gradient(135deg,#1a1a0a,#0d0d00)">🥇</div><div class="gt-ov"></div><div class="gt-name">Gymolympics</div></a>
+    <a href="https://vibecodingcamp.vercel.app/games/crecentematte.html" target="_blank" class="gt"><div class="gt-inner" style="background:linear-gradient(135deg,#1a1500,#2a2000)">🪙</div><div class="gt-ov"></div><div class="gt-name">Coin Clicker</div></a>
+    <a href="https://vibecodingcamp.vercel.app/games/luciajaramillo.html" target="_blank" class="gt"><div class="gt-inner" style="background:linear-gradient(135deg,#0d1a0d,#1a2e1a)">⛳</div><div class="gt-ov"></div><div class="gt-name">Mini Golf</div></a>
+    <a href="https://vibecodingcamp.vercel.app/games/anibalmonckeberg.html" target="_blank" class="gt"><div class="gt-inner" style="background:linear-gradient(135deg,#0a0a1a,#0d0d2a)">🚔</div><div class="gt-ov"></div><div class="gt-name">Badge & Cuffs</div></a>
+    <a href="https://vibecodingcamp.vercel.app/games/leonjaramillo.html" target="_blank" class="gt"><div class="gt-inner" style="background:linear-gradient(135deg,#1a0a00,#2a1000)">🚗</div><div class="gt-ov"></div><div class="gt-name">Fugitivo</div></a>
+    <a href="https://vibecodingcamp.vercel.app/games/colombatauber.html" target="_blank" class="gt"><div class="gt-inner" style="background:linear-gradient(135deg,#0a0000,#1a0000)">📖</div><div class="gt-ov"></div><div class="gt-name">Hollow</div></a>
+    <a href="https://vibecodingcamp.vercel.app/games/domingomatte.html" target="_blank" class="gt"><div class="gt-inner" style="background:linear-gradient(135deg,#00001a,#00002a)">🚀</div><div class="gt-ov"></div><div class="gt-name">Rocket Galaxy</div></a>
+    <a href="https://vibecodingcamp.vercel.app/games/cristobalolea.html" target="_blank" class="gt"><div class="gt-inner" style="background:linear-gradient(135deg,#0d0800,#1a1000)">⚔️</div><div class="gt-ov"></div><div class="gt-name">Dungeon Crawler</div></a>
+    <a href="https://vibecodingcamp.vercel.app/games/tomastauber.html" target="_blank" class="gt"><div class="gt-inner" style="background:linear-gradient(135deg,#001a00,#002a00)">⚽</div><div class="gt-ov"></div><div class="gt-name">Fútbol</div></a>
+    <a href="/games.html" class="see-all"><div style="font-size:24px">🎮</div><div style="font-size:11px;color:var(--muted)" data-i="see_all">See all →</div></a>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- MANIFESTO -->
+<section class="sec">
+  <div class="manifesto-box">
+    <div class="manifesto-title" data-i="manifesto_title">Not just using AI.<br>Building with it.</div>
+    <p class="manifesto-text" data-i="manifesto_text">In a world where AI is becoming part of everyday life, we teach kids and adults to be <strong style="color:var(--text)">creators — not just consumers</strong> of technology.<br><br>From a video game built in 4 hours to a workflow automated in a day. <strong style="color:var(--text)">The superpower is real.</strong></p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- WAITLIST AI GAME LAB -->
+<div class="form-wrap" id="waitlist-game">
+  <div style="font-size:10px;color:var(--pl);letter-spacing:3px;text-transform:uppercase;margin-bottom:24px;display:flex;align-items:center;gap:10px">🎮 AI Game Lab · <span data-i="waitlist_label">Waitlist</span><span style="flex:1;height:1px;background:var(--border)"></span></div>
+  <div class="form-card" style="box-shadow:0 0 60px rgba(124,58,237,0.08)">
+    <div class="form-top" style="background:linear-gradient(135deg,rgba(124,58,237,0.1),rgba(244,114,182,0.05))">
+      <div style="font-family:var(--fd);font-size:20px;font-weight:800;color:var(--text);margin-bottom:4px" id="form-game-title" data-i="form_game_title">Join the waitlist</div>
+      <div style="font-size:12px;color:var(--muted)" id="form-game-sub" data-i="form_game_sub">We'll confirm your spot within 24 hours via WhatsApp.</div>
+    </div>
+    <form id="waitlistForm" action="https://formspree.io/f/mlgpqlde" method="POST">
+      <input type="hidden" name="producto" value="AI Game Lab">
+      <div class="form-body">
+        <div id="errorMsg" style="background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);color:#f87171;font-size:12px;padding:10px 14px;border-radius:8px;display:none"></div>
+        <div class="field-row">
+          <div class="field"><label style="color:var(--pl)" data-i="f_parent">👤 Your name (parent)</label><input class="fi" type="text" name="parent_name" id="parentName" required data-ph-es="Tu nombre completo" data-ph-en="Your full name"></div>
+          <div class="field"><label style="color:var(--pl)">📱 WhatsApp</label><input class="fi" type="tel" name="phone" id="phone" placeholder="+1 (954) 000-0000" required></div>
+        </div>
+        <div class="field"><label style="color:var(--pl)">✉️ Email</label><input class="fi" type="email" name="email" id="email" placeholder="you@email.com" required></div>
+        <div id="kidsContainer"></div>
+        <button type="button" class="add-kid-btn" onclick="addKid()" id="addKidBtn"><span style="font-size:16px">＋</span> <span data-i="add_kid">Add a child</span></button>
+        <div class="field">
+          <label style="color:var(--pl)" data-i="f_confirm">📅 Confirmations</label>
+          <label class="chk"><input type="checkbox" name="confirm_laptop" id="confirmLaptop" value="si" required><span data-i="chk_laptop">💻 Each child will bring their own laptop</span></label>
+          <label class="chk"><input type="checkbox" name="confirm_price" id="confirmPrice" value="si" required><span data-i="chk_price">💳 We understand the cost is <strong>$59 per child</strong> or <strong>$89 for 2 kids</strong></span></label>
+        </div>
+        <input type="hidden" name="total_ninos" id="h_total">
+        <input type="hidden" name="kid_name_1" id="h_name_1"><input type="hidden" name="kid_age_1" id="h_age_1"><input type="hidden" name="kid_experience_1" id="h_exp_1"><input type="hidden" name="kid_idea_1" id="h_idea_1">
+        <input type="hidden" name="kid_name_2" id="h_name_2"><input type="hidden" name="kid_age_2" id="h_age_2"><input type="hidden" name="kid_experience_2" id="h_exp_2"><input type="hidden" name="kid_idea_2" id="h_idea_2">
+        <input type="hidden" name="kid_name_3" id="h_name_3"><input type="hidden" name="kid_age_3" id="h_age_3"><input type="hidden" name="kid_experience_3" id="h_exp_3"><input type="hidden" name="kid_idea_3" id="h_idea_3">
+      </div>
+      <div style="padding:0 32px 12px"><button type="submit" id="submitBtn" class="submit-btn" style="background:linear-gradient(135deg,var(--purple),var(--pl));color:white;box-shadow:0 4px 28px rgba(124,58,237,0.35)" id="submit-game-btn" data-i="submit_game">✅ Register</button></div>
+      <div style="font-size:10px;color:var(--muted);text-align:center;padding:0 32px 28px" data-i="form_note">Small groups · Confirmed in order of registration · Payment on confirmation</div>
+    </form>
+    <div class="success-view" id="successView">
+      <div class="success-emoji">🎉</div>
+      <div style="font-family:var(--fd);font-size:26px;font-weight:800;color:var(--text)" data-i="success_title">You're on the list!</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7;max-width:320px" data-i="success_sub">We'll reach out via WhatsApp within 24 hours to confirm your spot.</div>
+      <div class="success-box" id="successBox"></div>
+    </div>
+  </div>
+</div>
+
+<!-- WAITLIST AI WORK LAB -->
+<div class="form-wrap" id="waitlist-work" style="padding-bottom:100px">
+  <div style="font-size:10px;color:var(--green);letter-spacing:3px;text-transform:uppercase;margin-bottom:24px;display:flex;align-items:center;gap:10px">⚡ AI Work Lab · <span data-i="waitlist_label2">Waitlist</span><span style="flex:1;height:1px;background:var(--border)"></span></div>
+  <div class="form-card" style="border-color:rgba(74,222,128,0.15)">
+    <div class="form-top" style="background:linear-gradient(135deg,rgba(74,222,128,0.08),rgba(96,165,250,0.04))">
+      <div style="font-family:var(--fd);font-size:20px;font-weight:800;color:var(--text);margin-bottom:4px" id="form-work-title" data-i="form_work_title">Get notified when we open</div>
+      <div style="font-size:12px;color:var(--muted)" id="form-work-sub" data-i="form_work_sub">Be the first to know the date and price.</div>
+    </div>
+    <form action="https://formspree.io/f/mlgpqlde" method="POST">
+      <input type="hidden" name="producto" value="AI Work Lab">
+      <div class="form-body">
+        <div class="field"><label style="color:var(--green)" data-i="f_name">👤 Your name</label><input class="fi" type="text" name="name" required data-ph-es="Nombre completo" data-ph-en="Full name"></div>
+        <div class="field"><label style="color:var(--green)">📱 WhatsApp</label><input class="fi" type="tel" name="phone" placeholder="+1 (954) 000-0000" required></div>
+        <div class="field"><label style="color:var(--green)" data-i="f_tasks">💼 What tasks do you want to automate?</label><input class="fi" type="text" name="procesos" data-ph-es="ej. emails, reportes, tareas repetitivas..." data-ph-en="e.g. emails, reports, repetitive tasks..."></div>
+      </div>
+      <div style="padding:0 32px 32px"><button type="submit" class="submit-btn" style="background:linear-gradient(135deg,#16a34a,var(--green));color:#08120d;box-shadow:0 4px 24px rgba(74,222,128,0.2)" data-i="submit_work">✅ Register</button></div>
+    </form>
+  </div>
+</div>
+
+<footer>
+  VibeCodingCamp · Weston, FL · 2026 ·
+  <a href="/games.html" data-i="footer_games">🎮 Games</a> ·
+  <a href="/cdn-cgi/l/email-protection#d9b7b0bab6b5b8aabdacabb8b7aa99beb4b8b0b5f7bab6b4" data-i="footer_contact">Contact</a>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ── DATE CONFIG — change these to open registrations ──
+const DATES = {
+  game: null,   // e.g. 'Saturday April 12, 2026 · 10 AM–2 PM'
+  work: null,   // e.g. 'Saturday May 3, 2026 · 10 AM–2 PM'
+};
+// ──────────────────────────────────────────────────────
+
+// ── TRANSLATIONS ──
+const i18n = {
+  en: {
+    nav_games: '🎮 Games', nav_programs: 'Programs',
+    eyebrow: '📍 Weston, FL · Est. 2026',
+    h1_line1: 'BUILD WITH AI.', h1_line2: 'CREATE REAL THINGS.',
+    hero_desc: 'VibeCodingCamp is a platform where people learn to build using Artificial Intelligence. We run focused programs for kids and adults — more coming soon.',
+    stat1: 'Kids · 1st session', stat2: 'Games built', stat3: 'Per session', stat4: 'Programs',
+    sec_programs: 'Our programs',
+    badge_game: '🎮 For kids', game_sub: 'Vibe Coding Camp',
+    game_desc: 'Kids ages 8–12 build their own video game using AI — no coding experience needed. In 4 hours they leave with a real, playable game and the confidence that they can create with technology.',
+    gf1:'Build games with Claude AI',gf2:'No prior experience needed',gf3:'Game deployed with its own URL',gf4:'Max 10 kids per session',
+    gm1:'📅 Saturdays',gm2:'🧒 Ages 8–12',gm3:'🍕 Pizza included',
+    next_date:'Next date', game_no_date:'📣 Opening soon — join the waitlist',
+    game_price_sub:'per kid · $89 for 2 kids', game_cta:'✅ Register',
+    badge_work:'💼 For adults', work_sub:'Automate with Claude Code',
+    work_desc:'Learn to automate your repetitive tasks and workflows using Claude Code — no coding background required. In one day, you change how you work.',
+    wf1:'Automate repetitive tasks with AI',wf2:'Claude Code from scratch',wf3:'Real use cases from your own work',wf4:'Max 10 people per session',
+    wm1:'📅 TBD',wm2:'👤 Adults',
+    next_date2:'Next date', work_no_date:'📣 Opening soon — join the waitlist',
+    work_price_sub:'per person', work_cta:'✅ Register',
+    sec_games:'Games built in session 1 · AI Game Lab', see_all:'See all →',
+    manifesto_title:'Not just using AI.<br>Building with it.',
+    manifesto_text:'In a world where AI is becoming part of everyday life, we teach kids and adults to be <strong style="color:var(--text)">creators — not just consumers</strong> of technology.<br><br>From a video game built in 4 hours to a workflow automated in a day. <strong style="color:var(--text)">The superpower is real.</strong>',
+    waitlist_label:'Waitlist', waitlist_label2:'Waitlist',
+    form_game_title:'Join the waitlist', form_game_sub:"We'll confirm your spot within 24 hours via WhatsApp.",
+    f_parent:'👤 Your name (parent)', add_kid:'Add a child', f_confirm:'📅 Confirmations',
+    chk_laptop:'💻 Each child will bring their own laptop',
+    chk_price:'💳 We understand the cost is <strong>$59 per child</strong> or <strong>$89 for 2 kids</strong>',
+    submit_game:'✅ Register', form_note:'Small groups · Confirmed in order of registration · Payment on confirmation',
+    success_title:"You're on the list!", success_sub:"We'll reach out via WhatsApp within 24 hours to confirm your spot.",
+    form_work_title:'Get notified when we open', form_work_sub:'Be the first to know the date and price.',
+    f_name:'👤 Your name', f_tasks:'💼 What tasks do you want to automate?', submit_work:'✅ Register',
+    footer_games:'🎮 Games', footer_contact:'Contact', discord_cta:'Join our Discord community',
+  },
+  es: {
+    nav_games:'🎮 Juegos', nav_programs:'Programas',
+    eyebrow:'📍 Weston, FL · Est. 2026',
+    h1_line1:'CONSTRUYE CON IA.', h1_line2:'CREA COSAS REALES.',
+    hero_desc:'VibeCodingCamp es una plataforma donde personas aprenden a construir usando Inteligencia Artificial. Tenemos programas para niños y adultos — y vienen más.',
+    stat1:'Niños · 1ra sesión', stat2:'Juegos creados', stat3:'Por sesión', stat4:'Programas',
+    sec_programs:'Nuestros programas',
+    badge_game:'🎮 Para niños', game_sub:'Vibe Coding Camp',
+    game_desc:'Niños de 8 a 12 años crean su propio videojuego usando IA — sin experiencia previa. En 4 horas se van con un juego real y la confianza de que pueden crear tecnología.',
+    gf1:'Crear juegos con Claude AI',gf2:'Sin experiencia previa',gf3:'Juego deployado con su propia URL',gf4:'Máximo 10 niños por sesión',
+    gm1:'📅 Sábados',gm2:'🧒 8-12 años',gm3:'🍕 Pizza incluida',
+    next_date:'Próxima fecha', game_no_date:'📣 Próximamente — únete a la lista',
+    game_price_sub:'por niño · $89 por 2 niños', game_cta:'✅ Registrarme',
+    badge_work:'💼 Para adultos', work_sub:'Automatiza con Claude Code',
+    work_desc:'Aprende a automatizar tus tareas y flujos de trabajo usando Claude Code — sin saber programar. En un día transformas cómo trabajas.',
+    wf1:'Automatizar tareas repetitivas con IA',wf2:'Claude Code desde cero',wf3:'Casos de uso reales de tu trabajo',wf4:'Máximo 10 personas por sesión',
+    wm1:'📅 Por definir',wm2:'👤 Adultos',
+    next_date2:'Próxima fecha', work_no_date:'📣 Próximamente — únete a la lista',
+    work_price_sub:'por persona', work_cta:'✅ Registrarme',
+    sec_games:'Juegos creados en sesión 1 · AI Game Lab', see_all:'Ver todos →',
+    manifesto_title:'No solo usar IA.<br>Construir con ella.',
+    manifesto_text:'En un mundo donde la IA será parte del día a día, enseñamos a niños y adultos a ser <strong style="color:var(--text)">creadores — no solo consumidores</strong> de tecnología.<br><br>Desde un videojuego construido en 4 horas hasta un proceso automatizado en un día. <strong style="color:var(--text)">El superpoder es real.</strong>',
+    waitlist_label:'Lista de espera', waitlist_label2:'Lista de espera',
+    form_game_title:'Únete a la lista de espera', form_game_sub:'Confirmaremos tu lugar en menos de 24 horas por WhatsApp.',
+    f_parent:'👤 Tu nombre (papá / mamá)', add_kid:'Agregar niño/a', f_confirm:'📅 Confirmaciones',
+    chk_laptop:'💻 Cada niño traerá su propia laptop',
+    chk_price:'💳 Entendemos que el costo es <strong>$59 por niño</strong> o <strong>$89 por 2 niños</strong>',
+    submit_game:'✅ Registrarme', form_note:'Grupos pequeños · Confirmación por orden de llegada · Pago al confirmar',
+    success_title:'¡Ya están en la lista!', success_sub:'Te escribiremos a tu WhatsApp en menos de 24 horas.',
+    form_work_title:'Avísame cuando abra', form_work_sub:'Serás el primero en saber la fecha y el precio.',
+    f_name:'👤 Tu nombre', f_tasks:'💼 ¿Qué procesos quieres automatizar?', submit_work:'✅ Registrarme',
+    footer_games:'🎮 Juegos', footer_contact:'Contacto', discord_cta:'Únete a nuestra comunidad en Discord',
+  }
+};
+
+// Detect language
+const browserLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+let lang = browserLang.startsWith('es') ? 'es' : 'en';
+
+function applyLang(l) {
+  lang = l;
+  const t = i18n[l];
+  document.querySelectorAll('[data-i]').forEach(el => {
+    const key = el.getAttribute('data-i');
+    if (t[key] !== undefined) el.innerHTML = t[key];
+  });
+  // Placeholders
+  document.querySelectorAll('[data-ph-' + l + ']').forEach(el => {
+    el.placeholder = el.getAttribute('data-ph-' + l);
+  });
+  // h1 grad span
+  const grad = document.querySelector('h1 .grad');
+  if (grad) grad.innerHTML = t['h1_line2'];
+  // Update toggle button
+  document.getElementById('langToggle').textContent = l === 'en' ? 'ES' : 'EN';
+  document.documentElement.lang = l;
+  // Update kid radios labels
+  updateKidLabels(l);
+}
+
+function toggleLang() {
+  applyLang(lang === 'en' ? 'es' : 'en');
+}
+
+// ── KIDS FORM ──
+let kidCount = 0;
+const ageOpts = {
+  en: '<option value="">Age...</option><option value="menor-8">Under 8</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13-mas">13+</option>',
+  es: '<option value="">Edad...</option><option value="menor-8">Menos de 8</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13-mas">13+</option>'
+};
+const expOpts = {
+  en: [['ninguna','First time with code'],['basica','Uses apps & browses'],['intermedia','Tried Scratch or similar'],['avanzada','Already knows coding']],
+  es: [['ninguna','Primera vez con código'],['basica','Usa apps y navega'],['intermedia','Ha probado Scratch'],['avanzada','Ya sabe programar']]
+};
+
+function addKid() {
+  kidCount++;
+  const idx = kidCount;
+  const c = document.createElement('div');
+  c.id = 'kid-' + idx;
+  c.style.cssText = 'background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px';
+  c.setAttribute('data-kid', idx);
+  renderKidCard(c, idx, lang);
+  document.getElementById('kidsContainer').appendChild(c);
+  c.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function renderKidCard(c, idx, l) {
+  const radios = expOpts[l].map(([v,label]) =>
+    `<label class="radio-opt"><input type="radio" name="experience_${idx}" value="${v}"><span>${label}</span></label>`
+  ).join('');
+  const namePh = l === 'en' ? 'Name' : 'Nombre';
+  const ideaPh = l === 'en' ? 'What game would they like to build? (optional)' : '¿Qué juego le gustaría crear? (opcional)';
+  const kidLabel = l === 'en' ? `Child #${idx}` : `Niño/a #${idx}`;
+  const removeLabel = l === 'en' ? 'Remove' : 'Quitar';
+  const expLabel = l === 'en' ? 'Experience' : 'Experiencia';
+  c.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:10px;color:var(--pl);letter-spacing:1.5px;text-transform:uppercase">🧒 ${kidLabel}</span>
+      ${idx > 1 ? `<button type="button" onclick="document.getElementById('kid-${idx}').remove()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer">×</button>` : ''}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <input type="text" name="ui_kid_name_${idx}" placeholder="${namePh}" required style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:11px 13px;font-family:var(--fm);font-size:13px;color:var(--text);outline:none;width:100%">
+      <select name="ui_kid_age_${idx}" required style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:11px 13px;font-family:var(--fm);font-size:13px;color:var(--text);outline:none;width:100%">${ageOpts[l]}</select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <span style="font-size:10px;color:var(--pl);letter-spacing:1px;text-transform:uppercase">💻 ${expLabel}</span>
+      ${radios}
+    </div>
+    <input type="text" name="ui_project_idea_${idx}" placeholder="${ideaPh}" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:11px 13px;font-family:var(--fm);font-size:13px;color:var(--text);outline:none;width:100%">
+  `;
+}
+
+function updateKidLabels(l) {
+  document.querySelectorAll('[data-kid]').forEach(c => {
+    renderKidCard(c, parseInt(c.getAttribute('data-kid')), l);
+  });
+}
+
+// Init
+addKid();
+applyLang(lang);
+
+// ── DATE LOGIC ──
+function initDates() {
+  const t = i18n[lang];
+  // AI GAME LAB
+  if (DATES.game) {
+    document.getElementById('game-date-display').innerHTML = '📅 ' + DATES.game;
+    document.getElementById('game-date-display').style.color = 'var(--pl)';
+    document.getElementById('form-game-title').textContent = lang === 'en' ? 'Register for this session' : 'Registrarme en esta sesión';
+    document.getElementById('form-game-sub').textContent = lang === 'en'
+      ? 'You are registering for ' + DATES.game + '. We will confirm via WhatsApp and coordinate payment.'
+      : 'Te registras para ' + DATES.game + '. Confirmamos por WhatsApp y coordinamos el pago.';
+    document.getElementById('submit-game-btn').textContent = lang === 'en' ? '✅ Register' : '✅ Registrarme';
+    // Add hidden date field
+    let hd = document.getElementById('h_session_date');
+    if (!hd) { hd = document.createElement('input'); hd.type='hidden'; hd.name='session_date'; hd.id='h_session_date'; document.getElementById('waitlistForm').appendChild(hd); }
+    hd.value = DATES.game;
+  } else {
+    document.getElementById('game-date-display').innerHTML = lang === 'en' ? '📣 Opening soon — join the waitlist' : '📣 Próximamente — únete a la lista';
+    document.getElementById('form-game-title').textContent = lang === 'en' ? 'Join the waitlist' : 'Únete a la lista de espera';
+    document.getElementById('form-game-sub').textContent = lang === 'en' ? "We'll notify you when the next date opens." : 'Te notificamos cuando abramos la próxima fecha.';
+    document.getElementById('submit-game-btn').textContent = lang === 'en' ? '✅ Register' : '✅ Registrarme';
+  }
+  // AI WORK LAB
+  const workDateEl = document.getElementById('work-date-display');
+  const workTitleEl = document.getElementById('form-work-title');
+  const workSubEl = document.getElementById('form-work-sub');
+  if (DATES.work) {
+    workDateEl.innerHTML = '📅 ' + DATES.work;
+    workDateEl.style.color = 'var(--green)';
+    workTitleEl.textContent = lang === 'en' ? 'Register for this session' : 'Registrarme en esta sesión';
+    workSubEl.textContent = lang === 'en'
+      ? 'You are registering for ' + DATES.work + '. We will confirm via WhatsApp and coordinate payment.'
+      : 'Te registras para ' + DATES.work + '. Confirmamos por WhatsApp y coordinamos el pago.';
+  } else {
+    workDateEl.innerHTML = lang === 'en' ? '📣 Opening soon — join the waitlist' : '📣 Próximamente — únete a la lista';
+    workTitleEl.textContent = lang === 'en' ? 'Get notified when we open' : 'Avísame cuando abra';
+    workSubEl.textContent = lang === 'en' ? "Be the first to know the date and price." : 'Serás el primero en saber la fecha y el precio.';
+  }
+}
+initDates();
+
+// ── FORM SUBMIT ──
+const form = document.getElementById('waitlistForm');
+const submitBtn = document.getElementById('submitBtn');
+
+form.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const errorMsg = document.getElementById('errorMsg');
+  const kids = document.querySelectorAll('[data-kid]');
+  const phone = document.getElementById('phone').value.trim();
+  let summary = [];
+
+  for (const card of kids) {
+    const idx = card.getAttribute('data-kid');
+    const name = card.querySelector(`[name="ui_kid_name_${idx}"]`)?.value.trim();
+    const age = card.querySelector(`[name="ui_kid_age_${idx}"]`)?.value;
+    const exp = card.querySelector(`[name="experience_${idx}"]:checked`);
+    const idea = card.querySelector(`[name="ui_project_idea_${idx}"]`)?.value.trim();
+    const errName = lang === 'en' ? `Enter the name of child #${idx}` : `Ingresa el nombre del niño/a #${idx}`;
+    const errAge = lang === 'en' ? `Select the age of child #${idx}` : `Selecciona la edad del niño/a #${idx}`;
+    const errYoung = lang === 'en' ? 'The camp is for kids 8 and up 🙌' : 'El camp es para niños de 8 años en adelante 🙌';
+    const errExp = lang === 'en' ? `Select experience level for child #${idx}` : `Indica la experiencia del niño/a #${idx}`;
+    if (!name) { errorMsg.textContent = errName; errorMsg.style.display = 'block'; return; }
+    if (!age) { errorMsg.textContent = errAge; errorMsg.style.display = 'block'; return; }
+    if (age === 'menor-8') { errorMsg.textContent = errYoung; errorMsg.style.display = 'block'; return; }
+    if (!exp) { errorMsg.textContent = errExp; errorMsg.style.display = 'block'; return; }
+    summary.push({ name, idea });
+    const n = summary.length;
+    document.getElementById('h_name_' + n).value = name;
+    document.getElementById('h_age_' + n).value = age;
+    document.getElementById('h_exp_' + n).value = exp.value;
+    document.getElementById('h_idea_' + n).value = idea || '';
+  }
+  document.getElementById('h_total').value = summary.length;
+  submitBtn.disabled = true;
+  submitBtn.textContent = lang === 'en' ? 'Registering...' : 'Registrando...';
+
+  try {
+    const fd = new FormData(form);
+    await fetch('https://formspree.io/f/mlgpqlde', { method: 'POST', headers: { 'Accept': 'application/json' }, body: fd });
+  } catch(e) {}
+
+  form.style.display = 'none';
+  const sv = document.getElementById('successView');
+  sv.style.display = 'flex';
+  const writingTo = lang === 'en' ? "We'll reach out to" : 'Te escribimos al';
+  document.getElementById('successBox').innerHTML =
+    summary.map(k => `🎮 <strong>${k.na
