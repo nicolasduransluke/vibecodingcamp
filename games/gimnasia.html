@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🥇 GYMOLYMPICS</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #FFD700;
+    --silver: #C0C0C0;
+    --bronze: #CD7F32;
+    --bg: #0a0a1a;
+    --panel: #12122a;
+    --accent: #00e5ff;
+    --red: #ff2d55;
+    --green: #00ff88;
+    --text: #e8e8ff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Rajdhani', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* STARS BG */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 80% 10%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 50% 60%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 10% 80%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 70%, rgba(255,255,255,0.2) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; position: relative; z-index: 1; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+
+  /* ── TITLE SCREEN ── */
+  #screen-title {
+    background: radial-gradient(ellipse at 50% 40%, #1a1a4e 0%, #0a0a1a 70%);
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(60px, 12vw, 120px);
+    letter-spacing: 8px;
+    line-height: 1;
+    text-align: center;
+    background: linear-gradient(135deg, #FFD700 0%, #ff9500 40%, #FFD700 70%, #fff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 30px rgba(255,215,0,0.5));
+    animation: logoGlow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes logoGlow {
+    from { filter: drop-shadow(0 0 20px rgba(255,215,0,0.4)); }
+    to   { filter: drop-shadow(0 0 50px rgba(255,215,0,0.8)); }
+  }
+
+  .tagline {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: clamp(14px, 3vw, 22px);
+    letter-spacing: 6px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin: 10px 0 50px;
+    opacity: 0.8;
+  }
+
+  .disciplines-preview {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 50px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .disc-card {
+    width: 100px;
+    height: 100px;
+    border: 2px solid rgba(255,215,0,0.3);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 36px;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.7);
+    background: rgba(255,215,0,0.05);
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .disc-card .disc-icon { font-size: 36px; }
+  .disc-card:hover { border-color: var(--gold); background: rgba(255,215,0,0.1); transform: translateY(-4px); }
+
+  .btn-primary {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 4px;
+    padding: 16px 60px;
+    background: linear-gradient(135deg, #FFD700, #ff9500);
+    color: #000;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 0 30px rgba(255,215,0,0.4);
+  }
+
+  .btn-primary:hover { transform: scale(1.06); box-shadow: 0 0 50px rgba(255,215,0,0.7); }
+
+  .btn-secondary {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    padding: 12px 40px;
+    background: transparent;
+    color: var(--accent);
+    border: 2px solid var(--accent);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+  }
+
+  .btn-secondary:hover { background: var(--accent); color: #000; }
+
+  /* ── SELECT DISCIPLINE ── */
+  #screen-select {
+    background: radial-gradient(ellipse at 50% 20%, #1a1a4e 0%, #0a0a1a 70%);
+    gap: 30px;
+  }
+
+  .screen-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(30px, 6vw, 60px);
+    letter-spacing: 5px;
+    color: var(--gold);
+    text-align: center;
+  }
+
+  .disciplines-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    width: 100%;
+    max-width: 800px;
+  }
+
+  .disc-select {
+    background: var(--panel);
+    border: 2px solid rgba(255,215,0,0.2);
+    border-radius: 20px;
+    padding: 30px 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .disc-select::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 50%, rgba(255,215,0,0.05) 100%);
+    transition: opacity 0.3s;
+    opacity: 0;
+  }
+
+  .disc-select:hover::before { opacity: 1; }
+
+  .disc-select:hover {
+    border-color: var(--gold);
+    transform: translateY(-6px);
+    box-shadow: 0 10px 40px rgba(255,215,0,0.2);
+  }
+
+  .disc-select .icon { font-size: 60px; margin-bottom: 12px; display: block; }
+  .disc-select h3 { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 3px; color: var(--gold); }
+  .disc-select p { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 6px; letter-spacing: 1px; }
+
+  .disc-select.locked { opacity: 0.4; cursor: default; }
+  .disc-select.locked:hover { transform: none; box-shadow: none; border-color: rgba(255,215,0,0.2); }
+  .lock-badge { position: absolute; top: 12px; right: 12px; font-size: 18px; }
+
+  .score-bar {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    background: var(--panel);
+    border: 1px solid rgba(255,215,0,0.2);
+    border-radius: 50px;
+    padding: 12px 30px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 2px;
+  }
+
+  .score-item { display: flex; align-items: center; gap: 8px; }
+  .score-val { color: var(--gold); font-size: 22px; }
+
+  /* ── GAME SCREEN ── */
+  #screen-game { padding: 0; }
+
+  .game-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 30px;
+    background: rgba(18,18,42,0.95);
+    border-bottom: 2px solid rgba(255,215,0,0.2);
+    position: relative;
+    z-index: 10;
+  }
+
+  .game-title-bar {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .hud { display: flex; gap: 24px; align-items: center; }
+
+  .hud-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.5);
+  }
+
+  .hud-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  /* TIMER BAR */
+  .timer-container {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    position: relative;
+  }
+
+  .timer-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), var(--accent));
+    transition: width 0.1s linear, background 0.5s;
+  }
+
+  .timer-fill.danger { background: linear-gradient(90deg, var(--red), #ff6b00); }
+
+  /* GAME AREA */
+  .game-area {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    min-height: calc(100vh - 100px);
+  }
+
+  /* ─ MINI GAMES ─ */
+
+  /* SUELO - Sequence */
+  .sequence-game { text-align: center; width: 100%; max-width: 500px; }
+  .sequence-display {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 20px 0;
+    min-height: 80px;
+    align-items: center;
+  }
+
+  .seq-arrow {
+    font-size: 48px;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.2s;
+  }
+
+  .seq-arrow.show { opacity: 1; transform: scale(1); }
+  .seq-arrow.highlight { filter: drop-shadow(0 0 15px var(--gold)); animation: pulse 0.3s; }
+  @keyframes pulse { 0%,100%{transform:scale(1)}50%{transform:scale(1.3)} }
+
+  .input-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 20px;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .dir-btn {
+    width: 80px;
+    height: 80px;
+    font-size: 30px;
+    background: var(--panel);
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .dir-btn:active, .dir-btn.pressed {
+    background: rgba(255,215,0,0.2);
+    border-color: var(--gold);
+    transform: scale(0.9);
+  }
+
+  .dir-btn.correct { background: rgba(0,255,136,0.2); border-color: var(--green); }
+  .dir-btn.wrong   { background: rgba(255,45,85,0.2);  border-color: var(--red); }
+
+  /* ARGOLLAS - Hold timing */
+  .rings-game { text-align: center; width: 100%; max-width: 500px; }
+
+  .rings-visual {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 20px;
+  }
+
+  .ring {
+    position: absolute;
+    width: 80px; height: 80px;
+    border: 8px solid var(--gold);
+    border-radius: 50%;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 20px rgba(255,215,0,0.4);
+  }
+
+  .gymnast-rings {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 50px;
+    transition: transform 0.1s;
+  }
+
+  .power-meter-wrap {
+    width: 100%;
+    height: 30px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 15px;
+    overflow: hidden;
+    margin: 20px 0;
+    position: relative;
+    border: 2px solid rgba(255,255,255,0.2);
+  }
+
+  .power-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff2d55, #ff9500, #00ff88, #ff9500, #ff2d55);
+    background-size: 300% 100%;
+    animation: powerFlow 1.5s linear infinite;
+    transition: width 0.05s;
+  }
+
+  @keyframes powerFlow { 0%{background-position:0%}100%{background-position:100%} }
+
+  .sweet-spot {
+    position: absolute;
+    top: 0; height: 100%;
+    background: rgba(0,255,136,0.3);
+    border: 2px solid var(--green);
+    border-radius: 4px;
+    pointer-events: none;
+  }
+
+  .hold-indicator {
+    position: absolute;
+    top: 0; height: 100%;
+    width: 4px;
+    background: white;
+    border-radius: 2px;
+    transition: left 0.05s;
+    pointer-events: none;
+  }
+
+  .hold-btn {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 30px;
+    letter-spacing: 4px;
+    padding: 20px 60px;
+    background: var(--panel);
+    color: white;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .hold-btn:active, .hold-btn.holding {
+    background: rgba(255,215,0,0.2);
+    border-color: var(--gold);
+    transform: scale(0.96);
+    box-shadow: 0 0 30px rgba(255,215,0,0.4);
+  }
+
+  /* BARRAS - Rhythm tapping */
+  .bars-game { text-align: center; width: 100%; max-width: 500px; }
+
+  .bars-track {
+    width: 100%;
+    height: 120px;
+    background: var(--panel);
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+    margin: 20px 0;
+  }
+
+  .hit-zone {
+    position: absolute;
+    left: 80px;
+    top: 0; bottom: 0;
+    width: 60px;
+    background: rgba(0,229,255,0.1);
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+  }
+
+  .note {
+    position: absolute;
+    width: 50px; height: 50px;
+    border-radius: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    transition: left 0.016s linear;
+  }
+
+  .note-gold  { background: rgba(255,215,0,0.3); border: 2px solid var(--gold); }
+  .note-blue  { background: rgba(0,229,255,0.2); border: 2px solid var(--accent); }
+  .note.hit   { animation: noteHit 0.3s forwards; }
+  .note.miss  { opacity: 0.3; }
+  @keyframes noteHit { 0%{transform:translateY(-50%) scale(1)} 50%{transform:translateY(-50%) scale(1.5) rotate(15deg)} 100%{opacity:0;transform:translateY(-50%) scale(0)} }
+
+  .tap-btn {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 4px;
+    padding: 20px 80px;
+    background: var(--panel);
+    color: white;
+    border: 3px solid rgba(0,229,255,0.4);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.1s;
+    user-select: none;
+  }
+
+  .tap-btn:active {
+    background: rgba(0,229,255,0.2);
+    border-color: var(--accent);
+    transform: scale(0.95);
+    box-shadow: 0 0 30px rgba(0,229,255,0.4);
+  }
+
+  /* VIGA - Balance */
+  .beam-game { text-align: center; width: 100%; max-width: 500px; }
+
+  .beam-container {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    margin: 20px 0;
+  }
+
+  .beam {
+    position: absolute;
+    bottom: 20px;
+    left: 10%; right: 10%;
+    height: 20px;
+    background: linear-gradient(180deg, #8B4513, #5c2d0a);
+    border-radius: 4px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+
+  .beam-gymnast {
+    position: absolute;
+    bottom: 38px;
+    font-size: 40px;
+    transition: left 0.05s;
+    transform: translateX(-50%);
+  }
+
+  .balance-meter {
+    width: 100%;
+    height: 20px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    border: 2px solid rgba(255,255,255,0.2);
+    margin: 10px 0;
+  }
+
+  .balance-indicator {
+    position: absolute;
+    width: 8px; height: 100%;
+    background: white;
+    border-radius: 4px;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: left 0.05s;
+  }
+
+  .balance-zone {
+    position: absolute;
+    top: 0; height: 100%;
+    left: 40%; width: 20%;
+    background: rgba(0,255,136,0.3);
+    border-left: 2px solid var(--green);
+    border-right: 2px solid var(--green);
+  }
+
+  /* ── RESULT POPUP ── */
+  .result-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .result-overlay.show { opacity: 1; pointer-events: all; }
+
+  .result-box {
+    background: var(--panel);
+    border: 2px solid var(--gold);
+    border-radius: 24px;
+    padding: 50px 60px;
+    text-align: center;
+    transform: scale(0.8);
+    transition: transform 0.3s;
+    max-width: 400px;
+    width: 90%;
+  }
+
+  .result-overlay.show .result-box { transform: scale(1); }
+
+  .result-emoji { font-size: 80px; margin-bottom: 10px; }
+  .result-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    letter-spacing: 4px;
+    color: var(--gold);
+  }
+
+  .result-score {
+    font-size: 20px;
+    color: rgba(255,255,255,0.7);
+    margin: 10px 0 30px;
+    letter-spacing: 2px;
+  }
+
+  /* ── SCOREBOARD ── */
+  #screen-scoreboard {
+    background: radial-gradient(ellipse at 50% 30%, #1a1a3e 0%, #0a0a1a 70%);
+    gap: 30px;
+  }
+
+  .podium-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 600px;
+  }
+
+  .podium-place {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .podium-icon { font-size: 48px; }
+  .podium-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    text-align: center;
+  }
+
+  .podium-score {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  .podium-block {
+    width: 130px;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+  }
+
+  .p1 .podium-block { background: linear-gradient(180deg, #FFD700, #b8960c); height: 140px; }
+  .p2 .podium-block { background: linear-gradient(180deg, #C0C0C0, #808080); height: 100px; }
+  .p3 .podium-block { background: linear-gradient(180deg, #CD7F32, #8B5e24); height: 70px; }
+
+  .score-table {
+    width: 100%;
+    max-width: 600px;
+    border-collapse: collapse;
+  }
+
+  .score-table th {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.4);
+    padding: 8px 16px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .score-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-weight: 600;
+    font-size: 16px;
+  }
+
+  .score-table tr.player-row td:first-child { color: var(--accent); }
+  .score-table tr.cpu-row td:first-child { color: rgba(255,100,100,0.9); }
+
+  /* FEEDBACK TEXT */
+  .feedback-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    letter-spacing: 4px;
+    min-height: 50px;
+    transition: all 0.3s;
+    text-align: center;
+  }
+
+  .feedback-text.good  { color: var(--green); }
+  .feedback-text.ok    { color: var(--gold); }
+  .feedback-text.bad   { color: var(--red); }
+
+  .instruction-text {
+    font-size: 16px;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 2px;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  /* COMBO */
+  .combo-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    min-height: 30px;
+  }
+
+  .floating-score {
+    position: fixed;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: var(--gold);
+    pointer-events: none;
+    z-index: 999;
+    animation: floatUp 1s forwards;
+  }
+
+  @keyframes floatUp {
+    0%   { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-80px); }
+  }
+
+  .btn-group { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+
+  /* responsive */
+  @media(max-width: 500px) {
+    .disciplines-grid { grid-template-columns: 1fr 1fr; }
+    .game-header { padding: 12px 16px; }
+    .hud { gap: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════ TITLE ══════════ -->
+<div id="screen-title" class="screen active">
+  <div class="logo">GYMOLYMPICS</div>
+  <div class="tagline">Campeonato Mundial de Gimnasia</div>
+
+  <div class="disciplines-preview">
+    <div class="disc-card"><span class="disc-icon">🤸</span>SUELO</div>
+    <div class="disc-card"><span class="disc-icon">🏋️</span>ARGOLLAS</div>
+    <div class="disc-card"><span class="disc-icon">🪄</span>BARRAS</div>
+    <div class="disc-card"><span class="disc-icon">🧗</span>VIGA</div>
+  </div>
+
+  <button class="btn-primary" onclick="goTo('screen-select')">COMENZAR</button>
+</div>
+
+<!-- ══════════ SELECT DISCIPLINE ══════════ -->
+<div id="screen-select" class="screen">
+  <div class="screen-title">ELIGE TU DISCIPLINA</div>
+
+  <div class="score-bar">
+    <div class="score-item">🏅 TU PUNTUACIÓN: <span class="score-val" id="total-score-disp">0</span></div>
+    <div class="score-item">🎯 RONDA: <span class="score-val" id="round-disp">1 / 4</span></div>
+  </div>
+
+  <div class="disciplines-grid">
+    <div class="disc-select" id="disc-suelo" onclick="startGame('suelo')">
+      <span class="icon">🤸</span>
+      <h3>SUELO</h3>
+      <p>SECUENCIA DE MOVIMIENTOS</p>
+    </div>
+    <div class="disc-select" id="disc-argollas" onclick="startGame('argollas')">
+      <span class="icon">🏋️</span>
+      <h3>ARGOLLAS</h3>
+      <p>FUERZA Y EQUILIBRIO</p>
+    </div>
+    <div class="disc-select" id="disc-barras" onclick="startGame('barras')">
+      <span class="icon">🪄</span>
+      <h3>BARRAS</h3>
+      <p>RITMO Y PRECISIÓN</p>
+    </div>
+    <div class="disc-select" id="disc-viga" onclick="startGame('viga')">
+      <span class="icon">🧗</span>
+      <h3>VIGA</h3>
+      <p>MANTÉN EL EQUILIBRIO</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ GAME ══════════ -->
+<div id="screen-game" class="screen">
+  <div class="game-header">
+    <div class="game-title-bar">
+      <span id="game-disc-icon">🤸</span>
+      <span id="game-disc-name">SUELO</span>
+    </div>
+    <div class="hud">
+      <div class="hud-item"><span>PUNTOS</span><span class="hud-val" id="hud-score">0</span></div>
+      <div class="hud-item"><span>TIEMPO</span><span class="hud-val" id="hud-time">30</span></div>
+      <div class="hud-item"><span>COMBO</span><span class="hud-val" id="hud-combo">x1</span></div>
+    </div>
+    <button class="btn-secondary" onclick="quitGame()">SALIR</button>
+  </div>
+  <div class="timer-container">
+    <div class="timer-fill" id="timer-fill"></div>
+  </div>
+  <div class="game-area" id="game-area"></div>
+</div>
+
+<!-- ══════════ SCOREBOARD ══════════ -->
+<div id="screen-scoreboard" class="screen">
+  <div class="screen-title">🏆 RESULTADOS FINALES</div>
+
+  <div class="podium-container" id="podium"></div>
+
+  <table class="score-table" id="score-table">
+    <thead>
+      <tr>
+        <th>ATLETA</th>
+        <th>SUELO</th>
+        <th>ARGOLLAS</th>
+        <th>BARRAS</th>
+        <th>VIGA</th>
+        <th>TOTAL</th>
+      </tr>
+    </thead>
+    <tbody id="score-tbody"></tbody>
+  </table>
+
+  <div class="btn-group">
+    <button class="btn-primary" onclick="resetGame()">JUGAR DE NUEVO</button>
+    <button class="btn-secondary" onclick="goTo('screen-title')">MENÚ</button>
+  </div>
+</div>
+
+<!-- ══════════ RESULT POPUP ══════════ -->
+<div class="result-overlay" id="result-overlay">
+  <div class="result-box">
+    <div class="result-emoji" id="res-emoji">🥇</div>
+    <div class="result-label" id="res-label">¡PERFECTO!</div>
+    <div class="result-score" id="res-score">+500 puntos</div>
+    <div class="btn-group">
+      <button class="btn-primary" id="res-btn" onclick="closeResult()">CONTINUAR</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════
+const DISCIPLINES = ['suelo', 'argollas', 'barras', 'viga'];
+const DISC_NAMES  = { suelo:'SUELO', argollas:'ARGOLLAS', barras:'BARRAS', viga:'VIGA' };
+const DISC_ICONS  = { suelo:'🤸', argollas:'🏋️', barras:'🪄', viga:'🧗' };
+
+let state = {
+  scores: { player: {}, cpu: {} },
+  completed: [],
+  currentDisc: null,
+  totalScore: 0,
+};
+
+// ══════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function resetGame() {
+  state = { scores: { player:{}, cpu:{} }, completed: [], currentDisc: null, totalScore: 0 };
+  DISCIPLINES.forEach(d => {
+    const el = document.getElementById('disc-' + d);
+    if (el) { el.classList.remove('locked'); el.querySelector('.lock-badge')?.remove(); }
+  });
+  document.getElementById('total-score-disp').textContent = '0';
+  document.getElementById('round-disp').textContent = '1 / 4';
+  goTo('screen-select');
+}
+
+function updateSelectUI() {
+  const done = state.completed.length;
+  document.getElementById('total-score-disp').textContent = state.totalScore;
+  document.getElementById('round-disp').textContent = `${Math.min(done+1,4)} / 4`;
+  state.completed.forEach(d => {
+    const el = document.getElementById('disc-' + d);
+    if (el && !el.querySelector('.lock-badge')) {
+      el.classList.add('locked');
+      const b = document.createElement('span');
+      b.className = 'lock-badge';
+      b.textContent = '✅';
+      el.appendChild(b);
+    }
+  });
+}
+
+// ══════════════════════════════════════
+//  GAME ENGINE
+// ══════════════════════════════════════
+let gameTimer = null;
+let timeLeft = 30;
+let gameScore = 0;
+let combo = 1;
+let activeGame = null;
+
+function startGame(disc) {
+  if (state.completed.includes(disc)) return;
+  state.currentDisc = disc;
+
+  document.getElementById('game-disc-icon').textContent = DISC_ICONS[disc];
+  document.getElementById('game-disc-name').textContent = DISC_NAMES[disc];
+  gameScore = 0; combo = 1; timeLeft = 30;
+  updateHUD();
+
+  goTo('screen-game');
+
+  const area = document.getElementById('game-area');
+  area.innerHTML = '';
+
+  if (disc === 'suelo')    initSuelo(area);
+  if (disc === 'argollas') initArgollas(area);
+  if (disc === 'barras')   initBarras(area);
+  if (disc === 'viga')     initViga(area);
+
+  startTimer();
+}
+
+function startTimer() {
+  clearInterval(gameTimer);
+  const total = 30;
+  gameTimer = setInterval(() => {
+    timeLeft--;
+    document.getElementById('hud-time').textContent = timeLeft;
+    const pct = (timeLeft / total) * 100;
+    const fill = document.getElementById('timer-fill');
+    fill.style.width = pct + '%';
+    fill.className = 'timer-fill' + (timeLeft <= 8 ? ' danger' : '');
+    if (timeLeft <= 0) endGame();
+  }, 1000);
+}
+
+function endGame() {
+  clearInterval(gameTimer);
+  if (activeGame && activeGame.cleanup) activeGame.cleanup();
+
+  const disc = state.currentDisc;
+  const cpuScore = Math.floor(Math.random() * 400) + 200;
+
+  state.scores.player[disc] = gameScore;
+  state.scores.cpu[disc]    = cpuScore;
+  state.totalScore += gameScore;
+  state.completed.push(disc);
+
+  if (state.completed.length >= 4) {
+    showResult(gameScore, cpuScore, () => showScoreboard());
+  } else {
+    showResult(gameScore, cpuScore, () => {
+      updateSelectUI();
+      goTo('screen-select');
+    });
+  }
+}
+
+function quitGame() {
+  clearInterval(gameTimer);
+  if (activeGame && activeGame.cleanup) activeGame.cleanup();
+  goTo('screen-select');
+}
+
+function updateHUD() {
+  document.getElementById('hud-score').textContent = gameScore;
+  document.getElementById('hud-time').textContent = timeLeft;
+  document.getElementById('hud-combo').textContent = 'x' + combo;
+}
+
+function addScore(pts) {
+  gameScore += pts * combo;
+  updateHUD();
+}
+
+function showFloatingScore(pts, x, y) {
+  const el = document.createElement('div');
+  el.className = 'floating-score';
+  el.textContent = '+' + (pts * combo);
+  el.style.left = (x || window.innerWidth/2) + 'px';
+  el.style.top  = (y || window.innerHeight/2) + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1000);
+}
+
+function showResult(playerScore, cpuScore, cb) {
+  const win = playerScore >= cpuScore;
+  document.getElementById('res-emoji').textContent = win ? '🥇' : '🥈';
+  document.getElementById('res-label').textContent  = win ? '¡GANASTE!' : 'CPU GANA';
+  document.getElementById('res-score').textContent  = `TÚ: ${playerScore}pts  |  CPU: ${cpuScore}pts`;
+  const overlay = document.getElementById('result-overlay');
+  overlay.classList.add('show');
+  overlay._cb = cb;
+}
+
+function closeResult() {
+  const overlay = document.getElementById('result-overlay');
+  overlay.classList.remove('show');
+  if (overlay._cb) overlay._cb();
+}
+
+// ══════════════════════════════════════
+//  SUELO - Sequence Memory
+// ══════════════════════════════════════
+function initSuelo(area) {
+  const ARROWS = ['⬆️','⬇️','⬅️','➡️','↗️','↙️'];
+  let sequence = [], playerPos = 0, showing = false;
+
+  area.innerHTML = `
+    <div class="sequence-game">
+      <div class="instruction-text">MEMORIZA Y REPITE LA SECUENCIA</div>
+      <div class="feedback-text" id="sl-feedback">Observa...</div>
+      <div class="combo-display" id="sl-combo"></div>
+      <div class="sequence-display" id="sl-seq"></div>
+      <div class="input-buttons">
+        <div></div>
+        <button class="dir-btn" id="btn-up"   onclick="sueloBtnPress('⬆️')">⬆️</button>
+        <div></div>
+        <button class="dir-btn" id="btn-left" onclick="sueloBtnPress('⬅️')">⬅️</button>
+        <button class="dir-btn" id="btn-spin" onclick="sueloBtnPress('↗️')">↗️</button>
+        <button class="dir-btn" id="btn-right"onclick="sueloBtnPress('➡️')">➡️</button>
+        <div></div>
+        <button class="dir-btn" id="btn-down" onclick="sueloBtnPress('⬇️')">⬇️</button>
+        <button class="dir-btn" id="btn-diag" onclick="sueloBtnPress('↙️')">↙️</button>
+      </div>
+    </div>
+  `;
+
+  function newRound() {
+    showing = true;
+    playerPos = 0;
+    const len = Math.min(2 + Math.floor(gameScore/150), 5);
+    sequence = Array.from({length: len}, () => ARROWS[Math.floor(Math.random()*ARROWS.length)]);
+    document.getElementById('sl-feedback').textContent = 'Memoriza...';
+    document.getElementById('sl-feedback').className = 'feedback-text ok';
+    showSequence();
+  }
+
+  function showSequence() {
+    const seqEl = document.getElementById('sl-seq');
+    seqEl.innerHTML = '';
+    sequence.forEach((a, i) => {
+      const sp = document.createElement('span');
+      sp.className = 'seq-arrow';
+      sp.textContent = a;
+      seqEl.appendChild(sp);
+      setTimeout(() => {
+        sp.classList.add('show');
+        setTimeout(() => sp.classList.add('highlight'), 50);
+        setTimeout(() => sp.classList.remove('highlight'), 400);
+      }, i * 500);
+    });
+    setTimeout(() => {
+      seqEl.innerHTML = sequence.map(()=>'❓').join(' ');
+      document.getElementById('sl-feedback').textContent = 'Repite!';
+      document.getElementById('sl-feedback').className = 'feedback-text good';
+      showing = false;
+    }, sequence.length * 500 + 600);
+  }
+
+  window.sueloBtnPress = function(arrow) {
+    if (showing || timeLeft <= 0) return;
+    if (arrow === sequence[playerPos]) {
+      playerPos++;
+      document.getElementById('sl-feedback').textContent = '✓ Correcto';
+      document.getElementById('sl-feedback').className = 'feedback-text good';
+      if (playerPos >= sequence.length) {
+        const pts = sequence.length * 50;
+        combo = Math.min(combo + 1, 5);
+        document.getElementById('sl-combo').textContent = combo > 1 ? `COMBO x${combo}!` : '';
+        addScore(pts);
+        showFloatingScore(pts);
+        setTimeout(newRound, 600);
+      }
+    } else {
+      combo = 1;
+      document.getElementById('sl-combo').textContent = '';
+      document.getElementById('sl-feedback').textContent = '✗ Error!';
+      document.getElementById('sl-feedback').className = 'feedback-text bad';
+      setTimeout(newRound, 700);
+    }
+    updateHUD();
+  };
+
+  activeGame = { cleanup: () => { window.sueloBtnPress = null; } };
+  setTimeout(newRound, 500);
+}
+
+// ══════════════════════════════════════
+//  ARGOLLAS - Power Hold Timing
+// ══════════════════════════════════════
+function initArgollas(area) {
+  area.innerHTML = `
+    <div class="rings-game">
+      <div class="instruction-text">MANTÉN EL BOTÓN EN LA ZONA VERDE</div>
+      <div class="rings-visual">
+        <div class="ring" style="width:120px;height:120px;opacity:0.3"></div>
+        <div class="ring"></div>
+        <div class="gymnast-rings" id="ar-gymnast">🏋️</div>
+      </div>
+      <div class="feedback-text" id="ar-feedback">¡Presiona y sostén!</div>
+      <div class="power-meter-wrap">
+        <div class="sweet-spot" id="ar-sweet"></div>
+        <div class="power-fill" id="ar-fill" style="width:0%"></div>
+        <div class="hold-indicator" id="ar-ind" style="left:0%"></div>
+      </div>
+      <button class="hold-btn" id="ar-btn"
+        onmousedown="arStart(event)" onmouseup="arEnd(event)"
+        ontouchstart="arStart(event)" ontouchend="arEnd(event)">
+        SOSTENER
+      </button>
+    </div>
+  `;
+
+  let holding = false, holdStart = 0, raf = null;
+  let sweetLeft = 40, sweetWidth = 20;
+
+  function placeSweetSpot() {
+    sweetLeft = 20 + Math.random() * 50;
+    sweetWidth = 15 + Math.random() * 15;
+    document.getElementById('ar-sweet').style.left  = sweetLeft + '%';
+    document.getElementById('ar-sweet').style.width = sweetWidth + '%';
+  }
+
+  placeSweetSpot();
+
+  function tick() {
+    if (!holding) return;
+    const elapsed = (Date.now() - holdStart) / 1000;
+    const pct = Math.min(elapsed / 3 * 100, 100);
+    document.getElementById('ar-fill').style.width = pct + '%';
+    document.getElementById('ar-ind').style.left   = pct + '%';
+    document.getElementById('ar-gymnast').style.transform = `translate(-50%,-50%) scale(${1 + pct/200})`;
+    raf = requestAnimationFrame(tick);
+  }
+
+  window.arStart = function(e) {
+    e.preventDefault();
+    holding = true; holdStart = Date.now();
+    document.getElementById('ar-btn').classList.add('holding');
+    document.getElementById('ar-feedback').textContent = '💪 ¡Aguanta!';
+    document.getElementById('ar-feedback').className = 'feedback-text ok';
+    raf = requestAnimationFrame(tick);
+  };
+
+  window.arEnd = function(e) {
+    e.preventDefault();
+    if (!holding) return;
+    holding = false;
+    cancelAnimationFrame(raf);
+    document.getElementById('ar-btn').classList.remove('holding');
+
+    const elapsed = (Date.now() - holdStart) / 1000;
+    const pct = Math.min(elapsed / 3 * 100, 100);
+    document.getElementById('ar-fill').style.width = pct + '%';
+
+    const inZone = pct >= sweetLeft && pct <= sweetLeft + sweetWidth;
+    const dist = Math.abs(pct - (sweetLeft + sweetWidth / 2));
+    let pts = 0, msg = '', cls = '';
+
+    if (inZone) {
+      pts = Math.round(100 - dist * 2);
+      combo = Math.min(combo + 1, 5);
+      msg = '🌟 ¡PERFECTO!'; cls = 'good';
+    } else if (dist < 15) {
+      pts = 30; combo = Math.max(combo - 1, 1);
+      msg = '👍 Casi...'; cls = 'ok';
+    } else {
+      pts = 0; combo = 1;
+      msg = '❌ Fallido'; cls = 'bad';
+    }
+
+    document.getElementById('ar-feedback').textContent = msg;
+    document.getElementById('ar-feedback').className = 'feedback-text ' + cls;
+    if (pts) { addScore(pts); showFloatingScore(pts); }
+    updateHUD();
+
+    document.getElementById('ar-gymnast').style.transform = 'translate(-50%,-50%) scale(1)';
+
+    setTimeout(() => {
+      document.getElementById('ar-fill').style.width = '0%';
+      document.getElementById('ar-ind').style.left = '0%';
+      placeSweetSpot();
+    }, 700);
+  };
+
+  activeGame = { cleanup: () => {
+    holding = false; cancelAnimationFrame(raf);
+    window.arStart = null; window.arEnd = null;
+  }};
+}
+
+// ══════════════════════════════════════
+//  BARRAS - Rhythm Tap
+// ══════════════════════════════════════
+function initBarras(area) {
+  area.innerHTML = `
+    <div class="bars-game">
+      <div class="instruction-text">TOCA EL BOTÓN CUANDO LA NOTA PASE POR LA ZONA AZUL</div>
+      <div class="feedback-text" id="br-feedback">¡Listo!</div>
+      <div class="combo-display" id="br-combo"></div>
+      <div class="bars-track" id="br-track">
+        <div class="hit-zone"></div>
+      </div>
+      <button class="tap-btn" id="br-tapbtn" onclick="barsTap(event)">TAP</button>
+    </div>
+  `;
+
+  const track = document.getElementById('br-track');
+  const HIT_LEFT = 80, HIT_WIDTH = 60;
+  let notes = [], raf = null, lastSpawn = 0, speed = 200;
+
+  function spawnNote() {
+    const note = document.createElement('div');
+    note.className = 'note ' + (Math.random()>0.5?'note-gold':'note-blue');
+    note.textContent = Math.random()>0.5?'★':'●';
+    note.style.left = '100%';
+    note.dataset.x = window.innerWidth;
+    note.dataset.missed = '0';
+    track.appendChild(note);
+    notes.push(note);
+  }
+
+  function loop(ts) {
+    if (!ts) ts = 0;
+    if (ts - lastSpawn > (800 - Math.min(gameScore/5, 400))) { spawnNote(); lastSpawn = ts; }
+
+    const trackRect = track.getBoundingClientRect();
+    notes.forEach((n, i) => {
+      if (!n.parentNode) { notes.splice(i,1); return; }
+      const curLeft = parseFloat(n.style.left) || 100;
+      const pxPerFrame = speed / 60;
+      const pctPerFrame = pxPerFrame / trackRect.width * 100;
+      const newLeft = curLeft - pctPerFrame;
+      n.style.left = newLeft + '%';
+
+      const pxLeft = newLeft/100 * trackRect.width;
+      if (pxLeft < -60) {
+        if (n.dataset.missed === '0') {
+          n.dataset.missed = '1';
+          combo = 1;
+          document.getElementById('br-combo').textContent = '';
+          document.getElementById('br-feedback').textContent = 'Fallaste';
+          document.getElementById('br-feedback').className = 'feedback-text bad';
+          updateHUD();
+        }
+        n.remove(); notes.splice(i,1);
+      }
+    });
+
+    raf = requestAnimationFrame(loop);
+  }
+
+  window.barsTap = function(e) {
+    const trackRect = track.getBoundingClientRect();
+    let hit = null, bestDist = Infinity;
+    notes.forEach(n => {
+      if (n.dataset.missed === '1') return;
+      const pxLeft = parseFloat(n.style.left)/100 * trackRect.width;
+      const noteMid = pxLeft + 25;
+      const hitMid  = HIT_LEFT + HIT_WIDTH/2;
+      const dist = Math.abs(noteMid - hitMid);
+      if (dist < HIT_WIDTH && dist < bestDist) { bestDist = dist; hit = n; }
+    });
+
+    if (hit) {
+      hit.dataset.missed = '1';
+      hit.classList.add('hit');
+      setTimeout(() => { hit.remove(); notes.splice(notes.indexOf(hit),1); }, 300);
+
+      const perfect = bestDist < 15;
+      const pts = perfect ? 100 : 50;
+      combo = Math.min(combo + 1, 8);
+      const comboMsg = combo > 2 ? `COMBO x${combo}!` : '';
+      document.getElementById('br-combo').textContent = comboMsg;
+      document.getElementById('br-feedback').textContent = perfect ? '⭐ PERFECTO!' : '👍 Bien';
+      document.getElementById('br-feedback').className = 'feedback-text ' + (perfect?'good':'ok');
+      addScore(pts);
+      showFloatingScore(pts, e.clientX, e.clientY);
+    } else {
+      combo = Math.max(1, combo - 1);
+      document.getElementById('br-feedback').textContent = 'Muy pronto';
+      document.getElementById('br-feedback').className = 'feedback-text bad';
+    }
+    updateHUD();
+  };
+
+  raf = requestAnimationFrame(loop);
+  activeGame = { cleanup: () => { cancelAnimationFrame(raf); window.barsTap = null; } };
+}
+
+// ══════════════════════════════════════
+//  VIGA - Balance
+// ══════════════════════════════════════
+function initViga(area) {
+  area.innerHTML = `
+    <div class="beam-game">
+      <div class="instruction-text">USA ← → PARA EQUILIBRARTE EN LA VIGA</div>
+      <div class="feedback-text" id="vg-feedback">¡Equilibrio!</div>
+      <div class="beam-container">
+        <div class="beam-gymnast" id="vg-gym" style="left:50%">🧗</div>
+        <div class="beam"></div>
+      </div>
+      <div class="balance-meter">
+        <div class="balance-zone"></div>
+        <div class="balance-indicator" id="vg-ind" style="left:50%"></div>
+      </div>
+      <div style="display:flex;gap:20px;justify-content:center;margin-top:20px">
+        <button class="hold-btn" onmousedown="vgDir(-1)" ontouchstart="vgDir(-1)" onmouseup="vgDir(0)" ontouchend="vgDir(0)">◀ IZQUIERDA</button>
+        <button class="hold-btn" onmousedown="vgDir(1)" ontouchstart="vgDir(1)" onmouseup="vgDir(0)" ontouchend="vgDir(0)">DERECHA ▶</button>
+      </div>
+    </div>
+  `;
+
+  let balance = 50, drift = (Math.random()-0.5)*0.3, inputDir = 0, raf = null;
+  let inZone = false, zoneTime = 0, lastTs = null;
+
+  function loop(ts) {
+    const dt = lastTs ? (ts - lastTs)/1000 : 0.016;
+    lastTs = ts;
+
+    drift += (Math.random()-0.5) * 0.05;
+    drift = Math.max(-0.5, Math.min(0.5, drift));
+
+    balance += drift + inputDir * 0.5;
+    balance  = Math.max(0, Math.min(100, balance));
+
+    document.getElementById('vg-gym').style.left = balance + '%';
+    document.getElementById('vg-ind').style.left  = balance + '%';
+
+    const centered = balance >= 40 && balance <= 60;
+    if (centered) {
+      zoneTime += dt;
+      inZone = true;
+      document.getElementById('vg-feedback').textContent = '⚖️ ¡Perfecto!';
+      document.getElementById('vg-feedback').className = 'feedback-text good';
+      if (zoneTime > 0.5) { addScore(Math.round(dt*80)); updateHUD(); }
+    } else if (balance < 10 || balance > 90) {
+      document.getElementById('vg-feedback').textContent = '💥 ¡Cuidado!';
+      document.getElementById('vg-feedback').className = 'feedback-text bad';
+      zoneTime = 0; inZone = false;
+    } else {
+      document.getElementById('vg-feedback').textContent = 'Ajusta...';
+      document.getElementById('vg-feedback').className = 'feedback-text ok';
+      zoneTime = 0; inZone = false;
+    }
+
+    raf = requestAnimationFrame(loop);
+  }
+
+  window.vgDir = function(d) { inputDir = d; };
+  raf = requestAnimationFrame(loop);
+
+  const keyFn = e => {
+    if (e.key === 'ArrowLeft')  { inputDir = e.type === 'keydown' ? -1 : 0; }
+    if (e.key === 'ArrowRight') { inputDir = e.type === 'keydown' ?  1 : 0; }
+  };
+  document.addEventListener('keydown', keyFn);
+  document.addEventListener('keyup',   keyFn);
+
+  activeGame = { cleanup: () => {
+    cancelAnimationFrame(raf);
+    document.removeEventListener('keydown', keyFn);
+    document.removeEventListener('keyup',   keyFn);
+    window.vgDir = null;
+  }};
+}
+
+// ══════════════════════════════════════
+//  SCOREBOARD
+// ══════════════════════════════════════
+function showScoreboard() {
+  goTo('screen-scoreboard');
+
+  const playerTotal = DISCIPLINES.reduce((s,d) => s + (state.scores.player[d]||0), 0);
+  const cpuTotal    = DISCIPLINES.reduce((s,d) => s + (state.scores.cpu[d]||0), 0);
+  const playerWins  = playerTotal >= cpuTotal;
+
+  // Podium
+  const podium = document.getElementById('podium');
+  if (playerWins) {
+    podium.innerHTML = `
+      <div class="podium-place p2">
+        <div class="podium-icon">🤖</div>
+        <div class="podium-name">CPU</div>
+        <div class="podium-score">${cpuTotal}</div>
+        <div class="podium-block" style="color:#fff">2</div>
+      </div>
+      <div class="podium-place p1">
+        <div class="podium-icon">🧑‍🤸</div>
+        <div class="podium-name">TÚ</div>
+        <div class="podium-score">${playerTotal}</div>
+        <div class="podium-block" style="color:#000">1</div>
+      </div>
+    `;
+  } else {
+    podium.innerHTML = `
+      <div class="podium-place p1">
+        <div class="podium-icon">🤖</div>
+        <div class="podium-name">CPU</div>
+        <div class="podium-score">${cpuTotal}</div>
+        <div class="podium-block" style="color:#000">1</div>
+      </div>
+      <div class="podium-place p2">
+        <div class="podium-icon">🧑‍🤸</div>
+        <div class="podium-name">TÚ</div>
+        <div class="podium-score">${playerTotal}</div>
+        <div class="podium-block" style="color:#fff">2</div>
+      </div>
+    `;
+  }
+
+  // Table
+  const tbody = document.getElementById('score-tbody');
+  tbody.innerHTML = `
+    <tr class="player-row">
+      <td>🧑‍🤸 TÚ</td>
+      ${DISCIPLINES.map(d=>`<td>${state.scores.player[d]||0}</td>`).join('')}
+      <td style="color:var(--gold);font-weight:700">${playerTotal}</td>
+    </tr>
+    <tr class="cpu-row">
+      <td>🤖 CPU</td>
+      ${DISCIPLINES.map(d=>`<td>${state.scores.cpu[d]||0}</td>`).join('')}
+      <td style="color:var(--red);font-weight:700">${cpuTotal}</td>
+    </tr>
+  `;
+}
+</script>
+</body>
+</html>
