@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💰 COIN CLICKER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --gold:#FFD700;--gold2:#B8860B;--gold3:#FFF0A0;
+  --bg:#080810;--panel:#10101e;--panel2:#181828;
+  --border:#252540;--text:#ddd8ff;--accent:#9B6DFF;
+  --red:#ff4466;--green:#44ff88;
+}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;height:100vh;overflow:hidden;user-select:none;}
+canvas#stars{position:fixed;inset:0;pointer-events:none;z-index:0;}
+
+/* AUTOCLICKER WARNING */
+#acw{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:linear-gradient(135deg,#1a0000,#400000);
+  border:3px solid var(--red);border-radius:16px;padding:20px 40px;
+  font-family:'Cinzel Decorative',serif;font-size:1.4em;color:var(--red);
+  text-align:center;z-index:2000;display:none;
+  box-shadow:0 0 60px rgba(255,0,0,0.5);
+  animation:shake 0.4s;
+}
+@keyframes shake{0%,100%{transform:translate(-50%,-50%) rotate(0deg);}25%{transform:translate(-50%,-50%) rotate(-4deg);}75%{transform:translate(-50%,-50%) rotate(4deg);}}
+
+/* NOTIFICATION */
+#notif{
+  position:fixed;top:72px;left:50%;transform:translateX(-50%);
+  background:rgba(16,16,30,0.95);border:1px solid var(--gold2);
+  border-radius:8px;padding:6px 18px;font-size:.8em;color:var(--gold);
+  z-index:300;opacity:0;transition:opacity .3s;pointer-events:none;
+  white-space:nowrap;
+}
+#notif.show{opacity:1;}
+
+/* REBIRTH MODAL */
+#rmodal{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:600;}
+#rmodal.show{display:flex;}
+.mbox{
+  background:linear-gradient(135deg,#080015,#140028);border:2px solid var(--accent);
+  border-radius:16px;padding:28px 36px;max-width:420px;text-align:center;
+  box-shadow:0 0 80px rgba(155,109,255,.3);
+}
+.mbox h2{font-family:'Cinzel Decorative',serif;color:var(--accent);font-size:1.4em;margin-bottom:10px;}
+.mbox p{color:#ccc;font-size:.82em;line-height:1.6;margin-bottom:18px;}
+.mbtn{display:inline-flex;gap:10px;}
+.btn-ok{background:linear-gradient(135deg,#3a0080,#6a00c0);border:1px solid var(--accent);color:#fff;border-radius:8px;padding:10px 22px;cursor:pointer;font-family:'Cinzel Decorative',serif;font-size:.65em;transition:all .2s;}
+.btn-ok:hover{background:linear-gradient(135deg,#5a00b0,#9000e0);}
+.btn-no{background:var(--panel2);border:1px solid var(--border);color:#aaa;border-radius:8px;padding:10px 22px;cursor:pointer;font-size:.75em;transition:all .2s;}
+.btn-no:hover{background:var(--panel);color:#fff;}
+
+/* HEADER */
+#hdr{
+  position:relative;z-index:10;
+  background:linear-gradient(135deg,#0c0c1e,#16102a);
+  border-bottom:2px solid var(--gold2);padding:7px 14px;
+  display:flex;align-items:center;justify-content:space-between;height:56px;
+}
+#hdr h1{font-family:'Cinzel Decorative',serif;font-size:1em;color:var(--gold);text-shadow:0 0 20px rgba(255,215,0,.4);}
+.stats-row{display:flex;gap:8px;}
+.sbox{background:rgba(255,215,0,.08);border:1px solid var(--gold2);border-radius:7px;padding:3px 10px;text-align:center;}
+.sbox .sl{font-size:.55em;color:var(--gold2);letter-spacing:1.5px;text-transform:uppercase;}
+.sbox .sv{font-size:1em;color:var(--gold);font-weight:700;}
+
+/* MAIN GRID */
+#main{
+  display:grid;grid-template-columns:170px 1fr 290px;
+  height:calc(100vh - 56px);position:relative;z-index:5;
+}
+
+/* LEFT - ACTIVE PETS */
+#lpanel{
+  background:var(--panel);border-right:1px solid var(--border);
+  overflow-y:auto;padding:8px 6px;
+}
+#lpanel h3{font-family:'Cinzel Decorative',serif;font-size:.6em;color:var(--gold);text-align:center;padding:5px 0 8px;border-bottom:1px solid var(--border);margin-bottom:8px;letter-spacing:2px;}
+.apc{
+  background:var(--panel2);border:1px solid var(--border);
+  border-radius:9px;padding:7px 6px;margin-bottom:6px;
+  text-align:center;position:relative;transition:border-color .2s;
+}
+.apc:hover{border-color:var(--gold2);}
+.apc .pe{font-size:1.7em;display:block;line-height:1.2;}
+.apc .pn{font-size:.6em;color:var(--gold);font-weight:700;letter-spacing:.5px;}
+.apc .pa{font-size:.52em;color:#999;margin-top:1px;}
+.apc .pu{font-size:.5em;color:#555;cursor:pointer;margin-top:3px;}
+.apc .pu:hover{color:#888;}
+.pspeech{
+  position:absolute;top:-28px;left:50%;transform:translateX(-50%);
+  background:var(--gold);color:#000;border-radius:6px;padding:2px 7px;
+  font-size:.52em;white-space:nowrap;animation:psfade 2.2s forwards;z-index:50;
+}
+@keyframes psfade{0%{opacity:1;transform:translateX(-50%) translateY(0);}100%{opacity:0;transform:translateX(-50%) translateY(-18px);}}
+.pact{
+  background:linear-gradient(135deg,#400,#800);border:1px solid var(--red);
+  color:#ff8888;border-radius:5px;padding:3px 7px;font-size:.55em;
+  cursor:pointer;margin-top:5px;width:100%;transition:all .2s;font-weight:700;
+}
+.pact:hover{background:linear-gradient(135deg,#600,#c00);}
+.pact.sell{background:linear-gradient(135deg,#004000,#008000);border-color:#0f0;color:#88ff88;}
+.pact.sell:hover{background:linear-gradient(135deg,#006000,#00c000);}
+.pact:disabled{opacity:.4;cursor:not-allowed;}
+.no-pets{text-align:center;color:#444;font-size:.62em;padding:14px 6px;line-height:1.6;}
+
+/* CENTER */
+#center{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;padding:20px;
+  background:radial-gradient(ellipse at center,#0d0d22 0%,var(--bg) 70%);
+}
+#halved-banner{
+  background:linear-gradient(135deg,#2a0000,#500000);border:1px solid #ff2244;
+  border-radius:8px;padding:5px 14px;font-size:.72em;color:#ff6680;
+  text-align:center;display:none;animation:pulse 1.5s infinite;
+}
+@keyframes pulse{0%,100%{box-shadow:0 0 8px rgba(255,30,60,.3);}50%{box-shadow:0 0 20px rgba(255,30,60,.6);}}
+
+/* COIN */
+#coin-wrap{position:relative;cursor:pointer;}
+#coin{
+  width:190px;height:190px;border-radius:50%;
+  background:conic-gradient(from 0deg,#8B6914,#FFD700,#FFF0A0,#FFD700,#B8860B,#7A5C10,#B8860B,#FFD700,#FFF0A0,#FFD700,#8B6914);
+  box-shadow:0 0 50px rgba(255,215,0,.45),0 0 100px rgba(255,215,0,.2),
+    inset 0 3px 12px rgba(255,255,255,.35),inset 0 -3px 12px rgba(0,0,0,.35);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .08s,box-shadow .15s;
+  position:relative;overflow:hidden;
+}
+#coin::before{
+  content:'';position:absolute;top:0;left:0;right:0;bottom:0;border-radius:50%;
+  background:conic-gradient(from 90deg,transparent 80%,rgba(255,255,255,.2) 90%,transparent 100%);
+  animation:coinshine 3s linear infinite;
+}
+@keyframes coinshine{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+#coin:hover{box-shadow:0 0 70px rgba(255,215,0,.65),0 0 130px rgba(255,215,0,.3),inset 0 3px 12px rgba(255,255,255,.35),inset 0 -3px 12px rgba(0,0,0,.35);}
+#coin.clicked{transform:scale(.91);}
+#coin.halved{
+  background:conic-gradient(from 0deg,#3a3a3a,#888,#bbb,#888,#555,#333,#555,#888,#bbb,#888,#3a3a3a);
+  box-shadow:0 0 40px rgba(120,120,120,.35),0 0 80px rgba(120,120,120,.15),
+    inset 0 3px 12px rgba(255,255,255,.15),inset 0 -3px 12px rgba(0,0,0,.4);
+}
+#coin.halved::after{
+  content:'';position:absolute;top:-5%;left:47%;width:6%;height:110%;
+  background:linear-gradient(to right,transparent,rgba(0,0,0,.5),transparent);
+  transform:rotate(8deg);z-index:2;
+}
+.coin-in{
+  width:152px;height:152px;border-radius:50%;
+  background:conic-gradient(from 0deg,#7A5C10,#C8A000,#FFE44D,#C8A000,#7A5C10);
+  display:flex;align-items:center;justify-content:center;
+  font-size:3.8em;border:3px solid rgba(255,215,0,.25);
+  box-shadow:inset 0 2px 8px rgba(255,255,255,.2),inset 0 -2px 8px rgba(0,0,0,.3);
+  transition:all .2s;
+}
+.coin-in.halved{background:conic-gradient(from 0deg,#2a2a2a,#555,#888,#555,#2a2a2a);}
+
+/* Floating text */
+.ftxt{
+  position:fixed;pointer-events:none;
+  font-size:1.1em;font-weight:700;color:var(--gold);
+  font-family:'Cinzel Decorative',serif;
+  animation:fup .9s forwards;z-index:200;
+}
+.ftxt.crit{color:#ff7733;font-size:1.7em;}
+.ftxt.storm{color:#66ccff;font-size:1.4em;}
+@keyframes fup{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-90px) scale(1.2);}}
+
+/* CLICK STATS */
+#cstats{text-align:center;}
+#cdisplay{font-size:1.05em;color:var(--gold);font-weight:700;margin-bottom:2px;}
+#cinfo{font-size:.72em;color:#888;}
+
+/* REBIRTH BTN */
+#rbtn{
+  background:linear-gradient(135deg,#180040,#380080);border:2px solid var(--accent);
+  border-radius:10px;color:#cc99ff;padding:7px 18px;
+  font-family:'Cinzel Decorative',serif;font-size:.62em;
+  cursor:pointer;transition:all .3s;letter-spacing:1px;
+}
+#rbtn:hover:not(:disabled){background:linear-gradient(135deg,#280060,#5800b0);box-shadow:0 0 25px rgba(155,109,255,.4);color:#fff;}
+#rbtn:disabled{opacity:.38;cursor:not-allowed;}
+#rbonuslabel{text-align:center;font-size:.62em;color:#555;}
+#rbonuslabel span{color:var(--accent);}
+
+/* RIGHT - SHOP */
+#rpanel{background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+#stabs{display:flex;border-bottom:1px solid var(--border);}
+.stab{
+  flex:1;padding:13px 6px;text-align:center;cursor:pointer;
+  font-size:.78em;letter-spacing:1.5px;color:#555;transition:all .25s;
+  font-family:'Cinzel Decorative',serif;
+  border-bottom:3px solid transparent;
+  background:var(--panel);
+}
+.stab:hover:not(.on){color:#aaa;background:#14141f;}
+.stab.on{
+  color:#000;background:linear-gradient(135deg,var(--gold),#e6b800);
+  border-bottom:3px solid var(--gold3);
+  text-shadow:0 1px 0 rgba(255,255,255,.3);
+  box-shadow:0 4px 18px rgba(255,215,0,.35);
+}
+#scont{flex:1;overflow-y:auto;padding:7px;}
+
+/* SHOP ITEMS */
+.sitem{
+  background:var(--panel2);border:1px solid var(--border);
+  border-radius:8px;padding:7px 8px;margin-bottom:5px;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px;
+}
+.sitem:hover:not(.sowned):not(.slocked):not(.scant){border-color:var(--gold2);background:#181830;}
+.sitem.sowned{border-color:#1e3a1e;opacity:.65;cursor:default;}
+.sitem.scant{opacity:.48;}
+.sitem.slocked{opacity:.28;cursor:not-allowed;filter:grayscale(.8);}
+.sitem.sactive{border-color:var(--gold);background:#1e1c10;}
+.sit-em{font-size:1.5em;flex-shrink:0;}
+.sit-inf{flex:1;min-width:0;}
+.sit-nm{font-size:.68em;color:var(--gold);font-weight:700;letter-spacing:.5px;}
+.sit-ds{font-size:.54em;color:#888;margin-top:1px;line-height:1.3;}
+.sit-rr{font-size:.5em;color:var(--accent);margin-top:2px;}
+.sit-pr{font-size:.68em;color:var(--gold);font-weight:700;flex-shrink:0;text-align:right;}
+.sit-pr.ok{color:#44bb55;}
+.sit-pr.ac{color:var(--gold);}
+
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:var(--panel);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+::-webkit-scrollbar-thumb:hover{background:var(--gold2);}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<div id="acw">🚫 STOP AUTOCLICKING! 🚫<br><span style="font-size:.5em;font-family:Rajdhani,sans-serif">We detected clicks faster than 88ms</span></div>
+<div id="notif"></div>
+<div id="rmodal">
+  <div class="mbox">
+    <h2>✨ REBIRTH</h2>
+    <p id="rtext"></p>
+    <div class="mbtn">
+      <button class="btn-ok" onclick="confirmRebirth()">REBIRTH!</button>
+      <button class="btn-no" onclick="closeModal()">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<div id="hdr">
+  <h1>⚙ COIN CLICKER</h1>
+  <div class="stats-row">
+    <div class="sbox"><div class="sl">COINS</div><div class="sv" id="s-coins">0</div></div>
+    <div class="sbox"><div class="sl">PER CLICK</div><div class="sv" id="s-cpc">1</div></div>
+    <div class="sbox"><div class="sl">PER SEC</div><div class="sv" id="s-cps">0</div></div>
+    <div class="sbox"><div class="sl">REBIRTHS</div><div class="sv" id="s-reb">0</div></div>
+    <div class="sbox"><div class="sl">TOTAL CLICKS</div><div class="sv" id="s-clk">0</div></div>
+  </div>
+</div>
+
+<div id="main">
+  <aside id="lpanel">
+    <h3>🐾 ACTIVE PETS</h3>
+    <div id="apet-list"><div class="no-pets">No active pets!<br>Buy pets from the shop and equip them here.</div></div>
+  </aside>
+
+  <main id="center">
+    <div id="halved-banner">⚠️ COIN IS HALVED — Earning 2× LESS ⚠️</div>
+    <div id="coin-wrap" onclick="clickCoin(event)">
+      <div id="coin"><div class="coin-in" id="coin-in">🪙</div></div>
+    </div>
+    <div id="cstats">
+      <div id="cdisplay">0 coins</div>
+      <div id="cinfo">Click the coin to earn!</div>
+    </div>
+    <button id="rbtn" onclick="openRebirthModal()" disabled>♾️ REBIRTH (Need 1M)</button>
+    <div id="rbonuslabel">Rebirth bonus: <span id="rbonus-span">+0%</span> per click</div>
+  </main>
+
+  <aside id="rpanel">
+    <div id="shop-label" style="background:linear-gradient(135deg,#0c0c20,#161630);border-bottom:1px solid var(--gold2);padding:6px 10px;display:flex;align-items:center;gap:6px;">
+      <span style="font-family:'Cinzel Decorative',serif;font-size:.6em;color:var(--gold);letter-spacing:3px;">🛒 SHOP</span>
+      <span style="font-size:.52em;color:#555;margin-left:auto;">tap a tab below</span>
+    </div>
+    <div id="stabs">
+      <div class="stab on" id="tab-u" onclick="switchTab('upgrades')">⚡ UPGRADES</div>
+      <div class="stab" id="tab-p" onclick="switchTab('pets')">🐾 PETS</div>
+    </div>
+    <div id="scont"></div>
+  </aside>
+</div>
+
+<script>
+// ──────────────────────────────────────────
+// AUDIO ENGINE
+// ──────────────────────────────────────────
+let AC;
+function getAC(){if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();return AC;}
+function tone(freq,type,dur,vol,startFreq){
+  try{
+    const c=getAC(),o=c.createOscillator(),g=c.createGain();
+    o.connect(g);g.connect(c.destination);
+    o.type=type||'sine';
+    if(startFreq){o.frequency.setValueAtTime(startFreq,c.currentTime);o.frequency.exponentialRampToValueAtTime(freq,c.currentTime+dur*.5);}
+    else o.frequency.setValueAtTime(freq,c.currentTime);
+    g.gain.setValueAtTime(vol||.2,c.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,c.currentTime+dur);
+    o.start(c.currentTime);o.stop(c.currentTime+dur);
+  }catch(e){}
+}
+function playCoin(){tone(880,'sine',.18,.25,1200);}
+function playCrit(){[0,.06,.12].forEach((t,i)=>{setTimeout(()=>tone(440*Math.pow(1.3,i),'triangle',.3,.18),t*1000)});}
+function playBuy(){tone(330,'square',.08,.12);setTimeout(()=>tone(440,'square',.08,.12),80);setTimeout(()=>tone(660,'square',.12,.12),160);}
+function playRebirth(){for(let i=0;i<10;i++)setTimeout(()=>tone(220*Math.pow(1.18,i),'sine',.35,.15),i*90);}
+function petSound(type){
+  try{
+    const c=getAC();
+    if(type==='bark'){tone(150,'sawtooth',.12,.18,220);}
+    else if(type==='meow'){const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.setValueAtTime(650,c.currentTime);o.frequency.exponentialRampToValueAtTime(420,c.currentTime+.3);o.frequency.exponentialRampToValueAtTime(520,c.currentTime+.55);g.gain.setValueAtTime(.14,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.65);o.start();o.stop(c.currentTime+.65);}
+    else if(type==='squeak'){tone(1300,'sine',.18,.1,900);}
+    else if(type==='roar'){tone(80,'sawtooth',.5,.22,150);}
+    else if(type==='chirp'){[0,.07,.14].forEach((t,i)=>setTimeout(()=>tone(1800+i*200,'sine',.1,.08),t*1000));}
+    else if(type==='hiss'){try{const buf=c.createBuffer(1,c.sampleRate*.28,c.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;const s=c.createBufferSource();s.buffer=buf;const f=c.createBiquadFilter();f.type='bandpass';f.frequency.value=2800;f.Q.value=.6;const g=c.createGain();g.gain.setValueAtTime(.12,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.28);s.connect(f);f.connect(g);g.connect(c.destination);s.start();s.stop(c.currentTime+.28);}catch(e){}}
+    else tone(440+Math.random()*440,'sine',.25,.08);
+  }catch(e){}
+}
+
+// ──────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────
+const S={
+  coins:0,totalCoins:0,
+  baseClick:1,coinsPerSec:0,
+  clickMult:1,// multiplicative upgrades
+  rebirths:0,rebirthMult:1,
+  critChance:0,critMult:3,
+  stormCount:0,
+  coinHalved:false,halfSold:false,
+  activePets:new Set(),ownedPets:new Set(),
+  ownedUpgrades:new Set(),
+  upgradeCounts:{},
+  totalClicks:0,lastClick:0,
+  tab:'upgrades',
+  // special flags
+  timeParrot:false,galaxyBoost:false,galaxyTimer:0,
+  robotDog:false,alphaDog:false,shadowPanther:false,
+  starPanda:false,lunarBonus:0,cryptoClicks:0,
+};
+
+// ──────────────────────────────────────────
+// UPGRADES  (42 unique upgrades)
+// ──────────────────────────────────────────
+// oneTime:true = one-purchase only (multipliers). All others repeatable; price ×1.25 per buy.
+const UPGRADES=[
+  // ── EARLY GAME (cheap, additive) ──────────────────────────────
+  {id:'auto_miner',  name:'Auto Miner',        em:'⛏️',  p:10,        desc:'+15 coins/sec',                    fx:()=>{S.coinsPerSec+=15;}},
+  {id:'gold_touch',  name:'Golden Touch',      em:'✨',  p:100,       desc:'2× coins per click',               fx:()=>{S.clickMult*=2;},         oneTime:true},
+  {id:'magnet',      name:'Coin Magnet',       em:'🧲',  p:200,       desc:'+40 coins/sec',                    fx:()=>{S.coinsPerSec+=40;}},
+  {id:'lucky_penny', name:'Lucky Penny',       em:'🍀',  p:400,       desc:'+10 base coins/click',             fx:()=>{S.baseClick+=10;}},
+  {id:'shovel',      name:'Silver Shovel',     em:'🪛',  p:800,       desc:'+80 coins/sec',                    fx:()=>{S.coinsPerSec+=80;}},
+  {id:'chest',       name:'Treasure Chest',    em:'💰',  p:2000,      desc:'+25 base coins/click',             fx:()=>{S.baseClick+=25;}},
+  {id:'gold_pick',   name:'Gold Pickaxe',      em:'⛏️',  p:4000,      desc:'+200 coins/sec',                   fx:()=>{S.coinsPerSec+=200;}},
+  {id:'clover',      name:'Lucky Clover',      em:'🌿',  p:600,       desc:'+10% critical hit chance',         fx:()=>{S.critChance+=10;}},
+  {id:'ruby_ring',   name:'Ruby Ring',         em:'💍',  p:2500,      desc:'+2 crit multiplier',               fx:()=>{S.critMult+=2;}},
+  {id:'copper_mine', name:'Copper Mine',       em:'🏔️',  p:8000,      desc:'+50 base coins/click',             fx:()=>{S.baseClick+=50;}},
+  // ── MID EARLY ─────────────────────────────────────────────────
+  {id:'emerald',     name:'Emerald Aura',      em:'💚',  p:6000,      desc:'+15% crit chance',                 fx:()=>{S.critChance+=15;}},
+  {id:'d_drill',     name:'Diamond Drill',     em:'💎',  p:20000,     desc:'+500 coins/sec',                   fx:()=>{S.coinsPerSec+=500;}},
+  {id:'vault',       name:'Platinum Vault',    em:'🏛️',  p:40000,     desc:'+80 base coins/click',             fx:()=>{S.baseClick+=80;}},
+  {id:'obs_hammer',  name:'Obsidian Hammer',   em:'🔨',  p:25000,     desc:'+400 coins/sec',                   fx:()=>{S.coinsPerSec+=400;}},
+  {id:'midas',       name:'Midas Touch',       em:'👑',  p:80000,     desc:'3× coins per click',               fx:()=>{S.clickMult*=3;},         oneTime:true},
+  {id:'ancient_mine',name:'Ancient Mine',      em:'🗿',  p:150000,    desc:'+2000 coins/sec',                  fx:()=>{S.coinsPerSec+=2000;}},
+  {id:'horseshoe',   name:'Gold Horseshoe',    em:'🐴',  p:60000,     desc:'+20% crit chance',                 fx:()=>{S.critChance+=20;}},
+  {id:'crystal',     name:'Crystal Ball',      em:'🔮',  p:300000,    desc:'+200 base coins/click',            fx:()=>{S.baseClick+=200;}},
+  {id:'silver_arrow',name:'Silver Arrow',      em:'🏹',  p:150000,    desc:'Crits give ×5 (one-time)',         fx:()=>{S.critMult=Math.max(S.critMult,5);}, oneTime:true},
+  {id:'time_mach',   name:'Time Machine',      em:'⏰',  p:700000,    desc:'+5000 coins/sec',                  fx:()=>{S.coinsPerSec+=5000;}},
+  // ── MID GAME ──────────────────────────────────────────────────
+  {id:'coin_storm',  name:'Coin Storm',        em:'🌀',  p:300000,    desc:'Every 30 clicks: 100× bonus!',    fx:()=>{}, special:'storm',       oneTime:true},
+  {id:'rune',        name:'Rune Stone',        em:'🪨',  p:600000,    desc:'+50% all income (×)',              fx:()=>{S.coinsPerSec*=1.5;S.clickMult*=1.5;}, oneTime:true},
+  {id:'enc_coin',    name:'Enchanted Coin',    em:'🌟',  p:1200000,   desc:'+500 base coins/click',            fx:()=>{S.baseClick+=500;}},
+  {id:'q_forge',     name:'Quantum Forge',     em:'⚛️',  p:2000000,   desc:'2× all coins/sec',                fx:()=>{S.coinsPerSec*=2;},       oneTime:true},
+  {id:'d_scale',     name:'Dragon Scale',      em:'🐉',  p:2500000,   desc:'+10000 coins/sec',                 fx:()=>{S.coinsPerSec+=10000;}},
+  {id:'stellar',     name:'Stellar Mint',      em:'⭐',  p:5000000,   desc:'+25000 coins/sec',                 fx:()=>{S.coinsPerSec+=25000;}},
+  {id:'ph_feather',  name:'Phoenix Feather',   em:'🪶',  p:4000000,   desc:'+1000 base coins/click',           fx:()=>{S.baseClick+=1000;}},
+  {id:'nebula',      name:'Nebula Factory',    em:'🌌',  p:8000000,   desc:'+2000 base coins/click',           fx:()=>{S.baseClick+=2000;}},
+  {id:'starlight',   name:'Starlight',         em:'💫',  p:12000000,  desc:'+50000 coins/sec',                 fx:()=>{S.coinsPerSec+=50000;}},
+  {id:'moon_shard',  name:'Moon Shard',        em:'🌙',  p:20000000,  desc:'+5000 base coins/click',           fx:()=>{S.baseClick+=5000;}},
+  // ── LATE MID ──────────────────────────────────────────────────
+  {id:'cosmic_p',    name:'Cosmic Press',      em:'🌠',  p:18000000,  desc:'+100000 coins/sec',                fx:()=>{S.coinsPerSec+=100000;}},
+  {id:'solar',       name:'Solar Flare',       em:'☀️',  p:50000000,  desc:'5× coins per click',               fx:()=>{S.clickMult*=5;},         oneTime:true},
+  {id:'void_ex',     name:'Void Extractor',    em:'🕳️',  p:40000000,  desc:'+10000 base coins/click',          fx:()=>{S.baseClick+=10000;}},
+  {id:'comet',       name:'Comet Trail',       em:'☄️',  p:80000000,  desc:'+500000 coins/sec',                fx:()=>{S.coinsPerSec+=500000;}},
+  {id:'aurora',      name:'Aurora Stone',      em:'🌈',  p:200000000, desc:'3× all coins/sec',                 fx:()=>{S.coinsPerSec*=3;},       oneTime:true},
+  {id:'prism',       name:'Prism Crystal',     em:'🔷',  p:350000000, desc:'+50000 base coins/click',          fx:()=>{S.baseClick+=50000;}},
+  {id:'uni_mint',    name:'Universal Mint',    em:'🏦',  p:80000000,  desc:'+1000000 coins/sec',               fx:()=>{S.coinsPerSec+=1000000;}},
+  // ── LATE GAME ─────────────────────────────────────────────────
+  {id:'bhole',       name:'Black Hole Core',   em:'⚫',  p:500000000, desc:'10× ALL income!',                  fx:()=>{S.coinsPerSec*=10;S.clickMult*=10;}, oneTime:true},
+  {id:'big_bang',    name:'Big Bang Press',     em:'💥',  p:150000000, desc:'+100000 base coins/click',         fx:()=>{S.baseClick+=100000;}},
+  {id:'inf_loop',    name:'Infinity Loop',      em:'♾️',  p:400000000, desc:'2× ALL income',                   fx:()=>{S.coinsPerSec*=2;S.clickMult*=2;},   oneTime:true},
+  {id:'singularity', name:'Singularity Key',    em:'🗝️',  p:1e9,       desc:'+10000000 coins/sec',              fx:()=>{S.coinsPerSec+=10000000;}},
+  {id:'god_forge',   name:"God's Forge",        em:'⚡',  p:5e9,       desc:'Everything ×5!',                   fx:()=>{S.coinsPerSec*=5;S.clickMult*=5;},   oneTime:true},
+];
+
+// ──────────────────────────────────────────
+// PETS  (50 unique pets)
+// ──────────────────────────────────────────
+const PETS=[
+  // 0 rebirths
+  {id:'hamster',     name:'Coin Hamster',    em:'🐹',p:50,      rb:0, snd:'squeak',
+   speech:['Squeak!','Wheee!','More coins!','Eek!'],
+   desc:'+0.5 coins/sec',
+   eq:()=>{S.coinsPerSec+=.5;},uq:()=>{S.coinsPerSec-=.5;},pass:null},
+  {id:'puppy',       name:'Lucky Pup',       em:'🐶',p:80,      rb:0, snd:'bark',
+   speech:['Woof!','Bark!','Found coins!','Good boy!'],
+   desc:'+5% bonus coins on every click',
+   eq:()=>{},uq:()=>{},pass:null,clickBonus:.05},
+  {id:'piggy',       name:'Piggy Bank',      em:'🐷',p:120,     rb:0, snd:'squeak',
+   speech:['Oink!','Save up!','Coins!','More!'],
+   desc:'Drops 5 coins every 20 sec',
+   eq:()=>{},uq:()=>{},pass:{interval:20,reward:()=>5}},
+  {id:'lucky_cat',   name:'Lucky Cat',       em:'🐱',p:200,     rb:0, snd:'meow',
+   speech:['Mrow!','Nyaa~','Lucky!','Purr!'],
+   desc:'+3% coins per click (multiplier)',
+   eq:()=>{S.clickMult*=1.03;},uq:()=>{S.clickMult/=1.03;},pass:null},
+  {id:'mouse',       name:'Coin Mouse',      em:'🐭',p:180,     rb:0, snd:'squeak',
+   speech:['Squeak!','Got coins!','Cheese!','Eeeek!'],
+   desc:'+1 coin/sec',
+   eq:()=>{S.coinsPerSec+=1;},uq:()=>{S.coinsPerSec-=1;},pass:null},
+
+  // 1 rebirth
+  {id:'golden_fish', name:'Golden Fish',     em:'🐟',p:500,     rb:1, snd:'ping',
+   speech:['Blub!','Glitter!','Golden!','Splash!'],
+   desc:'+2 coins/sec + 5% crit',
+   eq:()=>{S.coinsPerSec+=2;S.critChance+=5;},uq:()=>{S.coinsPerSec-=2;S.critChance-=5;},pass:null},
+  {id:'turtle',      name:'Treasure Turtle', em:'🐢',p:750,     rb:1, snd:'ping',
+   speech:['Slow & steady!','Found coins!','Shell!','...'],
+   desc:'Drops 20 coins every 15 sec',
+   eq:()=>{},uq:()=>{},pass:{interval:15,reward:()=>20}},
+  {id:'silver_fox',  name:'Silver Fox',      em:'🦊',p:1000,    rb:1, snd:'hiss',
+   speech:['Slick!','Fox power!','Sly!','SMRT!'],
+   desc:'+10% crit chance',
+   eq:()=>{S.critChance+=10;},uq:()=>{S.critChance-=10;},pass:null},
+  {id:'magic_rabbit',name:'Magic Rabbit',    em:'🐰',p:1200,    rb:1, snd:'squeak',
+   speech:['Hop!','Magic!','Abracadabra!','Boing!'],
+   desc:'+2 base coins/click',
+   eq:()=>{S.baseClick+=2;},uq:()=>{S.baseClick-=2;},pass:null},
+  {id:'coin_rat',    name:'Coin Rat',        em:'🐀',p:1500,    rb:1, snd:'squeak',
+   speech:['MINE!','Snatched!','Got it!','Squeak!'],
+   desc:'+3 coins/sec',
+   eq:()=>{S.coinsPerSec+=3;},uq:()=>{S.coinsPerSec-=3;},pass:null},
+
+  // 2 rebirths — GECKO IS THE SPECIAL SPLITTER
+  {id:'gecko',       name:'Gecko the Splitter',em:'🦎',p:3000,  rb:2, snd:'hiss',
+   speech:['Ssplit!','Half!','Hisss!','Crack!'],
+   desc:'🔪 SPLIT the coin for massive coins! (Earns 2× less while halved)',
+   eq:()=>{},uq:()=>{if(S.coinHalved)unhalve();},pass:null,special:'splitter'},
+  {id:'phoenix',     name:'Phoenix',          em:'🔥',p:4000,   rb:2, snd:'chirp',
+   speech:['Rise!','Reborn!','FIRE!','Flames!'],
+   desc:'+8 coins/sec + 5% crit',
+   eq:()=>{S.coinsPerSec+=8;S.critChance+=5;},uq:()=>{S.coinsPerSec-=8;S.critChance-=5;},pass:null},
+  {id:'leprechaun',  name:'Leprechaun',       em:'🍀',p:5000,   rb:2, snd:'chirp',
+   speech:['Lucky!','Gold!','Pot o coins!','Top o the mornin!'],
+   desc:'Every 30 sec: +3% of current coins',
+   eq:()=>{},uq:()=>{},pass:{interval:30,reward:()=>Math.max(50,Math.floor(S.coins*.03))}},
+  {id:'unicorn',     name:'Unicorn',          em:'🦄',p:6000,   rb:2, snd:'chirp',
+   speech:['Magic!','Rainbow!','Sparkle!','Presto!'],
+   desc:'+5 base coins/click',
+   eq:()=>{S.baseClick+=5;},uq:()=>{S.baseClick-=5;},pass:null},
+
+  // 3 rebirths
+  {id:'midas_monkey',name:'Midas Monkey',     em:'🐒',p:10000,  rb:3, snd:'chirp',
+   speech:['Oo oo!','Gold touch!','GOLDEN!','Banana!'],
+   desc:'+5 coins/sec + 2% click multiplier',
+   eq:()=>{S.coinsPerSec+=5;S.clickMult*=1.02;},uq:()=>{S.coinsPerSec-=5;S.clickMult/=1.02;},pass:null},
+  {id:'crypto_cat',  name:'Crypto Cat',       em:'😼',p:15000,  rb:3, snd:'meow',
+   speech:['HODL!','Moon!','To the moon!','Pump it!'],
+   desc:'Every 50 clicks: +1000 bonus coins',
+   eq:()=>{},uq:()=>{},pass:null,special:'crypto'},
+  {id:'dragon_baby', name:'Dragon Hatchling', em:'🐲',p:20000,  rb:3, snd:'roar',
+   speech:['ROAR!','Growing!','Fire!','Rawr!'],
+   desc:'+10 coins/sec',
+   eq:()=>{S.coinsPerSec+=10;},uq:()=>{S.coinsPerSec-=10;},pass:null},
+  {id:'gem_golem',   name:'Gem Golem',        em:'💎',p:25000,  rb:3, snd:'ping',
+   speech:['RUMBLE','GOLEM STRONG','COINS!','ROCK SOLID'],
+   desc:'Every 25 sec: drops 500 coins',
+   eq:()=>{},uq:()=>{},pass:{interval:25,reward:()=>500}},
+
+  // 4 rebirths
+  {id:'time_parrot', name:'Time Parrot',      em:'🦜',p:50000,  rb:4, snd:'chirp',
+   speech:['SQUAWK!','Time flies!','FASTER!','CAWW!'],
+   desc:'All pet passive timers run 2× faster',
+   eq:()=>{S.timeParrot=true;},uq:()=>{S.timeParrot=false;},pass:null},
+  {id:'whale',       name:'Coin Whale',       em:'🐋',p:60000,  rb:4, snd:'ping',
+   speech:['BLOOOOW!','Deep coins!','Splash!','...'],
+   desc:'+20 coins/sec',
+   eq:()=>{S.coinsPerSec+=20;},uq:()=>{S.coinsPerSec-=20;},pass:null},
+  {id:'galaxy_ham',  name:'Galaxy Hamster',   em:'🐾',p:75000,  rb:4, snd:'squeak',
+   speech:['SQUEAK!','GALAXY BRAIN!','Wheee!','COSMIC!'],
+   desc:'Every 20 sec: 3× clicks for 5 sec',
+   eq:()=>{},uq:()=>{S.galaxyBoost=false;},pass:null,special:'galaxy'},
+  {id:'thunder',     name:'Thunder Bird',     em:'⚡',p:90000,  rb:4, snd:'chirp',
+   speech:['ZAP!','THUNDER!','Bolt!','ZZZAP!'],
+   desc:'Lightning: drops 200 coins every 15 sec',
+   eq:()=>{},uq:()=>{},pass:{interval:15,reward:()=>200}},
+
+  // 5 rebirths
+  {id:'void_cat',    name:'Void Cat',         em:'🌑',p:200000, rb:5, snd:'hiss',
+   speech:['...','Void...','Darkness!','Oblivion.'],
+   desc:'+50 coins/sec',
+   eq:()=>{S.coinsPerSec+=50;},uq:()=>{S.coinsPerSec-=50;},pass:null},
+  {id:'rainbow_uni', name:'Rainbow Unicorn',  em:'🦄',p:250000, rb:5, snd:'chirp',
+   speech:['RAINBOW!','Sparkle!','MORE MAGIC!','Prism!'],
+   desc:'+10 base coins/click',
+   eq:()=>{S.baseClick+=10;},uq:()=>{S.baseClick-=10;},pass:null},
+  {id:'crystal_drag',name:'Crystal Dragon',   em:'🐉',p:300000, rb:5, snd:'roar',
+   speech:['CRYSTAL ROAR!','Gem storm!','DRAGON!','Rargh!'],
+   desc:'Every 20 sec: drops 5000 coins',
+   eq:()=>{},uq:()=>{},pass:{interval:20,reward:()=>5000}},
+  {id:'q_fox',       name:'Quantum Fox',      em:'🦊',p:350000, rb:5, snd:'hiss',
+   speech:['Quantum!','Superposition!','Fox!','Flux!'],
+   desc:'+25% crit chance',
+   eq:()=>{S.critChance+=25;},uq:()=>{S.critChance-=25;},pass:null},
+
+  // 6 rebirths
+  {id:'robot_dog',   name:'Robot Dog',        em:'🤖',p:750000, rb:6, snd:'bark',
+   speech:['BEEP BOOP!','AUTO-CLICK!','ROBOT DOG!','WOOF.EXE'],
+   desc:'Auto-clicks coin every 3 sec',
+   eq:()=>{S.robotDog=true;},uq:()=>{S.robotDog=false;},pass:null,special:'robot'},
+  {id:'jellyfish',   name:'Neon Jellyfish',   em:'🎐',p:900000, rb:6, snd:'ping',
+   speech:['Float...','Glow!','Zap!','Drift...'],
+   desc:'+100 coins/sec',
+   eq:()=>{S.coinsPerSec+=100;},uq:()=>{S.coinsPerSec-=100;},pass:null},
+  {id:'star_panda',  name:'Star Panda',       em:'🐼',p:1200000,rb:6, snd:'squeak',
+   speech:['Panda!','Stars!','Bam!','PANDEMONIUM!'],
+   desc:'+5% chance for 10× mega click',
+   eq:()=>{S.starPanda=true;},uq:()=>{S.starPanda=false;},pass:null},
+  {id:'mystic_owl',  name:'Mystic Owl',       em:'🦉',p:1500000,rb:6, snd:'chirp',
+   speech:['Hoo hoo!','Wisdom!','Night coins!','Hoot!'],
+   desc:'Every 60 sec: hidden coin worth 10000!',
+   eq:()=>{},uq:()=>{},pass:{interval:60,reward:()=>10000}},
+
+  // 7 rebirths
+  {id:'cosmic_bear', name:'Cosmic Bear',      em:'🐻',p:3000000, rb:7, snd:'roar',
+   speech:['COSMIC GROWL!','BEAR!','Stars!','RAWRR!'],
+   desc:'+200 coins/sec',
+   eq:()=>{S.coinsPerSec+=200;},uq:()=>{S.coinsPerSec-=200;},pass:null},
+  {id:'grav_dog',    name:'Gravity Dog',      em:'🐕',p:4000000, rb:7, snd:'bark',
+   speech:['GRAVITY!','WOOF!','Pulled coins!','DOWN BOY!'],
+   desc:'+5 base coins/click + 50/sec',
+   eq:()=>{S.baseClick+=5;S.coinsPerSec+=50;},uq:()=>{S.baseClick-=5;S.coinsPerSec-=50;},pass:null},
+  {id:'lava_sal',    name:'Lava Salamander',  em:'🦎',p:5000000, rb:7, snd:'hiss',
+   speech:['LAVA!','Hisss!','HOT!','Magma!'],
+   desc:'+300 coins/sec',
+   eq:()=>{S.coinsPerSec+=300;},uq:()=>{S.coinsPerSec-=300;},pass:null},
+  {id:'arctic_wolf', name:'Arctic Wolf',      em:'🐺',p:6000000, rb:7, snd:'bark',
+   speech:['HOWL!','Arctic!','Cold!','AWOOO!'],
+   desc:'+10 base coins/click + 20% crit',
+   eq:()=>{S.baseClick+=10;S.critChance+=20;},uq:()=>{S.baseClick-=10;S.critChance-=20;},pass:null},
+
+  // 8 rebirths
+  {id:'nebula_cat',  name:'Nebula Cat',       em:'😺',p:10000000,rb:8, snd:'meow',
+   speech:['Meooow!','Nebula!','Stars!','PURR...'],
+   desc:'+500 coins/sec',
+   eq:()=>{S.coinsPerSec+=500;},uq:()=>{S.coinsPerSec-=500;},pass:null},
+  {id:'shadow_pan',  name:'Shadow Panther',   em:'🐆',p:15000000,rb:8, snd:'hiss',
+   speech:['Shadow!','Stealth!','PANTHER!','Phantom!'],
+   desc:'+15 base coins/click + doubles all passive drops',
+   eq:()=>{S.baseClick+=15;S.shadowPanther=true;},uq:()=>{S.baseClick-=15;S.shadowPanther=false;},pass:null},
+  {id:'solar_falcon',name:'Solar Falcon',     em:'🦅',p:20000000,rb:8, snd:'chirp',
+   speech:['SCREECH!','Solar!','Sun power!','DIVE!'],
+   desc:'+1000 coins/sec',
+   eq:()=>{S.coinsPerSec+=1000;},uq:()=>{S.coinsPerSec-=1000;},pass:null},
+  {id:'lunar_rabbit',name:'Lunar Rabbit',     em:'🐇',p:25000000,rb:8, snd:'squeak',
+   speech:['Moon!','Hop!','Lunar!','Bounce!'],
+   desc:'+5% bonus on rebirth multiplier (permanent!)',
+   eq:()=>{S.lunarBonus+=.05;},uq:()=>{S.lunarBonus-=.05;},pass:null},
+
+  // 9 rebirths
+  {id:'titan_tort',  name:'Titan Tortoise',   em:'🐢',p:50000000,rb:9, snd:'ping',
+   speech:['TITAN!','...slow...','Mighty!','ANCIENT!'],
+   desc:'+2000 coins/sec',
+   eq:()=>{S.coinsPerSec+=2000;},uq:()=>{S.coinsPerSec-=2000;},pass:null},
+  {id:'storm_eagle', name:'Storm Eagle',      em:'🦁',p:75000000,rb:9, snd:'chirp',
+   speech:['STORM!','EAGLE!','Power!','SCREECH!'],
+   desc:'Every 10 sec: 10000 coins!',
+   eq:()=>{},uq:()=>{},pass:{interval:10,reward:()=>10000}},
+  {id:'inf_phoenix', name:'Inferno Phoenix',  em:'🔥',p:100000000,rb:9,snd:'roar',
+   speech:['INFERNO!','REBORN!','FLAMES!','ETERNAL FIRE!'],
+   desc:'+5000 coins/sec + 20% crit chance',
+   eq:()=>{S.coinsPerSec+=5000;S.critChance+=20;},uq:()=>{S.coinsPerSec-=5000;S.critChance-=20;},pass:null},
+
+  // 10 rebirths
+  {id:'cel_whale',   name:'Celestial Whale',  em:'🐳',p:200000000,rb:10,snd:'ping',
+   speech:['CELESTIAL!','SPLASH!','...cosmic...','MASSIVE!'],
+   desc:'Every 30 sec: 100000 coins!',
+   eq:()=>{},uq:()=>{},pass:{interval:30,reward:()=>100000}},
+  {id:'astral_tiger',name:'Astral Tiger',     em:'🐯',p:250000000,rb:10,snd:'roar',
+   speech:['ASTRAL!','ROAR!','Tiger!','COSMIC TIGER!'],
+   desc:'+10000 coins/sec',
+   eq:()=>{S.coinsPerSec+=10000;},uq:()=>{S.coinsPerSec-=10000;},pass:null},
+  {id:'void_dragon', name:'Void Dragon',      em:'🐲',p:500000000,rb:10,snd:'roar',
+   speech:['VOID!','DRAGON!','DARKNESS!','CONSUME ALL!'],
+   desc:'2× ALL coin income!',
+   eq:()=>{S.coinsPerSec*=2;S.clickMult*=2;},uq:()=>{S.coinsPerSec/=2;S.clickMult/=2;},pass:null},
+
+  // 11 rebirths
+  {id:'eternal',     name:'Eternal Serpent',  em:'🐍',p:1e9,    rb:11,snd:'hiss',
+   speech:['Eternal...','Sssnake!','Forever!','Unending!'],
+   desc:'+50000 coins/sec',
+   eq:()=>{S.coinsPerSec+=50000;},uq:()=>{S.coinsPerSec-=50000;},pass:null},
+  {id:'god_cat',     name:'God Cat',          em:'😸',p:2e9,    rb:11,snd:'meow',
+   speech:['I AM GOD!','Meow!','DIVINE!','OMNIPOTENT!'],
+   desc:'+50% crit chance & +10 crit multiplier!',
+   eq:()=>{S.critChance+=50;S.critMult+=10;},uq:()=>{S.critChance-=50;S.critMult-=10;},pass:null},
+
+  // 12 rebirths
+  {id:'uni_bear',    name:'Universe Bear',    em:'🌌',p:5e9,    rb:12,snd:'roar',
+   speech:['UNIVERSE!','GROWL!','COSMOS!','EVERYTHING!'],
+   desc:'+100000 coins/sec',
+   eq:()=>{S.coinsPerSec+=100000;},uq:()=>{S.coinsPerSec-=100000;},pass:null},
+  {id:'omega_wolf',  name:'Omega Wolf',       em:'🐺',p:1e10,   rb:12,snd:'bark',
+   speech:['OMEGA!','HOWL!','ALPHA!','PACK LEADER!'],
+   desc:'3× ALL income!',
+   eq:()=>{S.coinsPerSec*=3;S.clickMult*=3;},uq:()=>{S.coinsPerSec/=3;S.clickMult/=3;},pass:null},
+
+  // 13 rebirths
+  {id:'alpha_dog',   name:'Alpha Coin Dog',   em:'🐕‍🦺',p:2.5e10,rb:13,snd:'bark',
+   speech:['ALPHA WOOF!','AUTO-CLICK!','ULTIMATE!','LEGENDARY BARK!'],
+   desc:'Auto-clicks every 1 sec + +100 base coins/click',
+   eq:()=>{S.baseClick+=100;S.alphaDog=true;},uq:()=>{S.baseClick-=100;S.alphaDog=false;},pass:null,special:'alpha'},
+
+  // 15 rebirths
+  {id:'the_coin',    name:'THE COIN PET',     em:'🪙',p:1e11,   rb:15,snd:'ping',
+   speech:['I AM COIN!','MULTIPLIED!','ULTIMATE!','THE ONE!'],
+   desc:'10× EVERYTHING. The apex pet.',
+   eq:()=>{S.coinsPerSec*=10;S.clickMult*=10;},uq:()=>{S.coinsPerSec/=10;S.clickMult/=10;},pass:null},
+];
+
+// ──────────────────────────────────────────
+// PASSIVE TIMERS
+// ──────────────────────────────────────────
+const pTimers={};
+function startPetTimer(pet){
+  if(!pet.pass)return;
+  if(pTimers[pet.id])clearInterval(pTimers[pet.id]);
+  const ms=(S.timeParrot?pet.pass.interval/2:pet.pass.interval)*1000;
+  pTimers[pet.id]=setInterval(()=>{
+    if(!S.activePets.has(pet.id)){clearInterval(pTimers[pet.id]);delete pTimers[pet.id];return;}
+    let r=pet.pass.reward();
+    if(S.shadowPanther)r*=2;
+    if(S.coinHalved)r/=2;
+    addCoins(r);
+    notify(`${pet.em} ${pet.name}: +${fmt(r)} coins!`);
+  },ms);
+}
+function stopPetTimer(id){if(pTimers[id]){clearInterval(pTimers[id]);delete pTimers[id];}}
+
+// ──────────────────────────────────────────
+// COIN UTILS
+// ──────────────────────────────────────────
+function addCoins(n){n=Math.floor(n);S.coins+=n;S.totalCoins+=n;}
+function fmt(n){
+  if(n>=1e15)return(n/1e15).toFixed(2)+'Q';
+  if(n>=1e12)return(n/1e12).toFixed(2)+'T';
+  if(n>=1e9)return(n/1e9).toFixed(2)+'B';
+  if(n>=1e6)return(n/1e6).toFixed(2)+'M';
+  if(n>=1e3)return(n/1e3).toFixed(2)+'K';
+  return Math.floor(n).toString();
+}
+function getClickValue(){
+  let v=(S.baseClick*S.clickMult)*S.rebirthMult;
+  if(S.coinHalved)v/=2;
+  return v;
+}
+function getCPS(){
+  let v=S.coinsPerSec;
+  if(S.coinHalved)v/=2;
+  return v;
+}
+
+// ──────────────────────────────────────────
+// CLICK COIN
+// ──────────────────────────────────────────
+function clickCoin(e){
+  const now=Date.now();
+  if(S.lastClick>0&&(now-S.lastClick)<88){
+    showACW(); S.lastClick=now; return;
+  }
+  S.lastClick=now;
+  playCoin();
+  S.totalClicks++;
+
+  let earned=getClickValue();
+  let label='+'+fmt(earned);
+  let isCrit=false,isMega=false;
+
+  // Lucky pup
+  if(S.activePets.has('puppy'))earned*=1.05;
+
+  // Star panda mega
+  if(S.starPanda&&Math.random()<.05){earned*=10;isMega=true;}
+
+  // Crit
+  if(Math.random()*100<S.critChance){
+    earned*=S.critMult;isCrit=true;playCrit();
+    label=`CRIT ×${S.critMult}! +`+fmt(earned);
+  }
+  if(isMega&&!isCrit)label=`★ MEGA ×10! +`+fmt(earned);
+
+  // Galaxy boost
+  if(S.galaxyBoost)earned*=3;
+
+  // Storm
+  if(S.ownedUpgrades.has('coin_storm')){
+    S.stormCount++;
+    if(S.stormCount>=30){S.stormCount=0;const b=Math.floor(getClickValue()*100);addCoins(b);floatText(`⚡ STORM! +${fmt(b)}`,e.clientX,e.clientY,'storm');}
+  }
+
+  // Crypto cat
+  if(S.activePets.has('crypto_cat')){
+    S.cryptoClicks++;
+    if(S.cryptoClicks>=50){S.cryptoClicks=0;addCoins(1000);notify('😼 Crypto Cat HODL bonus! +1000!');}
+  }
+
+  addCoins(earned);
+  floatText(label,e.clientX,e.clientY,isCrit?'crit':(isMega?'storm':''));
+
+  const coin=document.getElementById('coin');
+  coin.classList.add('clicked');
+  setTimeout(()=>coin.classList.remove('clicked'),100);
+}
+
+let acwTo;
+function showACW(){
+  const w=document.getElementById('acw');
+  w.style.display='block';
+  clearTimeout(acwTo);
+  acwTo=setTimeout(()=>w.style.display='none',3000);
+}
+
+function floatText(txt,x,y,type){
+  const d=document.createElement('div');
+  d.className='ftxt'+(type?' '+type:'');
+  d.textContent=txt;
+  d.style.left=x+'px';d.style.top=(y-20)+'px';
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(),950);
+}
+
+// ──────────────────────────────────────────
+// GECKO - COIN HALVING
+// ──────────────────────────────────────────
+function halveCoin(){
+  if(S.coinHalved||!S.activePets.has('gecko'))return;
+  S.coinHalved=true;
+  document.getElementById('coin').classList.add('halved');
+  document.getElementById('coin-in').classList.add('halved');
+  document.getElementById('coin-in').textContent='⚡';
+  document.getElementById('halved-banner').style.display='block';
+  notify('🦎 Gecko split the coin! Sell the half for massive coins! Rebirth to restore.');
+  renderActivePets();
+}
+function sellHalf(){
+  if(!S.coinHalved||S.halfSold)return;
+  const bonus=Math.max(5000,Math.floor(S.totalCoins*.5));
+  addCoins(bonus);
+  S.halfSold=true;
+  notify(`💰 HALF SOLD! +${fmt(bonus)} coins! Coin is halved until rebirth!`);
+  renderActivePets();
+}
+function unhalve(){
+  S.coinHalved=false;S.halfSold=false;
+  document.getElementById('coin').classList.remove('halved');
+  document.getElementById('coin-in').classList.remove('halved');
+  document.getElementById('coin-in').textContent='🪙';
+  document.getElementById('halved-banner').style.display='none';
+}
+
+// ──────────────────────────────────────────
+// BUY UPGRADE
+// ──────────────────────────────────────────
+function upgradePrice(u){
+  if(u.oneTime)return u.p;
+  const n=S.upgradeCounts[u.id]||0;
+  return Math.floor(u.p*Math.pow(1.25,n));
+}
+function buyUpgrade(id){
+  const u=UPGRADES.find(x=>x.id===id);
+  if(!u)return;
+  if(u.oneTime&&S.ownedUpgrades.has(id))return;
+  const cost=upgradePrice(u);
+  if(S.coins<cost){notify('❌ Not enough coins!');return;}
+  S.coins-=cost;
+  if(u.oneTime){
+    S.ownedUpgrades.add(id);
+  }else{
+    S.upgradeCounts[id]=(S.upgradeCounts[id]||0)+1;
+    S.ownedUpgrades.add(id);
+  }
+  u.fx();
+  playBuy();
+  const count=u.oneTime?null:(S.upgradeCounts[id]||1);
+  const label=u.oneTime?`✅ ${u.name}!`:`✅ ${u.name} ×${count}!`;
+  notify(label);
+  renderShop();
+}
+
+// ──────────────────────────────────────────
+// BUY / EQUIP PETS
+// ──────────────────────────────────────────
+const MAX_PETS=6;
+function buyPet(id){
+  const p=PETS.find(x=>x.id===id);if(!p)return;
+  if(S.ownedPets.has(id)){togglePet(id);return;}
+  if(S.rebirths<p.rb){notify(`🔒 Need ${p.rb} rebirths to unlock!`);return;}
+  if(S.coins<p.p){notify('❌ Not enough coins!');return;}
+  S.coins-=p.p;S.ownedPets.add(id);
+  playBuy();
+  notify(`🐾 Got ${p.name}!`);
+  if(S.activePets.size<MAX_PETS)equipPet(id);
+  else renderShop();
+}
+function togglePet(id){
+  if(S.activePets.has(id))unequipPet(id);
+  else{if(S.activePets.size>=MAX_PETS){notify(`❌ Max ${MAX_PETS} active pets!`);return;}equipPet(id);}
+}
+function equipPet(id){
+  const p=PETS.find(x=>x.id===id);if(!p)return;
+  S.activePets.add(id);p.eq();
+  if(p.pass)startPetTimer(p);
+  renderActivePets();renderShop();
+}
+function unequipPet(id){
+  const p=PETS.find(x=>x.id===id);if(!p)return;
+  S.activePets.delete(id);p.uq();
+  stopPetTimer(id);
+  renderActivePets();renderShop();
+}
+
+// ──────────────────────────────────────────
+// REBIRTH
+// ──────────────────────────────────────────
+const REBIRTH_REQS=[1e6,1e7,1e8,5e8,1e9,5e9,1e10,5e10,1e11,5e11,1e12,5e12,1e13,5e13,1e14,1e15];
+function getRebirthReq(n){return REBIRTH_REQS[n]||REBIRTH_REQS[REBIRTH_REQS.length-1]*Math.pow(10,n-REBIRTH_REQS.length+1);}
+
+function openRebirthModal(){
+  const req=getRebirthReq(S.rebirths);
+  if(S.coins<req){notify(`❌ Need ${fmt(req)} coins to rebirth!`);return;}
+  const pct=5;// flat 5% per rebirth
+  const newTotal=(S.rebirths+1)*pct;
+  const lunarExtra=S.lunarBonus*100;
+  document.getElementById('rtext').innerHTML=
+    `<strong>Rebirth #${S.rebirths+1}</strong><br><br>`+
+    `This resets coins + upgrades, but grants:<br>`+
+    `• <span style="color:#FFD700">+5% coins per click (permanent)</span><br>`+
+    `• Unlocks higher-tier pets<br>`+
+    `• Restores your halved coin<br>`+
+    (lunarExtra>0?`• +${lunarExtra.toFixed(0)}% Lunar Rabbit bonus<br>`:'')+
+    `<br><strong style="color:#9B6DFF">Total after: +${newTotal+lunarExtra.toFixed(0)}% per click</strong>`;
+  document.getElementById('rmodal').classList.add('show');
+}
+function closeModal(){document.getElementById('rmodal').classList.remove('show');}
+function confirmRebirth(){
+  const req=getRebirthReq(S.rebirths);
+  if(S.coins<req){closeModal();return;}
+  playRebirth();
+  S.rebirths++;
+  S.rebirthMult=1+(S.rebirths*.05)+S.lunarBonus;
+  // Reset
+  S.coins=0;S.baseClick=1;S.coinsPerSec=0;
+  S.clickMult=1;S.critChance=0;S.critMult=3;S.stormCount=0;
+  S.ownedUpgrades.clear();S.upgradeCounts={};
+  // Unequip all pets
+  Array.from(S.activePets).forEach(id=>{const p=PETS.find(x=>x.id===id);if(p)p.uq();stopPetTimer(id);});
+  S.activePets.clear();
+  // Restore coin
+  unhalve();
+  // Reset special flags
+  S.timeParrot=false;S.galaxyBoost=false;S.galaxyTimer=0;S.robotDog=false;S.alphaDog=false;S.shadowPanther=false;S.starPanda=false;S.cryptoClicks=0;
+  closeModal();renderShop();renderActivePets();
+  notify(`🌀 REBIRTH #${S.rebirths}! +${(S.rebirthMult-1)*100|0}% per click bonus!`);
+}
+
+// ──────────────────────────────────────────
+// RENDER ACTIVE PETS
+// ──────────────────────────────────────────
+function renderActivePets(){
+  const el=document.getElementById('apet-list');
+  if(S.activePets.size===0){el.innerHTML='<div class="no-pets">No active pets!<br>Buy pets from the shop and equip them here.</div>';return;}
+  el.innerHTML='';
+  S.activePets.forEach(id=>{
+    const p=PETS.find(x=>x.id===id);if(!p)return;
+    const d=document.createElement('div');
+    d.className='apc';d.id='apc-'+id;
+    let extra='';
+    if(p.special==='splitter'){
+      if(!S.coinHalved)extra=`<button class="pact" onclick="halveCoin()">🔪 SPLIT COIN</button>`;
+      else if(!S.halfSold)extra=`<button class="pact sell" onclick="sellHalf()">💰 SELL HALF</button>`;
+      else extra=`<div style="font-size:.52em;color:#f55;margin-top:4px;">Half sold! Rebirth to restore.</div>`;
+    }
+    d.innerHTML=`<span class="pe">${p.em}</span><div class="pn">${p.name}</div><div class="pa">${p.desc}</div>${extra}<div class="pu" onclick="unequipPet('${id}')">✕ unequip</div>`;
+    el.appendChild(d);
+  });
+}
+
+// ──────────────────────────────────────────
+// PET SPEECH
+// ──────────────────────────────────────────
+function triggerSpeech(){
+  if(S.activePets.size===0)return;
+  const ids=Array.from(S.activePets);
+  const id=ids[Math.floor(Math.random()*ids.length)];
+  const p=PETS.find(x=>x.id===id);if(!p)return;
+  petSound(p.snd);
+  const card=document.getElementById('apc-'+id);if(!card)return;
+  // remove old
+  card.querySelectorAll('.pspeech').forEach(e=>e.remove());
+  const b=document.createElement('div');
+  b.className='pspeech';
+  b.textContent=p.speech[Math.floor(Math.random()*p.speech.length)];
+  card.appendChild(b);
+  setTimeout(()=>b.remove(),2200);
+}
+setInterval(()=>{if(Math.random()<.5)triggerSpeech();},4500+Math.random()*4000);
+
+// ──────────────────────────────────────────
+// RENDER SHOP
+// ──────────────────────────────────────────
+function renderShop(){
+  const el=document.getElementById('scont');el.innerHTML='';
+  if(S.tab==='upgrades'){
+    UPGRADES.forEach(u=>{
+      const isOneTime=!!u.oneTime;
+      const count=S.upgradeCounts[u.id]||0;
+      const cost=upgradePrice(u);
+      const afford=S.coins>=cost;
+      const blocked=isOneTime&&S.ownedUpgrades.has(u.id);
+      const d=document.createElement('div');
+      d.className='sitem'+(blocked?' sowned':(!afford?' scant':''));
+      let priceEl='';
+      if(blocked){
+        priceEl='<div class="sit-pr ok">✓ OWNED</div>';
+      }else{
+        const badge=(!isOneTime&&count>0)?` <span style="background:#9B6DFF33;color:#cc99ff;border-radius:4px;padding:0 5px;font-size:.8em">×${count}</span>`:'';
+        priceEl=`<div class="sit-pr">${badge} ${fmt(cost)} 🪙</div>`;
+      }
+      const tagLine=isOneTime
+        ?'<div style="font-size:.5em;color:#666;margin-top:1px">one-time upgrade</div>'
+        :(count===0
+          ?'<div style="font-size:.5em;color:#555;margin-top:1px">repeatable · price ×1.25 each buy</div>'
+          :`<div style="font-size:.5em;color:#9B6DFF;margin-top:1px">Owned ×${count} — next: ${fmt(cost)} 🪙</div>`);
+      d.innerHTML=`<span class="sit-em">${u.em}</span><div class="sit-inf"><div class="sit-nm">${u.name}</div><div class="sit-ds">${u.desc}</div>${tagLine}</div>${priceEl}`;
+      if(!blocked)d.onclick=()=>buyUpgrade(u.id);
+      el.appendChild(d);
+    });
+  }else{
+    PETS.forEach(p=>{
+      const owned=S.ownedPets.has(p.id);
+      const active=S.activePets.has(p.id);
+      const locked=S.rebirths<p.rb;
+      const afford=S.coins>=p.p;
+      const d=document.createElement('div');
+      d.className='sitem'+(locked?' slocked':(active?' sactive':(owned?' sowned':(!afford?' scant':''))));
+      let pr='';
+      if(locked)pr=`<div><div class="sit-pr" style="color:#555">🔒</div><div class="sit-rr">${p.rb} rebirths</div></div>`;
+      else if(active)pr=`<div class="sit-pr ac">★ ON</div>`;
+      else if(owned)pr=`<div class="sit-pr ok">✓ OFF</div>`;
+      else pr=`<div class="sit-pr">${fmt(p.p)} 🪙</div>`;
+      d.innerHTML=`<span class="sit-em">${p.em}</span><div class="sit-inf"><div class="sit-nm">${p.name}</div><div class="sit-ds">${p.desc}</div>${p.rb>0?`<div class="sit-rr">🌀 ${p.rb} rebirths req.</div>`:''}</div>${pr}`;
+      if(!locked)d.onclick=()=>buyPet(p.id);
+      el.appendChild(d);
+    });
+  }
+}
+function switchTab(t){
+  S.tab=t;
+  document.getElementById('tab-u').className='stab'+(t==='upgrades'?' on':'');
+  document.getElementById('tab-p').className='stab'+(t==='pets'?' on':'');
+  renderShop();
+}
+
+// ──────────────────────────────────────────
+// STATS RENDER
+// ──────────────────────────────────────────
+function renderStats(){
+  const cpc=getClickValue(),cps=getCPS();
+  document.getElementById('s-coins').textContent=fmt(S.coins);
+  document.getElementById('s-cpc').textContent=fmt(cpc);
+  document.getElementById('s-cps').textContent=fmt(cps);
+  document.getElementById('s-reb').textContent=S.rebirths;
+  document.getElementById('s-clk').textContent=fmt(S.totalClicks);
+  document.getElementById('cdisplay').textContent=fmt(S.coins)+' coins';
+  document.getElementById('cinfo').textContent=`+${fmt(cpc)}/click · +${fmt(cps)}/sec · ${S.critChance.toFixed(1)}% crit`;
+  const req=getRebirthReq(S.rebirths);
+  const rb=document.getElementById('rbtn');
+  const can=S.coins>=req;
+  rb.disabled=!can;
+  rb.textContent=can?`♾️ REBIRTH NOW!`:`♾️ REBIRTH (${fmt(req)})`;
+  const bonusPct=((S.rebirthMult-1)*100).toFixed(0);
+  document.getElementById('rbonus-span').textContent=`+${bonusPct}%`;
+}
+
+// ──────────────────────────────────────────
+// GAME LOOP
+// ──────────────────────────────────────────
+// Passive income: 20 ticks/sec
+setInterval(()=>{addCoins(getCPS()/20);renderStats();},50);
+
+// Robot dog: auto-click every 3s
+setInterval(()=>{if(S.robotDog)addCoins(getClickValue());},3000);
+// Alpha dog: auto-click every 1s
+setInterval(()=>{if(S.alphaDog)addCoins(getClickValue());},1000);
+
+// Galaxy hamster
+setInterval(()=>{
+  if(!S.activePets.has('galaxy_ham'))return;
+  S.galaxyTimer++;
+  if(S.galaxyTimer>=20&&!S.galaxyBoost){
+    S.galaxyTimer=0;S.galaxyBoost=true;
+    notify('🐾 Galaxy Hamster: 3× clicks for 5 seconds!');
+    setTimeout(()=>{S.galaxyBoost=false;},5000);
+  }
+},1000);
+
+// Re-render shop periodically (for coin count updates)
+setInterval(()=>renderShop(),2000);
+
+// ──────────────────────────────────────────
+// NOTIFICATION
+// ──────────────────────────────────────────
+let nTo;
+function notify(msg){
+  const n=document.getElementById('notif');
+  n.textContent=msg;n.classList.add('show');
+  clearTimeout(nTo);nTo=setTimeout(()=>n.classList.remove('show'),3200);
+}
+
+// ──────────────────────────────────────────
+// STAR BACKGROUND
+// ──────────────────────────────────────────
+(function(){
+  const cv=document.getElementById('stars');
+  const ctx=cv.getContext('2d');
+  cv.width=window.innerWidth;cv.height=window.innerHeight;
+  const stars=Array.from({length:180},()=>({
+    x:Math.random()*cv.width,y:Math.random()*cv.height,
+    r:Math.random()*1.4+.2,op:Math.random(),spd:Math.random()*.015+.005
+  }));
+  function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    stars.forEach(s=>{
+      s.op+=s.spd*(Math.random()>.5?1:-1);
+      s.op=Math.max(.05,Math.min(.9,s.op));
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,215,0,${s.op*.35})`;ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ──────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────
+renderShop();renderActivePets();renderStats();
+</script>
+</body>
+</html>
