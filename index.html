@@ -502,4 +502,10 @@ form.addEventListener('submit', async function(e) {
   sv.style.display = 'flex';
   const writingTo = lang === 'en' ? "We'll reach out to" : 'Te escribimos al';
   document.getElementById('successBox').innerHTML =
-    summary.map(k => `🎮 <strong>${k.na
+    summary.map(k => `🎮 <strong>${k.name}</strong>${k.idea ? ` — "${k.idea}"` : ''}`).join('<br>') +
+    `<br><br>${writingTo} <strong>${phone}</strong> 🚀`;
+});
+</script>
+</body>
+</html>
+
