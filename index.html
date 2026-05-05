@@ -182,7 +182,7 @@
         <span class="card-icon">🕹️</span>
         <div class="card-title ct-g">AI Game Lab</div>
         <div class="card-sub" data-i="game_sub">Vibe Coding Camp</div>
-        <p class="card-desc" data-i="game_desc">Kids ages 8–12 build their own video game using AI — no coding experience needed. In 4 hours they leave with a real, playable game and the confidence that they can create with technology.</p>
+        <p class="card-desc" data-i="game_desc">Kids ages 8–15 build their own video game using AI — no coding experience needed. In 4 hours they leave with a real, playable game and the confidence that they can create with technology.</p>
         <div class="card-features">
           <div class="feature"><div class="fd-g"></div><span data-i="gf1">Build games with Claude AI</span></div>
           <div class="feature"><div class="fd-g"></div><span data-i="gf2">No prior experience needed</span></div>
@@ -192,7 +192,7 @@
         <div class="card-meta">
           <div class="chip" data-i="gm1">📅 Saturdays</div>
           <div class="chip">🕙 10 AM – 2 PM</div>
-          <div class="chip" data-i="gm2">🧒 Ages 8–12</div>
+          <div class="chip" data-i="gm2">🧒 Ages 8–15</div>
           <div class="chip" data-i="gm3">🍕 Pizza included</div>
         </div>
         <div class="date-section">
@@ -344,7 +344,7 @@
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ── DATE CONFIG — change these to open registrations ──
 const DATES = {
-  game: null,   // e.g. 'Saturday April 12, 2026 · 10 AM–2 PM'
+  game: 'Saturday May 9, 2026 · 10 AM–2 PM',
   work: null,   // e.g. 'Saturday May 3, 2026 · 10 AM–2 PM'
 };
 // ──────────────────────────────────────────────────────
@@ -359,9 +359,9 @@ const i18n = {
     stat1: 'Kids · 1st session', stat2: 'Games built', stat3: 'Per session', stat4: 'Programs',
     sec_programs: 'Our programs',
     badge_game: '🎮 For kids', game_sub: 'Vibe Coding Camp',
-    game_desc: 'Kids ages 8–12 build their own video game using AI — no coding experience needed. In 4 hours they leave with a real, playable game and the confidence that they can create with technology.',
+    game_desc: 'Kids ages 8–15 build their own video game using AI — no coding experience needed. In 4 hours they leave with a real, playable game and the confidence that they can create with technology.',
     gf1:'Build games with Claude AI',gf2:'No prior experience needed',gf3:'Game deployed with its own URL',gf4:'Max 10 kids per session',
-    gm1:'📅 Saturdays',gm2:'🧒 Ages 8–12',gm3:'🍕 Pizza included',
+    gm1:'📅 Saturdays',gm2:'🧒 Ages 8–15',gm3:'🍕 Pizza included',
     next_date:'Next date', game_no_date:'📣 Opening soon — join the waitlist',
     game_price_sub:'per kid · $89 for 2 kids', game_cta:'✅ Register',
     badge_work:'💼 For adults', work_sub:'Automate with Claude Code',
@@ -392,9 +392,9 @@ const i18n = {
     stat1:'Niños · 1ra sesión', stat2:'Juegos creados', stat3:'Por sesión', stat4:'Programas',
     sec_programs:'Nuestros programas',
     badge_game:'🎮 Para niños', game_sub:'Vibe Coding Camp',
-    game_desc:'Niños de 8 a 12 años crean su propio videojuego usando IA — sin experiencia previa. En 4 horas se van con un juego real y la confianza de que pueden crear tecnología.',
+    game_desc:'Niños de 8 a 15 años crean su propio videojuego usando IA — sin experiencia previa. En 4 horas se van con un juego real y la confianza de que pueden crear tecnología.',
     gf1:'Crear juegos con Claude AI',gf2:'Sin experiencia previa',gf3:'Juego deployado con su propia URL',gf4:'Máximo 10 niños por sesión',
-    gm1:'📅 Sábados',gm2:'🧒 8-12 años',gm3:'🍕 Pizza incluida',
+    gm1:'📅 Sábados',gm2:'🧒 8-15 años',gm3:'🍕 Pizza incluida',
     next_date:'Próxima fecha', game_no_date:'📣 Próximamente — únete a la lista',
     game_price_sub:'por niño · $89 por 2 niños', game_cta:'✅ Registrarme',
     badge_work:'💼 Para adultos', work_sub:'Automatiza con Claude Code',
@@ -451,8 +451,8 @@ function toggleLang() {
 // ── KIDS FORM ──
 let kidCount = 0;
 const ageOpts = {
-  en: '<option value="">Age...</option><option value="menor-8">Under 8</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13-mas">13+</option>',
-  es: '<option value="">Edad...</option><option value="menor-8">Menos de 8</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13-mas">13+</option>'
+  en: '<option value="">Age...</option><option value="menor-8">Under 8</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16-mas">16+</option>',
+  es: '<option value="">Edad...</option><option value="menor-8">Menos de 8</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16-mas">16+</option>'
 };
 const expOpts = {
   en: [['ninguna','First time with code'],['basica','Uses apps & browses'],['intermedia','Tried Scratch or similar'],['avanzada','Already knows coding']],
