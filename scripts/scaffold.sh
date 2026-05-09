@@ -55,7 +55,7 @@ for entry in "${kids[@]}"; do
     <div class="emoji">🚧</div>
     <h1>${name} está construyendo</h1>
     <p>Vuelve en un rato — aquí va a estar el juego.</p>
-    <a href="/">← vibecodingcamp.com</a>
+    <a href="/">← vibecodingcamp.vercel.app</a>
   </div>
 </body>
 </html>
@@ -67,5 +67,5 @@ echo ""
 echo "Done. URLs:"
 for entry in "${kids[@]}"; do
   slug="${entry%%|*}"
-  echo "  https://vibecodingcamp.com/games/2026-05/${slug}.html"
+  echo "  https://vibecodingcamp.vercel.app/games/2026-05/${slug}.html"
 done

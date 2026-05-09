@@ -9,7 +9,7 @@
 #   bash scripts/commit-game.sh flo-lima /tmp/flo-game.html
 #
 # After running, the game is live at:
-#   https://vibecodingcamp.com/games/2026-05/<slug>.html
+#   https://vibecodingcamp.vercel.app/games/2026-05/<slug>.html
 #
 # Available slugs: domingo-matte, crescente-matte, clemente-duran,
 #   leon-jaramillo, colomba-tauber, anibal-monckeberg, july-monckeberg,
@@ -49,4 +49,4 @@ git push origin main
 
 echo ""
 echo "✅ Live in 30s at:"
-echo "   https://vibecodingcamp.com/${dest}"
+echo "   https://vibecodingcamp.vercel.app/${dest}"
