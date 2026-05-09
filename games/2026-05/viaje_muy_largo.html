@@ -1,0 +1,508 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+#wrap{background:#03030d;border-radius:12px;overflow:hidden;font-family:var(--font-sans);user-select:none}
+canvas{display:block;width:100%;height:430px;cursor:pointer}
+#hud{display:flex;justify-content:space-between;padding:7px 14px;background:#07071a;border-bottom:0.5px solid #1a1a40}
+.hbox{display:flex;flex-direction:column;align-items:center}
+.hl{color:#8888cc;font-size:10px}.hv{color:#fff;font-weight:500;font-size:14px}
+#pbar{display:flex;gap:2px;padding:4px 10px;background:#07071a;border-bottom:0.5px solid #1a1a40;align-items:center;overflow-x:auto;scrollbar-width:none}
+.ps{font-size:9px;color:#444;white-space:nowrap;padding:2px 5px;border-radius:20px;border:1px solid #222}
+.ps.done{color:#5DCAA5;border-color:#5DCAA5}.ps.cur{color:#fff;border-color:#7F77DD;background:#14143a}
+#msgbar{text-align:center;padding:5px;background:#07071a;border-top:0.5px solid #1a1a40;color:#c8c8ff;font-size:12px}
+#shop{background:#07071a;border-top:0.5px solid #1a1a40;padding:7px 12px;max-height:150px;overflow-y:auto}
+#shop-lbl{color:#8888cc;font-size:10px;margin-bottom:5px;display:flex;justify-content:space-between}
+#shop-lbl span{color:#5DCAA5;font-size:9px}
+#skns{display:flex;gap:4px;flex-wrap:wrap}
+.sb{background:#0d0d28;border:1.5px solid #2a2a55;border-radius:7px;padding:4px 7px;cursor:pointer;color:#aaaaee;font-size:9px;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:52px}
+.sb.owned{border-color:#5DCAA5;color:#5DCAA5}.sb.active{border-color:#7F77DD;background:#14143a;color:#c8c4ff}
+.sb:disabled{opacity:.3;cursor:default}.sc{font-size:8px;color:#555}
+#ctrl{text-align:center;padding:4px;color:#444;font-size:10px;background:#050512}
+#gview{position:relative}
+#bigmsg{position:absolute;top:32%;left:50%;transform:translate(-50%,-50%);color:#fff;padding:10px 20px;border-radius:10px;font-size:15px;font-weight:500;display:none;pointer-events:none;text-align:center;line-height:1.6;white-space:nowrap}
+#diff{position:absolute;top:8px;right:10px;color:#ff8844;font-size:11px;font-weight:500;pointer-events:none}
+#timer{position:absolute;top:8px;left:10px;color:#aaaaff;font-size:11px;font-weight:500;pointer-events:none}
+#pbar2{position:absolute;bottom:8px;left:10px;right:10px;height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden}
+#pfill{height:100%;background:linear-gradient(90deg,#7F77DD,#ff6600);width:0%;border-radius:3px;transition:width .1s}
+</style>
+<h2 class="sr-only">Viaje espacial muy largo con planetas grandes y visibles.</h2>
+<div id="wrap">
+  <div id="hud">
+    <div class="hbox"><div class="hl">VISITADOS</div><div class="hv" id="hs">0</div></div>
+    <div class="hbox"><div class="hl">MONEDAS</div><div class="hv" id="hc">0 ✦</div></div>
+    <div class="hbox"><div class="hl">EN</div><div class="hv" id="hd">Luna</div></div>
+  </div>
+  <div id="pbar"></div>
+  <div id="gview">
+    <canvas id="c"></canvas>
+    <div id="bigmsg"></div>
+    <div id="diff"></div>
+    <div id="timer"></div>
+    <div id="pbar2"><div id="pfill"></div></div>
+  </div>
+  <div id="msgbar">🌙 Estas en la Luna — toca para despegar!</div>
+  <div id="shop">
+    <div id="shop-lbl">100 SKINS <span id="oc">1/100</span></div>
+    <div id="skns"></div>
+  </div>
+  <div id="ctrl">Toca o ESPACIO — viaje LARGUISIMO entre planetas! 🚀</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const SKINS=[
+  {id:'s0',name:'Blanco',bc:0xeeeeff,wc:0x7F77DD,cost:0,emoji:'🚀'},
+  {id:'s1',name:'Rojo',bc:0xff2222,wc:0xaa0000,cost:150,emoji:'🔴'},
+  {id:'s2',name:'Azul',bc:0x2244ff,wc:0x0022aa,cost:150,emoji:'🔵'},
+  {id:'s3',name:'Verde',bc:0x22cc44,wc:0x006622,cost:150,emoji:'🟢'},
+  {id:'s4',name:'Amarillo',bc:0xffee22,wc:0xbb8800,cost:150,emoji:'🟡'},
+  {id:'s5',name:'Naranja',bc:0xff7700,wc:0xcc4400,cost:200,emoji:'🟠'},
+  {id:'s6',name:'Morado',bc:0x9922cc,wc:0x550088,cost:200,emoji:'🟣'},
+  {id:'s7',name:'Rosa',bc:0xff66aa,wc:0xcc2277,cost:200,emoji:'🌸'},
+  {id:'s8',name:'Gris',bc:0x999999,wc:0x555555,cost:200,emoji:'⚫'},
+  {id:'s9',name:'Negro',bc:0x111122,wc:0x333355,cost:250,emoji:'🌑'},
+  {id:'s10',name:'Fuego',bc:0xff4400,wc:0xff8800,cost:400,emoji:'🔥'},
+  {id:'s11',name:'Hielo',bc:0x88ddff,wc:0x44aaff,cost:400,emoji:'❄️'},
+  {id:'s12',name:'Rayo',bc:0xffff00,wc:0xff9900,cost:400,emoji:'⚡'},
+  {id:'s13',name:'Agua',bc:0x0099ff,wc:0x0055cc,cost:400,emoji:'💧'},
+  {id:'s14',name:'Tierra E',bc:0x886633,wc:0x554422,cost:420,emoji:'🌍'},
+  {id:'s15',name:'Viento',bc:0xaaffee,wc:0x44ccbb,cost:420,emoji:'💨'},
+  {id:'s16',name:'Lava',bc:0xff2200,wc:0x880000,cost:450,emoji:'🌋'},
+  {id:'s17',name:'Trueno',bc:0x6600ff,wc:0x220088,cost:450,emoji:'🌩️'},
+  {id:'s18',name:'Tormenta',bc:0x445566,wc:0x223344,cost:480,emoji:'⛈️'},
+  {id:'s19',name:'Niebla',bc:0xaabbcc,wc:0x778899,cost:500,emoji:'🌫️'},
+  {id:'s20',name:'Galaxia',bc:0x220066,wc:0x8800ff,cost:600,emoji:'🌌'},
+  {id:'s21',name:'Nebulosa',bc:0xff00aa,wc:0x660044,cost:600,emoji:'✨'},
+  {id:'s22',name:'Cometa',bc:0x00ffff,wc:0x0088aa,cost:650,emoji:'☄️'},
+  {id:'s23',name:'Estrella',bc:0xffffaa,wc:0xffcc00,cost:650,emoji:'⭐'},
+  {id:'s24',name:'LunaS',bc:0xddddaa,wc:0x888855,cost:700,emoji:'🌙'},
+  {id:'s25',name:'Sol',bc:0xff9900,wc:0xff5500,cost:700,emoji:'☀️'},
+  {id:'s26',name:'SaturnoS',bc:0xddcc88,wc:0xaa9944,cost:750,emoji:'🪐'},
+  {id:'s27',name:'Agujero',bc:0x000000,wc:0x330033,cost:800,emoji:'🕳️'},
+  {id:'s28',name:'Cosmos',bc:0x110033,wc:0x6600cc,cost:800,emoji:'🔭'},
+  {id:'s29',name:'Pulsar',bc:0x00ffaa,wc:0x007755,cost:850,emoji:'💫'},
+  {id:'s30',name:'Tigre',bc:0xff8800,wc:0x000000,cost:900,emoji:'🐯'},
+  {id:'s31',name:'Leopardo',bc:0xffcc44,wc:0x553300,cost:900,emoji:'🐆'},
+  {id:'s32',name:'Tiburon',bc:0x4477aa,wc:0x224466,cost:950,emoji:'🦈'},
+  {id:'s33',name:'Aguila',bc:0x885533,wc:0x442211,cost:950,emoji:'🦅'},
+  {id:'s34',name:'Dragon',bc:0xff0044,wc:0x880022,cost:1000,emoji:'🐉'},
+  {id:'s35',name:'Lobo',bc:0x778899,wc:0x445566,cost:1000,emoji:'🐺'},
+  {id:'s36',name:'Leon',bc:0xffaa33,wc:0xcc6600,cost:1050,emoji:'🦁'},
+  {id:'s37',name:'Serpiente',bc:0x44aa44,wc:0x226622,cost:1050,emoji:'🐍'},
+  {id:'s38',name:'Escorpion',bc:0xcc4400,wc:0x660000,cost:1100,emoji:'🦂'},
+  {id:'s39',name:'Pantera',bc:0x111111,wc:0x440044,cost:1100,emoji:'🐾'},
+  {id:'s40',name:'Pizza',bc:0xff9944,wc:0xcc6600,cost:500,emoji:'🍕'},
+  {id:'s41',name:'Helado',bc:0xffccee,wc:0xff88aa,cost:500,emoji:'🍦'},
+  {id:'s42',name:'Sandia',bc:0xff3355,wc:0x22aa22,cost:520,emoji:'🍉'},
+  {id:'s43',name:'Limon',bc:0xffff44,wc:0xaaaa00,cost:520,emoji:'🍋'},
+  {id:'s44',name:'Uva',bc:0x9933cc,wc:0x551188,cost:550,emoji:'🍇'},
+  {id:'s45',name:'Fresa',bc:0xff3355,wc:0xaa0022,cost:550,emoji:'🍓'},
+  {id:'s46',name:'Mango',bc:0xff8833,wc:0xcc5500,cost:580,emoji:'🥭'},
+  {id:'s47',name:'Coco',bc:0xccbbaa,wc:0x887766,cost:580,emoji:'🥥'},
+  {id:'s48',name:'NaranjaF',bc:0xff7700,wc:0xcc4400,cost:600,emoji:'🍊'},
+  {id:'s49',name:'Durazno',bc:0xffaa88,wc:0xcc6644,cost:600,emoji:'🍑'},
+  {id:'s50',name:'Oro',bc:0xffcc00,wc:0xff9900,cost:1200,emoji:'🏅'},
+  {id:'s51',name:'Plata',bc:0xcccccc,wc:0x888888,cost:1200,emoji:'🥈'},
+  {id:'s52',name:'Bronce',bc:0xcc8844,wc:0x885522,cost:1200,emoji:'🥉'},
+  {id:'s53',name:'Diamante',bc:0xaaeeff,wc:0x44aacc,cost:1500,emoji:'💎'},
+  {id:'s54',name:'Rubin',bc:0xff0044,wc:0xaa0022,cost:1500,emoji:'❤️'},
+  {id:'s55',name:'Esmeralda',bc:0x00cc66,wc:0x006633,cost:1500,emoji:'💚'},
+  {id:'s56',name:'Zafiro',bc:0x0044ff,wc:0x002288,cost:1500,emoji:'💙'},
+  {id:'s57',name:'Obsidiana',bc:0x110022,wc:0x440066,cost:1800,emoji:'⬛'},
+  {id:'s58',name:'Titanio',bc:0x778899,wc:0x334455,cost:1800,emoji:'🔩'},
+  {id:'s59',name:'Cristal',bc:0xddffff,wc:0x88cccc,cost:2000,emoji:'🔮'},
+  {id:'s60',name:'Arcoiris',bc:0xff44aa,wc:0x44ffaa,cost:2000,emoji:'🌈'},
+  {id:'s61',name:'Camuflaje',bc:0x556644,wc:0x334422,cost:2000,emoji:'🎭'},
+  {id:'s62',name:'Alien',bc:0x44ff88,wc:0x00cc44,cost:2200,emoji:'👽'},
+  {id:'s63',name:'Robot',bc:0x8899aa,wc:0x445566,cost:2200,emoji:'🤖'},
+  {id:'s64',name:'Fantasma',bc:0xeeeeff,wc:0xaaaacc,cost:2500,emoji:'👻'},
+  {id:'s65',name:'Ninja',bc:0x111111,wc:0x222222,cost:2500,emoji:'🥷'},
+  {id:'s66',name:'Vikingo',bc:0x886633,wc:0x554411,cost:2800,emoji:'⚔️'},
+  {id:'s67',name:'Pirata',bc:0x222222,wc:0xcc0000,cost:2800,emoji:'🏴‍☠️'},
+  {id:'s68',name:'Mago',bc:0x440088,wc:0x220044,cost:3000,emoji:'🧙'},
+  {id:'s69',name:'Samurai',bc:0xcc0000,wc:0x880000,cost:3000,emoji:'⛩️'},
+  {id:'s70',name:'Aurora',bc:0x00ffcc,wc:0x0088aa,cost:3500,emoji:'🌅'},
+  {id:'s71',name:'Volcan',bc:0xff3300,wc:0x990000,cost:3500,emoji:'🌋'},
+  {id:'s72',name:'Tsunami',bc:0x0055ff,wc:0x003399,cost:3500,emoji:'🌊'},
+  {id:'s73',name:'Tornado',bc:0x668899,wc:0x334455,cost:3500,emoji:'🌪️'},
+  {id:'s74',name:'Supernova',bc:0xff8800,wc:0xff0000,cost:4000,emoji:'💥'},
+  {id:'s75',name:'Quasar',bc:0xff00ff,wc:0x880088,cost:4000,emoji:'🔆'},
+  {id:'s76',name:'PulsarX',bc:0x00ffff,wc:0x008888,cost:4500,emoji:'📡'},
+  {id:'s77',name:'Antimat',bc:0x000000,wc:0xff00ff,cost:4500,emoji:'⚛️'},
+  {id:'s78',name:'Foton',bc:0xffffff,wc:0xffff00,cost:5000,emoji:'🌟'},
+  {id:'s79',name:'Cuasar',bc:0xff44ff,wc:0xaa00aa,cost:5000,emoji:'🔭'},
+  {id:'s80',name:'Fenix',bc:0xff6600,wc:0xff0000,cost:6000,emoji:'🦅'},
+  {id:'s81',name:'Kraken',bc:0x004466,wc:0x002233,cost:6000,emoji:'🦑'},
+  {id:'s82',name:'Unicornio',bc:0xff88ff,wc:0xcc44cc,cost:6500,emoji:'🦄'},
+  {id:'s83',name:'Golem',bc:0x886644,wc:0x553322,cost:7000,emoji:'🗿'},
+  {id:'s84',name:'Espectro',bc:0x22ffaa,wc:0x006644,cost:7000,emoji:'👁️'},
+  {id:'s85',name:'Titan',bc:0x8844aa,wc:0x441166,cost:7500,emoji:'⚡'},
+  {id:'s86',name:'Oraculo',bc:0xffdd00,wc:0xaa8800,cost:8000,emoji:'🔯'},
+  {id:'s87',name:'Leviatan',bc:0x003366,wc:0x001133,cost:8000,emoji:'🐋'},
+  {id:'s88',name:'Quimera',bc:0xcc4488,wc:0x882244,cost:9000,emoji:'🦋'},
+  {id:'s89',name:'Hidra',bc:0x226644,wc:0x113322,cost:9000,emoji:'🐲'},
+  {id:'s90',name:'Infinito',bc:0x8800ff,wc:0xff00ff,cost:10000,emoji:'♾️'},
+  {id:'s91',name:'Caos',bc:0x000000,wc:0xff0000,cost:12000,emoji:'💀'},
+  {id:'s92',name:'CosmosX',bc:0x000022,wc:0x0000ff,cost:14000,emoji:'🌐'},
+  {id:'s93',name:'BigBang',bc:0xffffff,wc:0xff8800,cost:16000,emoji:'💫'},
+  {id:'s94',name:'Vacio',bc:0x000000,wc:0x001111,cost:18000,emoji:'🌑'},
+  {id:'s95',name:'Creacion',bc:0xffeedd,wc:0xff9966,cost:20000,emoji:'🌈'},
+  {id:'s96',name:'Destino',bc:0x660022,wc:0xff0044,cost:25000,emoji:'⚔️'},
+  {id:'s97',name:'Eternidad',bc:0x002266,wc:0x0066ff,cost:30000,emoji:'🔱'},
+  {id:'s98',name:'Omnipoder',bc:0xffff00,wc:0xff8800,cost:50000,emoji:'👑'},
+  {id:'s99',name:'Leyenda',bc:0xff00ff,wc:0xffff00,cost:99999,emoji:'🏆'},
+];
+
+const GALAXIES=[
+  {name:'Galaxia 1',color:0x7F77DD,bg:0x03020f,pl:['Kepler','Proxima','Atrox','Lyra','Vortex','Nebula'],pc:[0x9b77cc,0xcc77bb,0x7799dd,0xaa55cc,0x6655bb,0xcc99ff],ps:[1.1,0.8,1.4,1.0,1.2,0.9]},
+  {name:'Galaxia 2',color:0x1D9E75,bg:0x01080a,pl:['VegaII','Sirion','Nyx','Elysia','Zephyr','OrionX'],pc:[0x3dcca0,0xaacc44,0x44ccaa,0x55dd66,0x33bb88,0x88ddbb],ps:[1.0,1.3,0.9,1.1,1.2,0.8]},
+  {name:'Galaxia 3',color:0xD85A30,bg:0x0a0200,pl:['Vulcan','Ignis','Pyrex','Ember','Scorch','Solaris'],pc:[0xcc5533,0xdd8833,0xcc3333,0xff6622,0xee4411,0xffaa33],ps:[1.2,1.0,0.8,1.1,1.3,0.9]},
+  {name:'Galaxia 4',color:0xE4D191,bg:0x0a0900,pl:['Aurum','Helios','Solus','Gilded','Radiant','Luxor'],pc:[0xffcc44,0xeeaa22,0xffdd66,0xccaa33,0xffe066,0xddbb44],ps:[1.0,1.2,0.9,1.1,0.8,1.3]},
+  {name:'Galaxia 5',color:0xE24B4A,bg:0x0a0000,pl:['Crimson','Scarlet','Rubeus','Sangre','Ares','Fury'],pc:[0xdd2233,0xff3344,0xcc1122,0xee4455,0xff2244,0xdd3355],ps:[1.1,0.9,1.3,1.0,0.8,1.2]},
+  {name:'Galaxia 6',color:0x7de8e8,bg:0x00080a,pl:['Glacius','Polar','Frostyx','Cryos','Arctis','Blizzar'],pc:[0x88eeff,0x55ccdd,0x44bbcc,0x77ddee,0x99eeff,0x55aacc],ps:[1.0,1.2,0.9,1.1,0.8,1.3]},
+  {name:'Galaxia 7',color:0xED93B1,bg:0x0a0005,pl:['Rosea','Sakura','Blossom','Petal','Floris','Amora'],pc:[0xff88aa,0xffaacc,0xee77bb,0xff99bb,0xdd66aa,0xff88cc],ps:[1.1,0.9,1.2,1.0,0.8,1.3]},
+  {name:'Galaxia 8',color:0x97C459,bg:0x020800,pl:['Verdant','Jungle','Sylvan','Fern','Mossy','Gaia'],pc:[0x88dd44,0x66bb22,0x99cc55,0x77cc33,0xaadd66,0x55aa22],ps:[1.0,1.2,0.9,1.1,0.8,1.3]},
+];
+const MP=[
+  {color:0x330033,size:1.2,orbit:3.8,speed:0.008,tilt:0.2},
+  {color:0x001a00,size:0.8,orbit:5.0,speed:0.006,tilt:0.5},
+  {color:0x1a0000,size:1.5,orbit:6.5,speed:0.004,tilt:0.8},
+  {color:0x000d1a,size:1.0,orbit:8.0,speed:0.003,tilt:1.1},
+  {color:0x0d000d,size:0.7,orbit:4.5,speed:0.011,tilt:0.3},
+  {color:0x1a1a00,size:1.3,orbit:7.0,speed:0.005,tilt:0.9},
+];
+const STOPS=[];
+[{type:'planet',name:'Luna',color:0xaaaaaa,size:1.8,bg:0x06060f,craters:true},
+ {type:'planet',name:'Mercurio',color:0xb5651d,size:0.9,bg:0x080604},
+ {type:'planet',name:'Venus',color:0xe8c87a,size:1.2,bg:0x0d0900},
+ {type:'planet',name:'Tierra',color:0x2e86ab,size:1.3,bg:0x030810,land:true},
+ {type:'planet',name:'Marte',color:0xc1440e,size:1.0,bg:0x090301},
+ {type:'planet',name:'Jupiter',color:0xc88b3a,size:2.2,bg:0x080600,bands:true},
+ {type:'planet',name:'Saturno',color:0xe4d191,size:2.0,bg:0x080700,ring:true},
+ {type:'planet',name:'Urano',color:0x7de8e8,size:1.5,bg:0x020b0b},
+ {type:'planet',name:'Neptuno',color:0x3f54ba,size:1.5,bg:0x02020d},
+].forEach(s=>STOPS.push(s));
+GALAXIES.forEach((g,gi)=>{
+  STOPS.push({type:'galaxy_enter',name:g.name,color:g.color,bg:g.bg});
+  g.pl.forEach((p,pi)=>STOPS.push({type:'planet',name:p,color:g.pc[pi],size:g.ps[pi],bg:g.bg,galaxy:gi+1,galColor:g.color}));
+});
+STOPS.push({type:'blackhole_enter',name:'Hoyo Negro',bg:0x000000});
+MP.forEach((m,i)=>STOPS.push({type:'mystery',name:'Misterioso '+(i+1),color:m.color,size:m.size,bg:0x000000,mystIdx:i}));
+STOPS.push({type:'blackhole_core',name:'Nucleo Final',bg:0x000000});
+
+// 🔑 CLAVE: viaje largo = muchas fases con scroll continuo de estrellas
+// Planetas cercanos al inicio/fin para verlos bien
+// Viaje: despegue (2s) + viaje largo (12s) + llegada (2s) = 16s total!
+// Y cada parada mas larga que la anterior
+
+function getFlyDur(i){ return 12 + i * 1.2; } // 12s primer viaje, crece 1.2s por parada!
+
+let idx=0,coins=0,score=0,phase='idle',animT=0,gT=0,canTap=true;
+let activeSkin='s0',ownedSkins=new Set(['s0']);
+
+// 3 fases del vuelo: despegue, viaje largo, llegada
+const PHASE_LAUNCH=2.0, PHASE_ARRIVE=2.0;
+
+const canvas=document.getElementById('c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+const scene=new THREE.Scene();
+const cam=new THREE.PerspectiveCamera(55,1,0.1,300);
+cam.position.set(0,0,14);cam.lookAt(0,0,0);
+
+function resize(){const w=canvas.parentElement.offsetWidth,h=430;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();}
+resize();window.addEventListener('resize',resize);
+scene.add(new THREE.AmbientLight(0x556677,1.8));
+const dl=new THREE.DirectionalLight(0xfffbe0,2.2);dl.position.set(6,8,6);scene.add(dl);
+const pl=new THREE.PointLight(0x6644ff,2,80);scene.add(pl);
+
+const sg=new THREE.BufferGeometry();const sv=new Float32Array(1000*3);
+for(let i=0;i<1000;i++){sv[i*3]=(Math.random()-.5)*140;sv[i*3+1]=(Math.random()-.5)*600;sv[i*3+2]=(Math.random()-.5)*30-8;}
+sg.setAttribute('position',new THREE.BufferAttribute(sv,3));
+const starField=new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:.09,sizeAttenuation:true}));
+scene.add(starField);
+
+// Posiciones: planeta actual abajo (-5), proximo muy arriba (aparece durante llegada)
+const BOT_Y=-5, TOP_Y=5;
+
+function mkPlanet(s){
+  const g=new THREE.Group();
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(s.size,32,24),new THREE.MeshPhongMaterial({color:s.color,shininess:60})));
+  if(s.ring){const r=new THREE.Mesh(new THREE.TorusGeometry(s.size*1.7,.2,8,60),new THREE.MeshPhongMaterial({color:0xd4b96a,transparent:true,opacity:.85,side:THREE.DoubleSide}));r.rotation.x=Math.PI/2+.25;g.add(r);}
+  if(s.bands){const bm=new THREE.MeshPhongMaterial({color:0x9a5a20,transparent:true,opacity:.45,side:THREE.DoubleSide});[-1,-.3,.3,1].forEach(y=>{const b=new THREE.Mesh(new THREE.TorusGeometry(s.size*.92,.14,4,40),bm);b.rotation.x=Math.PI/2;b.position.y=y*.38;g.add(b);});}
+  if(s.land){const lm=new THREE.MeshPhongMaterial({color:0x2a8a2a});for(let i=0;i<4;i++){const c=new THREE.Mesh(new THREE.SphereGeometry(.25+Math.random()*.2,8,6),lm);const a=Math.random()*Math.PI*2,b=(Math.random()-.5)*.9;c.position.set(Math.cos(a)*Math.cos(b)*s.size,Math.sin(b)*s.size,Math.sin(a)*Math.cos(b)*s.size);g.add(c);}}
+  if(s.craters){const cm=new THREE.MeshPhongMaterial({color:0x777777});for(let i=0;i<6;i++){const c=new THREE.Mesh(new THREE.SphereGeometry(.12+Math.random()*.12,8,6),cm);const a=Math.random()*Math.PI*2,b=(Math.random()-.5)*.85;c.position.set(Math.cos(a)*Math.cos(b)*s.size,Math.sin(b)*s.size,Math.sin(a)*Math.cos(b)*s.size);g.add(c);}}
+  if(s.galaxy){const gm=new THREE.MeshPhongMaterial({color:s.galColor||s.color,transparent:true,opacity:.35,side:THREE.DoubleSide});const gr=new THREE.Mesh(new THREE.TorusGeometry(s.size*1.45,.09,4,40),gm);gr.rotation.x=Math.PI/3;g.add(gr);}
+  if(s.type==='mystery'){g.add(new THREE.Mesh(new THREE.SphereGeometry(s.size*1.5,16,12),new THREE.MeshPhongMaterial({color:0x220022,transparent:true,opacity:.5,side:THREE.DoubleSide})));}
+  return g;
+}
+function mkGalaxyEnter(s){
+  const g=new THREE.Group();const col=new THREE.Color(s.color);
+  const geo=new THREE.BufferGeometry();const pos=new Float32Array(800*3);
+  for(let i=0;i<800;i++){const a=Math.random()*Math.PI*2,r=Math.pow(Math.random(),.5)*4.0;pos[i*3]=Math.cos(a+r*.6)*r;pos[i*3+1]=(Math.random()-.5)*.7;pos[i*3+2]=Math.sin(a+r*.6)*r;}
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  g.add(new THREE.Points(geo,new THREE.PointsMaterial({color:col,size:.13,sizeAttenuation:true})));
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(3.0,.2,8,60),new THREE.MeshPhongMaterial({color:s.color,emissive:s.color,emissiveIntensity:.6,transparent:true,opacity:.9}));
+  ring.rotation.x=Math.PI/2;g.add(ring);g.userData.ring=ring;
+  for(let i=0;i<4;i++){const orb=new THREE.Mesh(new THREE.SphereGeometry(.25,8,6),new THREE.MeshPhongMaterial({color:s.color,emissive:s.color,emissiveIntensity:.4}));g.add(orb);g.userData['orb'+i]=orb;}
+  g.userData.orbAngle=0;return g;
+}
+function mkBlackholeBase(){
+  const g=new THREE.Group();
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(1.8,32,20),new THREE.MeshPhongMaterial({color:0x000000})));
+  [0xff6600,0xff3300,0xffaa00,0x9900ff].forEach((c,i)=>{const r=new THREE.Mesh(new THREE.TorusGeometry(2.6+i*.5,.14,8,80),new THREE.MeshPhongMaterial({color:c,emissive:c,emissiveIntensity:1.6,transparent:true,opacity:.9-i*.15}));r.rotation.x=Math.PI/2+(i*.08);g.add(r);g.userData['disk'+i]=r;});
+  const gr=new THREE.Mesh(new THREE.TorusGeometry(4.5,.1,8,100),new THREE.MeshPhongMaterial({color:0x9933ff,emissive:0x6600ff,emissiveIntensity:2.5,transparent:true,opacity:.8}));
+  gr.rotation.x=Math.PI/2;g.add(gr);g.userData.glowring=gr;
+  MP.forEach((m,i)=>{const orb=new THREE.Mesh(new THREE.SphereGeometry(m.size,16,12),new THREE.MeshPhongMaterial({color:m.color}));const fog=new THREE.Mesh(new THREE.SphereGeometry(m.size*1.5,8,6),new THREE.MeshPhongMaterial({color:0x220033,transparent:true,opacity:.5,side:THREE.DoubleSide}));orb.add(fog);g.add(orb);g.userData['mp'+i]=orb;g.userData['mpA'+i]=i*(Math.PI*2/MP.length);});
+  return g;
+}
+let rocketMesh=null;
+function mkRocket(sk){
+  if(rocketMesh)scene.remove(rocketMesh);
+  const s=SKINS.find(x=>x.id===sk)||SKINS[0];
+  const g=new THREE.Group();
+  const bm=new THREE.MeshPhongMaterial({color:s.bc,shininess:120});
+  g.add(new THREE.Mesh(new THREE.CylinderGeometry(.2,.27,1.2,16),bm));
+  const n=new THREE.Mesh(new THREE.ConeGeometry(.2,.5,16),bm);n.position.y=.85;g.add(n);
+  const wm=new THREE.MeshPhongMaterial({color:s.wc});
+  [-1,1].forEach(x=>{const w=new THREE.Mesh(new THREE.BoxGeometry(.06,.38,.34),wm);w.position.set(x*.25,-.42,0);w.rotation.z=x*.25;g.add(w);});
+  const fl=new THREE.Mesh(new THREE.ConeGeometry(.13,.5,12),new THREE.MeshPhongMaterial({color:0xff6600,emissive:0xff3300,emissiveIntensity:1.2}));
+  fl.position.y=-.95;fl.rotation.z=Math.PI;g.add(fl);g.userData.fl=fl;
+  const fl2=new THREE.Mesh(new THREE.ConeGeometry(.09,.9,8),new THREE.MeshPhongMaterial({color:0xffff00,emissive:0xffaa00,emissiveIntensity:1.8,transparent:true,opacity:.8}));
+  fl2.position.y=-1.55;fl2.rotation.z=Math.PI;g.add(fl2);g.userData.fl2=fl2;
+  rocketMesh=g;scene.add(g);return g;
+}
+let rocket=mkRocket('s0');
+let botMesh=null,topMesh=null;
+
+function stopSz(s){if(s.type==='planet'||s.type==='mystery')return s.size;if(s.type==='galaxy_enter')return 3.0;return 2.2;}
+function rocketOn(py,s){return py+stopSz(s)+0.7;}
+function mkStop(s){if(s.type==='planet'||s.type==='mystery')return mkPlanet(s);if(s.type==='galaxy_enter')return mkGalaxyEnter(s);return mkBlackholeBase();}
+
+function applyBg(s){
+  scene.background=new THREE.Color(s.bg);
+  scene.fog=new THREE.Fog(s.bg,50,120);
+  if(s.type==='blackhole_enter'||s.type==='blackhole_core'||s.type==='mystery'){pl.color.set(0x9933ff);pl.intensity=4;}
+  else if(s.type==='galaxy_enter'||s.galaxy){pl.color.set(new THREE.Color(s.color||s.galColor||0x7F77DD));pl.intensity=2.5;}
+  else{pl.color.set(0x6644ff);pl.intensity=2;}
+}
+
+function buildScene(){
+  if(botMesh){scene.remove(botMesh);botMesh=null;}
+  if(topMesh){scene.remove(topMesh);topMesh=null;}
+  const s=STOPS[idx];applyBg(s);
+  botMesh=mkStop(s);botMesh.position.set(0,BOT_Y,0);scene.add(botMesh);
+  if(idx+1<STOPS.length){
+    topMesh=mkStop(STOPS[idx+1]);
+    topMesh.position.set(0,TOP_Y,0);
+    topMesh.visible=false; // oculto hasta la llegada
+    scene.add(topMesh);
+  }
+  rocket.position.set(0,rocketOn(BOT_Y,STOPS[idx]),0);rocket.rotation.set(0,0,0);
+  cam.position.set(0,0,14);cam.lookAt(0,0,0);
+  phase='idle';animT=0;canTap=true;updateAll();
+}
+
+function lerp(a,b,t){return a+(b-a)*t;}
+function eI(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
+function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
+
+function getDiff(){if(idx<9)return '⭐ Facil';if(idx<18)return '⭐⭐ Normal';if(idx<40)return '⭐⭐⭐ Dificil';if(idx<60)return '💀 Muy dificil';return '☠️ EXTREMO';}
+function fmtTime(s){if(s<60)return Math.ceil(s)+'s';return Math.floor(s/60)+'m '+Math.ceil(s%60)+'s';}
+
+function updateAll(){
+  document.getElementById('hs').textContent=score;
+  document.getElementById('hc').textContent=Math.round(coins).toLocaleString()+' ✦';
+  document.getElementById('hd').textContent=STOPS[idx].name;
+  document.getElementById('diff').textContent=getDiff();
+  document.getElementById('oc').textContent=ownedSkins.size+'/100';
+  const cur=STOPS[idx],next=STOPS[idx+1];
+  let msg='';
+  if(idx===STOPS.length-1)msg='🏆 CONQUISTASTE EL UNIVERSO ANIBAL!';
+  else if(cur.name==='Luna')msg='🌙 En la Luna — toca! Viaje de '+fmtTime(getFlyDur(idx))+' 🚀';
+  else if(cur.type==='blackhole_core')msg='☠️ NUCLEO del Hoyo Negro!';
+  else if(cur.type==='blackhole_enter')msg='🕳️ Hoyo Negro!';
+  else if(cur.type==='mystery')msg='👾 '+cur.name+' — toca! Siguiente: '+fmtTime(getFlyDur(idx));
+  else if(cur.type==='galaxy_enter')msg='🌀 '+cur.name+' — toca! Viaje: '+fmtTime(getFlyDur(idx));
+  else if(cur.galaxy)msg='🌟 '+cur.name+' — viaje a '+(next?next.name:'')+': '+fmtTime(getFlyDur(idx));
+  else msg='🪐 En '+cur.name+' — viaje a '+(next?next.name:'')+': '+fmtTime(getFlyDur(idx));
+  document.getElementById('msgbar').textContent=msg;
+  const bar=document.getElementById('pbar');bar.innerHTML='';
+  STOPS.forEach((s,i)=>{
+    const el=document.createElement('span');
+    el.className='ps'+(i<idx?' done':i===idx?' cur':'');
+    const icon=s.type==='blackhole_core'?'☠️':s.type==='blackhole_enter'?'🕳️':s.type==='mystery'?'👾':s.type==='galaxy_enter'?'🌀':'';
+    el.textContent=(i<idx?'✓ ':icon)+s.name;
+    bar.appendChild(el);
+    if(i<STOPS.length-1){const sep=document.createElement('span');sep.style.cssText='color:#333;font-size:9px';sep.textContent='›';bar.appendChild(sep);}
+  });
+  buildShop();
+}
+function buildShop(){
+  const cont=document.getElementById('skns');cont.innerHTML='';
+  SKINS.forEach(sk=>{
+    const btn=document.createElement('button');
+    const owned=ownedSkins.has(sk.id),active=activeSkin===sk.id;
+    btn.className='sb'+(active?' active':owned?' owned':'');
+    const cs=sk.cost===0?'Gratis':owned?'Equipar':'✦'+sk.cost.toLocaleString();
+    btn.innerHTML=`<span style="font-size:15px">${sk.emoji}</span><span>${sk.name}</span><span class="sc">${cs}</span>`;
+    if(!owned&&coins<sk.cost)btn.disabled=true;
+    btn.addEventListener('click',()=>{
+      if(owned){activeSkin=sk.id;rocket=mkRocket(sk.id);rocket.position.set(0,rocketOn(BOT_Y,STOPS[idx]),0);}
+      else if(coins>=sk.cost){coins-=sk.cost;ownedSkins.add(sk.id);activeSkin=sk.id;rocket=mkRocket(sk.id);rocket.position.set(0,rocketOn(BOT_Y,STOPS[idx]),0);updateAll();}
+      buildShop();
+    });
+    cont.appendChild(btn);
+  });
+}
+function showBig(txt,col){
+  const el=document.getElementById('bigmsg');
+  el.innerHTML=txt;el.style.background=col||'rgba(29,158,117,.95)';el.style.display='block';
+  clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',2000);
+}
+function tap(){if(!canTap||phase!=='idle'||idx>=STOPS.length-1)return;canTap=false;phase='flying';animT=0;}
+canvas.addEventListener('pointerdown',tap);
+document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();tap();}});
+buildScene();
+
+const clock=new THREE.Clock();
+let starScrollY=0;
+
+function animMesh(m){
+  if(!m)return;
+  m.rotation.y+=.004;
+  if(m.userData.ring)m.userData.ring.rotation.z+=.007;
+  [0,1,2,3].forEach(i=>{if(m.userData['disk'+i])m.userData['disk'+i].rotation.z+=.018+i*.009;});
+  if(m.userData.glowring)m.userData.glowring.rotation.z+=.005;
+  if(m.userData.orb0!==undefined){m.userData.orbAngle=(m.userData.orbAngle||0)+.02;[0,1,2,3].forEach(i=>{const a=m.userData.orbAngle+i*(Math.PI*2/4);if(m.userData['orb'+i])m.userData['orb'+i].position.set(Math.cos(a)*3.8,0,Math.sin(a)*3.8);});}
+  MP.forEach((mp,i)=>{if(m.userData['mp'+i]){m.userData['mpA'+i]=(m.userData['mpA'+i]||0)+mp.speed;const a=m.userData['mpA'+i];m.userData['mp'+i].position.set(Math.cos(a)*mp.orbit,Math.sin(a*mp.tilt)*1.5,Math.sin(a)*mp.orbit);}});
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(clock.getDelta(),.05);
+  gT+=dt;
+  animMesh(botMesh);animMesh(topMesh);
+
+  if(phase==='idle'){
+    animT=0;
+    const s=STOPS[idx];
+    rocket.position.y=rocketOn(BOT_Y,s)+Math.sin(gT*1.5)*.06;
+    if(rocket.userData.fl)rocket.userData.fl.scale.y=.35+Math.sin(gT*6)*.08;
+    if(rocket.userData.fl2)rocket.userData.fl2.scale.y=.2;
+    // planetas visibles cerca
+    if(botMesh){botMesh.position.y+=(BOT_Y-botMesh.position.y)*.1;}
+    if(topMesh){topMesh.visible=false;}
+    // camara cerca del planeta
+    cam.position.z+=(14-cam.position.z)*.08;
+    cam.position.y+=(0-cam.position.y)*.08;
+    cam.lookAt(0,BOT_Y*.2,0);
+    starField.position.y=0;
+    document.getElementById('pfill').style.width='0%';
+    document.getElementById('timer').textContent='';
+  }
+
+  if(phase==='flying'){
+    animT+=dt;
+    const totalDur=PHASE_LAUNCH+getFlyDur(idx)+PHASE_ARRIVE;
+    const prog=Math.min(animT/totalDur,1);
+
+    // — FASE 1: DESPEGUE (planeta actual se va abajo, cohete sube) —
+    if(animT<PHASE_LAUNCH){
+      const p=animT/PHASE_LAUNCH;
+      const e=eI(p);
+      // cohete despega del planeta
+      rocket.position.y=lerp(rocketOn(BOT_Y,STOPS[idx]), 2, e);
+      if(botMesh) botMesh.position.y=lerp(BOT_Y, BOT_Y-8, e);
+      // camara se aleja
+      cam.position.z+=((20+p*15)-cam.position.z)*.08;
+      cam.lookAt(0,rocket.position.y*.3,0);
+      if(rocket.userData.fl)rocket.userData.fl.scale.y=1.5+Math.sin(gT*25)*.4;
+      if(rocket.userData.fl2)rocket.userData.fl2.scale.y=2.5+Math.sin(gT*20)*.6;
+      starField.position.y=lerp(0,8,p);
+    }
+    // — FASE 2: VIAJE LARGO (cohete en el centro, estrellas vuelan) —
+    else if(animT<PHASE_LAUNCH+getFlyDur(idx)){
+      const travelT=animT-PHASE_LAUNCH;
+      const travelDur=getFlyDur(idx);
+      const p=travelT/travelDur;
+      // cohete flota en el centro con pequeña oscilacion
+      rocket.position.y=Math.sin(gT*1.2)*.15;
+      // camara bien alejada — espacio profundo
+      cam.position.z+=(36-cam.position.z)*.03;
+      cam.position.y+=(0-cam.position.y)*.05;
+      cam.lookAt(0,0,0);
+      // llamas enormes
+      if(rocket.userData.fl)rocket.userData.fl.scale.y=2.2+Math.sin(gT*30)*.5;
+      if(rocket.userData.fl2)rocket.userData.fl2.scale.y=3.5+Math.sin(gT*24)*.8;
+      // estrellas se mueven RAPIDISIMO para sensacion de velocidad
+      starScrollY+=dt*80; // muy rapido!
+      starField.position.y=starScrollY;
+      // planeta destino aparece pequenito a lo lejos
+      if(topMesh){
+        topMesh.visible=true;
+        topMesh.position.y=lerp(200,30,eI(p)); // viene de muy lejos
+        const sc=lerp(0.05,0.4,eI(p));
+        topMesh.scale.set(sc,sc,sc);
+      }
+      // tiempo restante
+      const remaining=Math.max(0,travelDur-travelT);
+      document.getElementById('timer').textContent='⏱ '+fmtTime(remaining)+' restante';
+    }
+    // — FASE 3: LLEGADA (planeta aparece grande, cohete aterriza) —
+    else{
+      const arrT=animT-(PHASE_LAUNCH+getFlyDur(idx));
+      const p=Math.min(arrT/PHASE_ARRIVE,1);
+      const e=eI(p);
+      // planeta destino crece y baja a su posicion
+      if(topMesh){
+        topMesh.visible=true;
+        topMesh.position.y=lerp(30,TOP_Y,e);
+        const sc=lerp(0.4,1.0,e);
+        topMesh.scale.set(sc,sc,sc);
+      }
+      // cohete baja al planeta
+      rocket.position.y=lerp(0,rocketOn(TOP_Y,STOPS[idx+1]),e);
+      // camara se acerca
+      cam.position.z+=((14)-cam.position.z)*.06;
+      cam.position.y+=(0-cam.position.y)*.06;
+      cam.lookAt(0,TOP_Y*.2,0);
+      if(rocket.userData.fl)rocket.userData.fl.scale.y=lerp(2.2,.35,e);
+      if(rocket.userData.fl2)rocket.userData.fl2.scale.y=lerp(3.5,.2,e);
+      starField.position.y+=dt*lerp(80,0,e); // estrellas se frenan
+      document.getElementById('timer').textContent=p<1?'¡Llegando!':'';
+    }
+
+    document.getElementById('pfill').style.width=Math.round(prog*100)+'%';
+
+    if(prog>=1){
+      // llegamos!
+      if(rocket.userData.fl)rocket.userData.fl.scale.y=.35;
+      if(rocket.userData.fl2)rocket.userData.fl2.scale.y=.2;
+      if(topMesh){topMesh.scale.set(1,1,1);topMesh.visible=true;}
+      starScrollY=0;starField.position.y=0;
+      document.getElementById('timer').textContent='';
+      phase='done';idx++;score++;
+      const bonus=30+score*12;coins+=bonus;
+      const s=STOPS[idx];
+      let msg='',col='rgba(29,158,117,.95)';
+      if(s.type==='blackhole_core'){msg='☠️ NUCLEO! +'+bonus+' ✦ LEYENDA!';col='rgba(80,0,140,.97)';}
+      else if(s.type==='blackhole_enter'){msg='🕳️ HOYO NEGRO! +'+bonus+' ✦';col='rgba(100,0,180,.97)';}
+      else if(s.type==='mystery'){msg='👾 '+s.name+'! +'+bonus+' ✦';col='rgba(60,0,100,.95)';}
+      else if(s.type==='galaxy_enter'){msg='🌀 '+s.name+'! +'+bonus+' ✦';col='rgba(60,30,150,.95)';}
+      else if(s.galaxy){msg='🌟 '+s.name+'! +'+bonus+' ✦';col='rgba(80,40,160,.95)';}
+      else msg='🎉 '+s.name+'! +'+bonus+' ✦';
+      showBig(msg,col);
+      scene.remove(botMesh);botMesh=topMesh;topMesh=null;
+      botMesh.position.set(0,BOT_Y,0);botMesh.scale.set(1,1,1);
+      applyBg(STOPS[idx]);
+      if(idx+1<STOPS.length){topMesh=mkStop(STOPS[idx+1]);topMesh.position.set(0,TOP_Y,0);topMesh.visible=false;scene.add(topMesh);}
+      rocket.position.set(0,rocketOn(BOT_Y,STOPS[idx]),0);
+      updateAll();
+      setTimeout(()=>{phase='idle';canTap=true;},500);
+      if(idx===STOPS.length-1)setTimeout(()=>showBig('🏆 LEYENDA DEL UNIVERSO ANIBAL!<br>✦'+Math.round(coins).toLocaleString(),'rgba(127,119,221,.97)'),2200);
+    }
+  }
+  renderer.render(scene,cam);
+}
+animate();
+</script>
