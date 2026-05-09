@@ -238,6 +238,58 @@
   </div>
 </div>
 
+<!-- 5.6 BOSS LEVEL EXPLAINED -->
+<div class="slide">
+  <div class="orb" style="width:500px;height:500px;background:rgba(124,58,237,0.18);top:-100px;right:-80px"></div>
+  <div class="orb" style="width:300px;height:300px;background:rgba(244,114,182,0.10);bottom:80px;left:-60px"></div>
+  <style>
+    .arch{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:14px;align-items:stretch;margin-top:18px}
+    .arch-card{background:rgba(255,255,255,0.03);border:1.5px solid var(--border);border-radius:16px;padding:20px 18px;text-align:center;animation:fadeUp 0.4s ease-out both;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px}
+    .arch-card:nth-child(1){animation-delay:.1s;border-color:rgba(167,139,250,0.4);background:rgba(167,139,250,0.06)}
+    .arch-card:nth-child(3){animation-delay:.2s;border-color:rgba(74,222,128,0.4);background:rgba(74,222,128,0.06)}
+    .arch-card:nth-child(5){animation-delay:.3s;border-color:rgba(251,146,60,0.4);background:rgba(251,146,60,0.06)}
+    .arch-emoji{font-size:42px;line-height:1;margin-bottom:4px}
+    .arch-title{font-family:var(--fd);font-size:clamp(15px,1.7vw,19px);font-weight:800;letter-spacing:-0.3px;margin-bottom:4px}
+    .arch-card:nth-child(1) .arch-title{color:var(--pl)}
+    .arch-card:nth-child(3) .arch-title{color:var(--green)}
+    .arch-card:nth-child(5) .arch-title{color:var(--orange)}
+    .arch-desc{font-size:clamp(11px,1.2vw,13px);color:#c8c8e0;line-height:1.5}
+    .arrow{display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:28px;font-weight:800;color:var(--muted);animation:fadeUp 0.4s ease-out both;animation-delay:.15s}
+    .arch-foot{margin-top:18px;background:linear-gradient(135deg,rgba(244,114,182,0.10),rgba(124,58,237,0.10));border:1.5px solid rgba(244,114,182,0.35);border-radius:14px;padding:14px 22px;display:flex;align-items:center;gap:14px;animation:fadeUp 0.4s ease-out .4s both}
+    .arch-foot-emoji{font-size:32px}
+    .arch-foot-text{font-family:var(--fd);font-size:clamp(14px,1.6vw,17px);font-weight:800;color:var(--text);letter-spacing:-0.3px}
+    .arch-foot-text span{background:linear-gradient(135deg,var(--pink),var(--pl));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  </style>
+  <div class="sc">
+    <div class="tag" style="background:rgba(124,58,237,0.15);border:1px solid rgba(167,139,250,0.4);color:var(--pl);margin-bottom:14px">🟣 BOSS LEVEL · Solo para los más avanzados</div>
+    <div class="headline" style="margin-bottom:6px;font-size:clamp(28px,4vw,46px)">Frontend, Backend,<br><span class="gp">Base de datos</span></div>
+    <div class="body" style="margin-bottom:0;font-size:clamp(13px,1.4vw,16px)">Tu juego vive en tu pantalla. <span style="color:var(--pl)">Pero ¿y si tus amigos pudieran ver tu score y competir contra vos?</span> Para eso existe el backend.</div>
+    <div class="arch">
+      <div class="arch-card">
+        <div class="arch-emoji">🎨</div>
+        <div class="arch-title">FRONTEND</div>
+        <div class="arch-desc">Lo que ven y tocan.<br>HTML + CSS + JS — lo que ya estás haciendo.</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="arch-card">
+        <div class="arch-emoji">🛠️</div>
+        <div class="arch-title">BACKEND</div>
+        <div class="arch-desc">Pide y guarda cosas en internet.<br>Supabase te lo da listo, sin instalar nada.</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="arch-card">
+        <div class="arch-emoji">💾</div>
+        <div class="arch-title">DATABASE</div>
+        <div class="arch-desc">La memoria compartida.<br>Todos leen y escriben aquí — al mismo tiempo.</div>
+      </div>
+    </div>
+    <div class="arch-foot">
+      <div class="arch-foot-emoji">🏆</div>
+      <div class="arch-foot-text">Resultado: <span>leaderboard global</span> donde todos los kids del camp compiten en tiempo real. Pedile a tu tutor el <span>Boss Level Cheat Sheet</span>.</div>
+    </div>
+  </div>
+</div>
+
 <!-- 5.7 SHIP IT -->
 <div class="slide">
   <div class="orb" style="width:500px;height:500px;background:rgba(96,165,250,0.13);top:-100px;right:-80px"></div>
