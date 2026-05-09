@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRINEO ALPINO 3D — by Pedro</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Russo+One&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    margin: 0; overflow: hidden;
+    background: #0a1830;
+    font-family: 'Russo One', sans-serif;
+    user-select: none;
+  }
+
+  #canvas-container { width: 100vw; height: 100vh; position: relative; }
+  canvas { display: block; }
+
+  /* ===== HUD ===== */
+  #hud {
+    position: absolute;
+    top: 20px; left: 20px; right: 20px;
+    display: none; justify-content: space-between;
+    color: white; pointer-events: none; z-index: 10;
+    text-shadow: 2px 2px 0 #000, 0 0 12px rgba(0,0,0,0.8);
+  }
+  #hud.show { display: flex; }
+  .hud-block {
+    background: rgba(0,0,0,0.4);
+    padding: 12px 18px;
+    border-radius: 8px;
+    border: 2px solid rgba(255,255,255,0.2);
+  }
+  .hud-label { font-size: 11px; letter-spacing: 3px; opacity: 0.7; }
+  .hud-value {
+    font-size: 28px; letter-spacing: 2px;
+    line-height: 1; margin-top: 2px; color: #00d9ff;
+  }
+  .hud-value.speed { color: #ffeb3b; }
+  .hud-value.goal { color: #00ff88; font-size: 22px; }
+
+  /* Progress bar to goal */
+  .goal-bar {
+    position: absolute;
+    top: 90px; left: 50%;
+    transform: translateX(-50%);
+    width: 350px; height: 14px;
+    background: rgba(0,0,0,0.6);
+    border-radius: 8px;
+    border: 2px solid rgba(255,255,255,0.3);
+    z-index: 10;
+    overflow: hidden;
+    display: none;
+  }
+  .goal-bar.show { display: block; }
+  .goal-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00d9ff, #00ff88);
+    width: 0%;
+    transition: width 0.2s;
+    box-shadow: 0 0 12px #00ff88;
+  }
+  .goal-text {
+    position: absolute;
+    top: -22px; left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-size: 11px; letter-spacing: 3px;
+    text-shadow: 2px 2px 0 #000;
+    white-space: nowrap;
+  }
+
+  /* ===== SCREENS ===== */
+  .screen {
+    position: absolute; inset: 0;
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 20; color: white; text-align: center;
+    padding: 30px;
+  }
+  .screen.show { display: flex; }
+
+  /* Title */
+  #title-screen {
+    background: linear-gradient(180deg, rgba(135,206,235,0.7) 0%, rgba(255,255,255,0.5) 100%);
+  }
+  .title-mountain { font-size: 60px; margin-bottom: 10px; }
+  .title-name {
+    font-size: 80px; letter-spacing: 8px; line-height: 1;
+    text-shadow: 4px 4px 0 #1a4a6f, 8px 8px 0 rgba(0,0,0,0.3), 0 0 30px rgba(0,217,255,0.5);
+  }
+  .title-sub {
+    font-size: 14px; letter-spacing: 6px; margin-top: 16px;
+    opacity: 0.9; text-shadow: 2px 2px 0 #000;
+  }
+  .start-btn {
+    margin-top: 50px;
+    background: #ffeb3b; color: #1a4a6f;
+    border: none; padding: 22px 60px;
+    font-family: 'Russo One', sans-serif;
+    font-size: 28px; letter-spacing: 4px;
+    cursor: pointer; border-radius: 8px;
+    box-shadow: 0 8px 0 #c0a800, 0 12px 30px rgba(0,0,0,0.5);
+    transition: all 0.1s;
+  }
+  .start-btn:hover {
+    transform: translateY(2px);
+    box-shadow: 0 6px 0 #c0a800, 0 10px 25px rgba(0,0,0,0.5);
+  }
+  .start-btn:active {
+    transform: translateY(8px);
+    box-shadow: 0 0 0 #c0a800;
+  }
+  .start-btn.sm {
+    padding: 12px 30px;
+    font-size: 18px;
+  }
+  .start-btn.green {
+    background: #00ff88; color: #003a1f;
+    box-shadow: 0 8px 0 #006633, 0 12px 30px rgba(0,0,0,0.5);
+  }
+  .start-btn.green:hover {
+    box-shadow: 0 6px 0 #006633, 0 10px 25px rgba(0,0,0,0.5);
+  }
+  .start-btn.green:active {
+    box-shadow: 0 0 0 #006633;
+  }
+  .credit {
+    position: absolute;
+    bottom: 20px; right: 20px;
+    font-size: 11px; letter-spacing: 3px;
+    opacity: 0.6;
+  }
+
+  /* ===== LEVEL SELECT ===== */
+  #level-select {
+    background: linear-gradient(180deg, #0a1830 0%, #1a3a5c 100%);
+    align-items: center;
+  }
+  .level-select-title {
+    font-size: 50px; letter-spacing: 6px;
+    margin-bottom: 8px;
+    text-shadow: 4px 4px 0 #000, 0 0 30px rgba(0,217,255,0.5);
+  }
+  .level-select-sub {
+    font-size: 13px; letter-spacing: 4px;
+    opacity: 0.7; margin-bottom: 30px;
+  }
+  .levels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    max-width: 900px;
+    width: 100%;
+  }
+  .level-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+    border: 3px solid var(--lvl-color, #00d9ff);
+    border-radius: 12px;
+    padding: 24px 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    text-align: left;
+  }
+  .level-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at top right, var(--lvl-color, #00d9ff), transparent 60%);
+    opacity: 0.18;
+    pointer-events: none;
+  }
+  .level-card:hover:not(.locked) {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px var(--lvl-color, #00d9ff);
+  }
+  .level-card.locked {
+    opacity: 0.4;
+    cursor: not-allowed;
+    border-color: #555;
+  }
+  .level-card.locked::before { background: none; }
+  .level-emoji { font-size: 50px; line-height: 1; }
+  .level-num {
+    font-size: 14px; letter-spacing: 4px;
+    opacity: 0.6;
+    margin: 8px 0 2px;
+  }
+  .level-card-name {
+    font-size: 22px; letter-spacing: 2px;
+    line-height: 1.1;
+  }
+  .level-diff {
+    font-size: 11px; letter-spacing: 3px;
+    color: var(--lvl-color, #00d9ff);
+    margin-top: 6px;
+  }
+  .level-goal {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    font-size: 11px; letter-spacing: 2px;
+    opacity: 0.8;
+  }
+  .level-goal strong { color: #ffeb3b; font-size: 16px; }
+  .level-best { font-size: 10px; opacity: 0.5; margin-top: 4px; letter-spacing: 2px; }
+  .level-best span { color: #00ff88; }
+  .level-locked-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.6);
+    font-size: 30px;
+    border-radius: 9px;
+  }
+
+  /* Game over */
+  #game-over {
+    background: rgba(20,30,50,0.85);
+  }
+  .gameover-emoji { font-size: 100px; margin-bottom: 10px; }
+  .gameover-title {
+    font-size: 70px; letter-spacing: 6px; color: #ff5050;
+    text-shadow: 4px 4px 0 #500, 0 0 30px rgba(255,80,80,0.6);
+  }
+  .gameover-msg { font-size: 16px; letter-spacing: 4px; margin-top: 14px; opacity: 0.9; }
+  .gameover-stats { margin: 30px 0; display: flex; gap: 40px; }
+  .stat-block { text-align: center; }
+  .stat-label { font-size: 11px; letter-spacing: 3px; opacity: 0.6; }
+  .stat-value {
+    font-size: 50px; color: #ffeb3b; line-height: 1;
+    text-shadow: 3px 3px 0 #5a4a00;
+  }
+  .gameover-buttons { display: flex; gap: 14px; margin-top: 10px; }
+
+  /* Level complete */
+  #level-complete {
+    background: linear-gradient(180deg, rgba(0,255,136,0.2) 0%, rgba(0,40,30,0.85) 100%);
+  }
+  .complete-emoji { font-size: 110px; margin-bottom: 10px; animation: bounce 0.6s ease infinite alternate; }
+  @keyframes bounce {
+    from { transform: translateY(0); }
+    to { transform: translateY(-15px); }
+  }
+  .complete-title {
+    font-size: 70px; letter-spacing: 6px; color: #00ff88;
+    text-shadow: 4px 4px 0 #003322, 0 0 40px rgba(0,255,136,0.8);
+  }
+  .complete-sub {
+    font-size: 18px; letter-spacing: 4px;
+    margin-top: 12px; opacity: 0.9;
+  }
+  .complete-buttons { display: flex; gap: 14px; margin-top: 30px; }
+
+  /* Touch controls */
+  #touch-controls {
+    position: absolute;
+    bottom: 20px; left: 0; right: 0;
+    display: none; justify-content: space-between;
+    padding: 0 20px; z-index: 15;
+    pointer-events: none;
+  }
+  .touch-btn {
+    background: rgba(255,255,255,0.2);
+    border: 3px solid white;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    color: white; font-size: 40px;
+    pointer-events: auto;
+    display: flex; align-items: center; justify-content: center;
+  }
+  @media (max-width: 768px) { #touch-controls.show { display: flex; } }
+
+  #error-screen {
+    background: #1a1a2e;
+  }
+  #error-screen h1 { font-size: 40px; color: #ff5050; margin-bottom: 20px; }
+  #error-screen p { font-size: 16px; opacity: 0.9; max-width: 500px; line-height: 1.5; }
+
+  .controls-hint {
+    margin-top: 30px; font-size: 13px;
+    letter-spacing: 3px; opacity: 0.85;
+    text-shadow: 1px 1px 0 #000;
+  }
+  .controls-hint kbd {
+    background: rgba(255,255,255,0.95); color: #1a4a6f;
+    padding: 4px 10px; margin: 0 4px;
+    border-radius: 4px;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.3);
+    font-family: 'Russo One'; font-size: 12px;
+  }
+
+  .back-btn {
+    position: absolute;
+    top: 20px; left: 20px;
+    background: rgba(0,0,0,0.4);
+    color: white;
+    border: 2px solid rgba(255,255,255,0.3);
+    padding: 10px 18px;
+    cursor: pointer;
+    font-family: 'Russo One', sans-serif;
+    letter-spacing: 2px;
+    border-radius: 6px;
+    z-index: 25;
+  }
+  .back-btn:hover { border-color: #00d9ff; color: #00d9ff; }
+</style>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+
+<div id="hud">
+  <div class="hud-block">
+    <div class="hud-label">DISTANCIA</div>
+    <div class="hud-value" id="dist-value">0 M</div>
+  </div>
+  <div class="hud-block" style="text-align:center;">
+    <div class="hud-label">NIVEL</div>
+    <div class="hud-value goal" id="level-name">BOSQUE ALPINO</div>
+  </div>
+  <div class="hud-block" style="text-align:right;">
+    <div class="hud-label">VELOCIDAD</div>
+    <div class="hud-value speed" id="speed-value">0</div>
+  </div>
+</div>
+
+<div class="goal-bar" id="goal-bar">
+  <div class="goal-text" id="goal-text">META: 800 M</div>
+  <div class="goal-fill" id="goal-fill"></div>
+</div>
+
+<!-- TITLE -->
+<div class="screen show" id="title-screen">
+  <div class="title-mountain">🏔️🛷🌲</div>
+  <div class="title-name">TRINEO<br>ALPINO</div>
+  <div class="title-sub">5 NIVELES · ESQUIVA · SOBREVIVE</div>
+  <button class="start-btn" onclick="goLevelSelect()">JUGAR</button>
+  <div class="controls-hint">
+    <kbd>←</kbd> <kbd>→</kbd> ESQUIVAR · <kbd>↑</kbd> ACELERAR · <kbd>↓</kbd> FRENAR
+  </div>
+  <div class="credit">A GAME BY PEDRO LAGOS</div>
+</div>
+
+<!-- LEVEL SELECT -->
+<div class="screen" id="level-select">
+  <button class="back-btn" onclick="showOnlyScreen('title-screen')">← VOLVER</button>
+  <div class="level-select-title">ELIGE TU MONTAÑA</div>
+  <div class="level-select-sub">COMPLETA UN NIVEL PARA DESBLOQUEAR EL SIGUIENTE</div>
+  <div class="levels-grid" id="levels-grid"></div>
+</div>
+
+<!-- GAME OVER -->
+<div class="screen" id="game-over">
+  <div class="gameover-emoji" id="gameover-emoji">💥</div>
+  <div class="gameover-title">¡FIN!</div>
+  <div class="gameover-msg" id="gameover-msg">CHOCASTE</div>
+  <div class="gameover-stats">
+    <div class="stat-block">
+      <div class="stat-label">DISTANCIA</div>
+      <div class="stat-value" id="final-dist">0</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-label">META ERA</div>
+      <div class="stat-value" id="final-goal" style="color:#00ff88;">0</div>
+    </div>
+  </div>
+  <div class="gameover-buttons">
+    <button class="start-btn" onclick="restartLevel()">REINTENTAR</button>
+    <button class="start-btn sm" onclick="goLevelSelect()">NIVELES</button>
+  </div>
+</div>
+
+<!-- LEVEL COMPLETE -->
+<div class="screen" id="level-complete">
+  <div class="complete-emoji">🏆</div>
+  <div class="complete-title">¡COMPLETADO!</div>
+  <div class="complete-sub" id="complete-sub">DESBLOQUEASTE EL SIGUIENTE NIVEL</div>
+  <div class="gameover-stats">
+    <div class="stat-block">
+      <div class="stat-label">META</div>
+      <div class="stat-value" id="complete-goal" style="color:#00ff88;">800</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-label">VELOCIDAD MAX</div>
+      <div class="stat-value" id="complete-speed">0</div>
+    </div>
+  </div>
+  <div class="complete-buttons">
+    <button class="start-btn green" id="next-btn" onclick="goNextLevel()">SIGUIENTE NIVEL</button>
+    <button class="start-btn sm" onclick="goLevelSelect()">NIVELES</button>
+  </div>
+</div>
+
+<!-- ERROR -->
+<div class="screen" id="error-screen">
+  <h1>⚠️ ERROR</h1>
+  <p>No se pudo cargar la librería 3D. Necesitas conexión a internet la primera vez. Recarga la página (F5).</p>
+</div>
+
+<div id="touch-controls">
+  <div class="touch-btn" id="touch-left">◀</div>
+  <div class="touch-btn" id="touch-right">▶</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+if (typeof THREE === 'undefined') {
+  showOnlyScreen('error-screen');
+  throw new Error('Three.js no cargo');
+}
+
+// ============================================================
+// LEVELS DATA
+// ============================================================
+const LEVELS = [
+  {
+    id: 0,
+    name: 'BOSQUE ALPINO',
+    emoji: '🌲',
+    difficulty: 'FÁCIL',
+    color: '#00ff88',
+    goal: 800,
+    bgColor: 0xa0c8e8,
+    fogColor: 0xa0c8e8,
+    fogNear: 60, fogFar: 220,
+    snowColor: 0xeef4fb,
+    treeColors: [0x2d6a3e, 0x368050, 0x255530],
+    sunPos: [40, 80, 30],
+    sunColor: 0xfff4d6,
+    sunIntensity: 0.85,
+    hemiSky: 0xffffff,
+    hemiGround: 0xa0a0c0,
+    hemiInt: 0.65,
+    cliffColor: 0x405066,
+    cliffLightColor: 0x506478,
+    voidColor: 0x506890,
+    mountainColor: 0x4a6080,
+    sunDiscColor: 0xffeeb0,
+    sunDiscPos: [80, 80, -300],
+    treeSpawnRate: 0.50,
+    treeSpawnRateMin: 0.20,
+    speedRamp: 1.0,
+    maxSpeed: 75,
+    speedStart: 28,
+  },
+  {
+    id: 1,
+    name: 'PINAR HELADO',
+    emoji: '❄️',
+    difficulty: 'NORMAL',
+    color: '#00d9ff',
+    goal: 1200,
+    bgColor: 0x7090b0,
+    fogColor: 0x7090b0,
+    fogNear: 50, fogFar: 200,
+    snowColor: 0xe0eaf4,
+    treeColors: [0x1a4a3a, 0x256048, 0x183c30],
+    sunPos: [-30, 60, 50],
+    sunColor: 0xc0d4e8,
+    sunIntensity: 0.65,
+    hemiSky: 0xc0d4e8,
+    hemiGround: 0x6080a0,
+    hemiInt: 0.55,
+    cliffColor: 0x304050,
+    cliffLightColor: 0x405568,
+    voidColor: 0x405068,
+    mountainColor: 0x3a5070,
+    sunDiscColor: 0xd0e0f0,
+    sunDiscPos: [-90, 70, -300],
+    treeSpawnRate: 0.40,
+    treeSpawnRateMin: 0.15,
+    speedRamp: 1.4,
+    maxSpeed: 85,
+    speedStart: 32,
+  },
+  {
+    id: 2,
+    name: 'GLACIAR AZUL',
+    emoji: '🧊',
+    difficulty: 'DIFÍCIL',
+    color: '#0088ff',
+    goal: 1600,
+    bgColor: 0x4080c8,
+    fogColor: 0x4080c8,
+    fogNear: 50, fogFar: 180,
+    snowColor: 0xb8d4f0,
+    treeColors: [0x103044, 0x205066, 0x1a4258],
+    sunPos: [60, 90, 0],
+    sunColor: 0x80c0ff,
+    sunIntensity: 1.0,
+    hemiSky: 0x80b0e0,
+    hemiGround: 0x2050a0,
+    hemiInt: 0.7,
+    cliffColor: 0x1a3050,
+    cliffLightColor: 0x2a4868,
+    voidColor: 0x10305a,
+    mountainColor: 0x3060a0,
+    sunDiscColor: 0xd0e8ff,
+    sunDiscPos: [120, 100, -280],
+    treeSpawnRate: 0.32,
+    treeSpawnRateMin: 0.12,
+    speedRamp: 1.8,
+    maxSpeed: 95,
+    speedStart: 38,
+  },
+  {
+    id: 3,
+    name: 'ATARDECER ROJO',
+    emoji: '🌅',
+    difficulty: 'INSANO',
+    color: '#ff6b00',
+    goal: 2000,
+    bgColor: 0xff7050,
+    fogColor: 0xff8060,
+    fogNear: 40, fogFar: 170,
+    snowColor: 0xffd0b0,
+    treeColors: [0x4a1010, 0x5a2010, 0x3a0808],
+    sunPos: [-40, 30, -20],
+    sunColor: 0xff8040,
+    sunIntensity: 1.1,
+    hemiSky: 0xff9060,
+    hemiGround: 0x802040,
+    hemiInt: 0.7,
+    cliffColor: 0x402030,
+    cliffLightColor: 0x503040,
+    voidColor: 0x301020,
+    mountainColor: 0x603040,
+    sunDiscColor: 0xffe080,
+    sunDiscPos: [-120, 30, -280],
+    treeSpawnRate: 0.25,
+    treeSpawnRateMin: 0.10,
+    speedRamp: 2.2,
+    maxSpeed: 110,
+    speedStart: 42,
+  },
+  {
+    id: 4,
+    name: 'NOCHE POLAR',
+    emoji: '🌌',
+    difficulty: 'IMPOSIBLE',
+    color: '#aa00ff',
+    goal: 2500,
+    bgColor: 0x0a0830,
+    fogColor: 0x101040,
+    fogNear: 35, fogFar: 150,
+    snowColor: 0x707090,
+    treeColors: [0x0a0a20, 0x101030, 0x080818],
+    sunPos: [0, 100, 0],
+    sunColor: 0x8080ff,
+    sunIntensity: 0.45,
+    hemiSky: 0x4040a0,
+    hemiGround: 0x100828,
+    hemiInt: 0.5,
+    cliffColor: 0x080820,
+    cliffLightColor: 0x181838,
+    voidColor: 0x000010,
+    mountainColor: 0x202050,
+    sunDiscColor: 0xc0c0ff,
+    sunDiscPos: [40, 100, -280],
+    treeSpawnRate: 0.18,
+    treeSpawnRateMin: 0.08,
+    speedRamp: 2.8,
+    maxSpeed: 130,
+    speedStart: 50,
+    aurora: true,
+  },
+];
+
+// ============================================================
+// PROGRESS / STATE
+// ============================================================
+const progress = {
+  unlocked: 0,  // index of highest unlocked level
+  bestDist: {}, // levelId -> best distance
+};
+
+// ============================================================
+// THREE.JS SETUP
+// ============================================================
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 600);
+camera.position.set(0, 5, 10);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
+document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// References we'll rebuild per level
+let hemiLight, sunLight;
+let slope, slopeMat, voidPlane, sunDisc;
+let cliffLeft, cliffRight;
+let mountains = [];
+let auroraStrips = [];
+const trees = [];
+const snowflakes = [];
+let sled;
+let currentLevel = LEVELS[0];
+
+const SLOPE_WIDTH = 28;
+const SLOPE_LENGTH = 4000;
+
+// ============================================================
+// SCENE BUILDERS
+// ============================================================
+function clearScene() {
+  while (scene.children.length > 0) {
+    scene.remove(scene.children[0]);
+  }
+  trees.length = 0;
+  snowflakes.length = 0;
+  mountains.length = 0;
+  auroraStrips.length = 0;
+}
+
+function buildSceneForLevel(level) {
+  clearScene();
+  scene.background = new THREE.Color(level.bgColor);
+  scene.fog = new THREE.Fog(level.fogColor, level.fogNear, level.fogFar);
+
+  // Lights
+  hemiLight = new THREE.HemisphereLight(level.hemiSky, level.hemiGround, level.hemiInt);
+  scene.add(hemiLight);
+  sunLight = new THREE.DirectionalLight(level.sunColor, level.sunIntensity);
+  sunLight.position.set(level.sunPos[0], level.sunPos[1], level.sunPos[2]);
+  scene.add(sunLight);
+
+  // Slope
+  const slopeGeo = new THREE.PlaneGeometry(SLOPE_WIDTH, SLOPE_LENGTH, 14, 200);
+  const sPos = slopeGeo.attributes.position;
+  for (let i = 0; i < sPos.count; i++) {
+    sPos.setZ(i, (Math.random() - 0.5) * 0.4);
+  }
+  slopeGeo.computeVertexNormals();
+  slopeMat = new THREE.MeshLambertMaterial({ color: level.snowColor, flatShading: true });
+  slope = new THREE.Mesh(slopeGeo, slopeMat);
+  slope.rotation.x = -Math.PI / 2;
+  slope.position.z = -SLOPE_LENGTH / 2 + 100;
+  scene.add(slope);
+
+  // Snow stripes
+  const stripeColor = new THREE.Color(level.snowColor).multiplyScalar(0.92);
+  const stripeMat = new THREE.MeshLambertMaterial({ color: stripeColor, flatShading: true });
+  for (let i = 0; i < 80; i++) {
+    const stripe = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 8), stripeMat);
+    stripe.rotation.x = -Math.PI / 2;
+    stripe.position.set(
+      (Math.random() - 0.5) * (SLOPE_WIDTH - 4),
+      0.02,
+      -i * 50 - Math.random() * 30
+    );
+    scene.add(stripe);
+  }
+
+  // Cliffs
+  const cliffMat = new THREE.MeshLambertMaterial({ color: level.cliffColor, flatShading: true });
+  const cliffMatLight = new THREE.MeshLambertMaterial({ color: level.cliffLightColor, flatShading: true });
+  cliffLeft = makeCliffSide(-1, cliffMat, cliffMatLight, slopeMat);
+  cliffRight = makeCliffSide(1, cliffMat, cliffMatLight, slopeMat);
+  scene.add(cliffLeft);
+  scene.add(cliffRight);
+
+  // Void below
+  voidPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(400, SLOPE_LENGTH),
+    new THREE.MeshBasicMaterial({ color: level.voidColor })
+  );
+  voidPlane.rotation.x = -Math.PI / 2;
+  voidPlane.position.set(0, -50, -SLOPE_LENGTH / 2 + 100);
+  scene.add(voidPlane);
+
+  // Mountains
+  const mountainMat = new THREE.MeshLambertMaterial({ color: level.mountainColor, flatShading: true });
+  const mountainSnow = new THREE.MeshLambertMaterial({ color: level.snowColor, flatShading: true });
+  for (let i = 0; i < 12; i++) {
+    const m = makeMountain(
+      (Math.random() - 0.5) * 400,
+      -200 - Math.random() * 200,
+      0.7 + Math.random() * 0.8,
+      mountainMat,
+      mountainSnow
+    );
+    scene.add(m);
+    mountains.push(m);
+  }
+
+  // Sun/moon disc
+  sunDisc = new THREE.Mesh(
+    new THREE.CircleGeometry(15, 32),
+    new THREE.MeshBasicMaterial({ color: level.sunDiscColor, transparent: true, opacity: 0.85 })
+  );
+  sunDisc.position.set(level.sunDiscPos[0], level.sunDiscPos[1], level.sunDiscPos[2]);
+  scene.add(sunDisc);
+
+  // Aurora (only night level)
+  if (level.aurora) {
+    for (let i = 0; i < 6; i++) {
+      const auroraMat = new THREE.MeshBasicMaterial({
+        color: i % 2 === 0 ? 0x00ffaa : 0xaa00ff,
+        transparent: true,
+        opacity: 0.25,
+        side: THREE.DoubleSide,
+      });
+      const auroraGeo = new THREE.PlaneGeometry(60 + Math.random() * 40, 30);
+      const aurora = new THREE.Mesh(auroraGeo, auroraMat);
+      aurora.position.set(
+        (Math.random() - 0.5) * 200,
+        80 + Math.random() * 30,
+        -250 - Math.random() * 50
+      );
+      aurora.rotation.z = (Math.random() - 0.5) * 0.5;
+      scene.add(aurora);
+      auroraStrips.push(aurora);
+    }
+  }
+
+  // Sled
+  sled = makeSled();
+  scene.add(sled);
+
+  // Initial trees
+  for (let i = 0; i < 30; i++) {
+    spawnTree(
+      (Math.random() - 0.5) * (SLOPE_WIDTH - 4),
+      -30 - i * 25 - Math.random() * 15,
+      level
+    );
+  }
+
+  // Snowflakes
+  const snowGeo = new THREE.SphereGeometry(0.08, 4, 4);
+  const snowMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  for (let i = 0; i < 250; i++) {
+    const flake = new THREE.Mesh(snowGeo, snowMat);
+    flake.position.set(
+      (Math.random() - 0.5) * 80,
+      Math.random() * 40 + 5,
+      -Math.random() * 100 + 20
+    );
+    scene.add(flake);
+    snowflakes.push(flake);
+  }
+}
+
+function makeCliffSide(side, cliffMat, cliffMatLight, snowMat) {
+  const group = new THREE.Group();
+  const wall = new THREE.Mesh(
+    new THREE.BoxGeometry(3, 60, SLOPE_LENGTH),
+    cliffMat
+  );
+  wall.position.set(side * (SLOPE_WIDTH / 2 + 1.5), -30, -SLOPE_LENGTH / 2 + 100);
+  group.add(wall);
+
+  for (let i = 0; i < 100; i++) {
+    const cap = new THREE.Mesh(
+      new THREE.BoxGeometry(2 + Math.random() * 2, 0.6, 3 + Math.random() * 4),
+      snowMat
+    );
+    cap.position.set(
+      side * (SLOPE_WIDTH / 2 + 0.5 + Math.random()),
+      0.3,
+      -i * 40 - Math.random() * 20
+    );
+    cap.rotation.y = Math.random() * 0.3;
+    group.add(cap);
+  }
+
+  for (let i = 0; i < 50; i++) {
+    const rock = new THREE.Mesh(
+      new THREE.ConeGeometry(1 + Math.random() * 1.5, 2 + Math.random() * 3, 5),
+      cliffMatLight
+    );
+    rock.position.set(
+      side * (SLOPE_WIDTH / 2 + 1 + Math.random() * 1.5),
+      1 + Math.random(),
+      -i * 80 - Math.random() * 40
+    );
+    rock.rotation.y = Math.random() * Math.PI;
+    group.add(rock);
+  }
+  return group;
+}
+
+function makeMountain(x, z, scale, mountainMat, snowMat) {
+  const mountain = new THREE.Group();
+  const peak = new THREE.Mesh(new THREE.ConeGeometry(20 * scale, 35 * scale, 5), mountainMat);
+  peak.position.y = (35 * scale) / 2 - 4;
+  mountain.add(peak);
+  const snowCap = new THREE.Mesh(new THREE.ConeGeometry(8 * scale, 10 * scale, 5), snowMat);
+  snowCap.position.y = (35 * scale) - 9;
+  mountain.add(snowCap);
+  mountain.position.set(x, 0, z);
+  return mountain;
+}
+
+function makeSled() {
+  const sled = new THREE.Group();
+  const sledBase = new THREE.Mesh(
+    new THREE.BoxGeometry(1.6, 0.3, 2.6),
+    new THREE.MeshLambertMaterial({ color: 0xd83838, flatShading: true })
+  );
+  sledBase.position.y = 0.4;
+  sled.add(sledBase);
+
+  const skiMat = new THREE.MeshLambertMaterial({ color: 0x222222, flatShading: true });
+  for (const dx of [-0.6, 0.6]) {
+    const ski = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.15, 3), skiMat);
+    ski.position.set(dx, 0.15, 0);
+    sled.add(ski);
+    const curl = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), skiMat);
+    curl.position.set(dx, 0.4, -1.5);
+    curl.rotation.x = -0.3;
+    sled.add(curl);
+  }
+
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(0.85, 0.9, 0.85),
+    new THREE.MeshLambertMaterial({ color: 0xffeb3b, flatShading: true })
+  );
+  body.position.y = 1.05;
+  sled.add(body);
+
+  const head = new THREE.Mesh(
+    new THREE.SphereGeometry(0.32, 12, 8),
+    new THREE.MeshLambertMaterial({ color: 0xfacc9c })
+  );
+  head.position.y = 1.7;
+  sled.add(head);
+
+  const hat = new THREE.Mesh(
+    new THREE.ConeGeometry(0.38, 0.5, 8),
+    new THREE.MeshLambertMaterial({ color: 0xff0066, flatShading: true })
+  );
+  hat.position.y = 2.1;
+  sled.add(hat);
+
+  const pompom = new THREE.Mesh(
+    new THREE.SphereGeometry(0.12, 8, 6),
+    new THREE.MeshLambertMaterial({ color: 0xffffff })
+  );
+  pompom.position.y = 2.4;
+  sled.add(pompom);
+
+  const armMat = new THREE.MeshLambertMaterial({ color: 0xffeb3b, flatShading: true });
+  for (const dx of [-0.55, 0.55]) {
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.6, 0.25), armMat);
+    arm.position.set(dx, 1.0, 0.1);
+    sled.add(arm);
+  }
+  return sled;
+}
+
+function spawnTree(x, z, level) {
+  const tree = new THREE.Group();
+  const scale = 0.85 + Math.random() * 0.5;
+  const trunkMat = new THREE.MeshLambertMaterial({ color: 0x4a2b16, flatShading: true });
+
+  const trunk = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.3 * scale, 0.4 * scale, 1.2 * scale, 6),
+    trunkMat
+  );
+  trunk.position.y = 0.6 * scale;
+  tree.add(trunk);
+
+  const colors = level.treeColors;
+  const pineColor = colors[Math.floor(Math.random() * colors.length)];
+  const pineMat = new THREE.MeshLambertMaterial({ color: pineColor, flatShading: true });
+  for (let i = 0; i < 3; i++) {
+    const cone = new THREE.Mesh(
+      new THREE.ConeGeometry((2.4 - i * 0.5) * scale, 1.8 * scale, 6),
+      pineMat
+    );
+    cone.position.y = (1.4 + i * 1.1) * scale;
+    cone.rotation.y = Math.random() * Math.PI;
+    tree.add(cone);
+  }
+
+  const snowTip = new THREE.Mesh(
+    new THREE.ConeGeometry(0.5 * scale, 0.6 * scale, 6),
+    new THREE.MeshLambertMaterial({ color: level.snowColor, flatShading: true })
+  );
+  snowTip.position.y = 4.6 * scale;
+  tree.add(snowTip);
+
+  tree.position.set(x, 0, z);
+  tree.userData.collisionRadius = 1.0 * scale;
+  scene.add(tree);
+  trees.push(tree);
+}
+
+// ============================================================
+// GAME STATE
+// ============================================================
+const game = {
+  state: 'title',
+  sledX: 0, sledZ: 0, sledVX: 0,
+  speed: 30, maxSpeed: 0,
+  distance: 0, spawnTimer: 0,
+  alive: true,
+};
+
+const keys = {};
+window.addEventListener('keydown', e => {
+  keys[e.key.toLowerCase()] = true;
+  keys[e.key] = true;
+  if (e.key.startsWith('Arrow') || e.key === ' ') e.preventDefault();
+});
+window.addEventListener('keyup', e => {
+  keys[e.key.toLowerCase()] = false;
+  keys[e.key] = false;
+});
+
+let touchLeftHeld = false, touchRightHeld = false;
+const touchLeft = document.getElementById('touch-left');
+const touchRight = document.getElementById('touch-right');
+touchLeft.addEventListener('touchstart', e => { e.preventDefault(); touchLeftHeld = true; });
+touchLeft.addEventListener('touchend', e => { e.preventDefault(); touchLeftHeld = false; });
+touchRight.addEventListener('touchstart', e => { e.preventDefault(); touchRightHeld = true; });
+touchRight.addEventListener('touchend', e => { e.preventDefault(); touchRightHeld = false; });
+
+// ============================================================
+// SCREENS NAV
+// ============================================================
+function showOnlyScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('show'));
+  document.getElementById(id).classList.add('show');
+  document.getElementById('hud').classList.remove('show');
+  document.getElementById('goal-bar').classList.remove('show');
+  document.getElementById('touch-controls').classList.remove('show');
+}
+
+function goLevelSelect() {
+  showOnlyScreen('level-select');
+  renderLevelSelect();
+}
+
+function renderLevelSelect() {
+  const grid = document.getElementById('levels-grid');
+  grid.innerHTML = '';
+  LEVELS.forEach((lvl, idx) => {
+    const card = document.createElement('div');
+    card.className = 'level-card';
+    card.style.setProperty('--lvl-color', lvl.color);
+    const isLocked = idx > progress.unlocked;
+    if (isLocked) card.classList.add('locked');
+    const best = progress.bestDist[lvl.id];
+    card.innerHTML = `
+      <div class="level-emoji">${lvl.emoji}</div>
+      <div class="level-num">NIVEL ${idx + 1}</div>
+      <div class="level-card-name">${lvl.name}</div>
+      <div class="level-diff">${lvl.difficulty}</div>
+      <div class="level-goal">META: <strong>${lvl.goal} M</strong></div>
+      ${best ? `<div class="level-best">RÉCORD: <span>${Math.floor(best)} M</span></div>` : ''}
+      ${isLocked ? '<div class="level-locked-text">🔒</div>' : ''}
+    `;
+    card.onclick = () => {
+      if (!isLocked) startLevel(idx);
+    };
+    grid.appendChild(card);
+  });
+}
+
+function startLevel(idx) {
+  currentLevel = LEVELS[idx];
+  buildSceneForLevel(currentLevel);
+  resetGame();
+  game.state = 'playing';
+  showOnlyScreen('title-screen');
+  document.getElementById('title-screen').classList.remove('show');
+  document.getElementById('hud').classList.add('show');
+  document.getElementById('goal-bar').classList.add('show');
+  document.getElementById('touch-controls').classList.add('show');
+  document.getElementById('level-name').textContent = currentLevel.name;
+  document.getElementById('goal-text').textContent = `META: ${currentLevel.goal} M`;
+}
+
+function restartLevel() {
+  buildSceneForLevel(currentLevel);
+  resetGame();
+  game.state = 'playing';
+  showOnlyScreen('title-screen');
+  document.getElementById('title-screen').classList.remove('show');
+  document.getElementById('hud').classList.add('show');
+  document.getElementById('goal-bar').classList.add('show');
+  document.getElementById('touch-controls').classList.add('show');
+}
+
+function goNextLevel() {
+  const nextIdx = currentLevel.id + 1;
+  if (nextIdx < LEVELS.length) {
+    startLevel(nextIdx);
+  } else {
+    goLevelSelect();
+  }
+}
+
+function resetGame() {
+  game.sledX = 0;
+  game.sledZ = 0;
+  game.sledVX = 0;
+  game.speed = currentLevel.speedStart;
+  game.maxSpeed = currentLevel.speedStart;
+  game.distance = 0;
+  game.spawnTimer = 0;
+  game.alive = true;
+  if (sled) {
+    sled.position.set(0, 0, 0);
+    sled.rotation.set(0, 0, 0);
+  }
+  crashAnim = null;
+}
+
+function gameOver(emoji, msg) {
+  if (game.state === 'gameover') return;
+  game.state = 'gameover';
+  game.alive = false;
+  // Update best
+  if (!progress.bestDist[currentLevel.id] || game.distance > progress.bestDist[currentLevel.id]) {
+    progress.bestDist[currentLevel.id] = game.distance;
+  }
+  setTimeout(() => {
+    document.getElementById('gameover-emoji').textContent = emoji;
+    document.getElementById('gameover-msg').textContent = msg;
+    document.getElementById('final-dist').textContent = Math.floor(game.distance);
+    document.getElementById('final-goal').textContent = currentLevel.goal;
+    showOnlyScreen('game-over');
+  }, 1200);
+}
+
+function levelComplete() {
+  if (game.state === 'complete') return;
+  game.state = 'complete';
+  // Unlock next
+  if (currentLevel.id === progress.unlocked && progress.unlocked < LEVELS.length - 1) {
+    progress.unlocked++;
+  }
+  // Update best
+  if (!progress.bestDist[currentLevel.id] || game.distance > progress.bestDist[currentLevel.id]) {
+    progress.bestDist[currentLevel.id] = game.distance;
+  }
+  document.getElementById('complete-goal').textContent = currentLevel.goal;
+  document.getElementById('complete-speed').textContent = Math.floor(game.maxSpeed);
+  const isLast = currentLevel.id === LEVELS.length - 1;
+  document.getElementById('complete-sub').textContent = isLast
+    ? '¡COMPLETASTE TODOS LOS NIVELES!'
+    : `DESBLOQUEASTE: ${LEVELS[currentLevel.id + 1].name}`;
+  document.getElementById('next-btn').textContent = isLast ? 'JUGAR DE NUEVO' : 'SIGUIENTE NIVEL';
+  if (isLast) document.getElementById('next-btn').onclick = () => startLevel(0);
+  else document.getElementById('next-btn').onclick = () => goNextLevel();
+
+  showOnlyScreen('level-complete');
+}
+
+let crashAnim = null;
+function startTreeCrash() {
+  crashAnim = { type: 'tree', vy: 4, rotX: 0.15, rotZ: 0.2 };
+  gameOver('💥', '¡CHOCASTE CON UN ÁRBOL!');
+}
+function startCliffFall() {
+  crashAnim = { type: 'cliff', vy: 0, rotZ: 0.05 };
+  gameOver('😱', '¡CAÍSTE EN EL PRECIPICIO!');
+}
+function updateCrash(dt) {
+  if (!crashAnim) return;
+  if (crashAnim.type === 'tree') {
+    sled.rotation.x += crashAnim.rotX * dt * 60;
+    sled.rotation.z += crashAnim.rotZ * dt * 60;
+    sled.position.y += crashAnim.vy * dt;
+    crashAnim.vy -= 12 * dt;
+    if (sled.position.y < -2) sled.position.y = -2;
+  } else if (crashAnim.type === 'cliff') {
+    crashAnim.vy -= 18 * dt;
+    sled.position.y += crashAnim.vy * dt;
+    sled.rotation.z += crashAnim.rotZ * dt * 60;
+    sled.position.x += game.sledVX * dt * 0.3;
+  }
+}
+
+// Build initial scene for title (use first level visuals)
+buildSceneForLevel(LEVELS[0]);
+
+// ============================================================
+// MAIN LOOP
+// ============================================================
+let lastTime = performance.now();
+function update() {
+  const now = performance.now();
+  const dt = Math.min(0.05, (now - lastTime) / 1000);
+  lastTime = now;
+
+  // Snowflakes
+  snowflakes.forEach(flake => {
+    flake.position.y -= 6 * dt;
+    flake.position.x -= 2 * dt;
+    flake.position.z += game.speed * dt * 0.5;
+    if (flake.position.y < 0 || flake.position.z > game.sledZ + 30) {
+      flake.position.y = 30 + Math.random() * 15;
+      flake.position.x = game.sledX + (Math.random() - 0.5) * 80;
+      flake.position.z = game.sledZ - 80 - Math.random() * 30;
+    }
+  });
+
+  // Aurora animation (night level)
+  auroraStrips.forEach((a, i) => {
+    a.material.opacity = 0.18 + Math.sin(now / 1200 + i) * 0.1;
+    a.position.x += Math.sin(now / 3000 + i) * 0.05;
+  });
+
+  if (game.state === 'playing' && game.alive) {
+    let dir = 0;
+    if (keys['ArrowLeft'] || keys['a'] || touchLeftHeld) dir -= 1;
+    if (keys['ArrowRight'] || keys['d'] || touchRightHeld) dir += 1;
+    // FASTER STEERING — bumped from 30 to 60 accel, max from 15 to 24, less friction
+    game.sledVX += dir * 60 * dt;
+    game.sledVX *= 0.88;
+    game.sledVX = Math.max(-24, Math.min(24, game.sledVX));
+
+    if (keys['ArrowUp'] || keys['w']) game.speed += 25 * dt;
+    if (keys['ArrowDown'] || keys['s']) game.speed -= 35 * dt;
+    game.speed = Math.min(currentLevel.maxSpeed, game.speed + currentLevel.speedRamp * dt);
+    game.speed = Math.max(15, game.speed);
+    if (game.speed > game.maxSpeed) game.maxSpeed = game.speed;
+
+    game.sledX += game.sledVX * dt;
+    game.sledZ -= game.speed * dt;
+    game.distance += game.speed * dt;
+
+    sled.position.x = game.sledX;
+    sled.position.z = game.sledZ;
+    sled.rotation.z = -game.sledVX * 0.045;
+    sled.rotation.y = -game.sledVX * 0.03;
+
+    if (Math.abs(game.sledX) > SLOPE_WIDTH / 2 - 1) {
+      startCliffFall();
+    }
+
+    // Goal check
+    if (game.distance >= currentLevel.goal) {
+      levelComplete();
+    }
+
+    // Tree spawning
+    game.spawnTimer -= dt;
+    if (game.spawnTimer <= 0) {
+      const spawnZ = game.sledZ - 120 - Math.random() * 40;
+      spawnTree(
+        (Math.random() - 0.5) * (SLOPE_WIDTH - 4),
+        spawnZ,
+        currentLevel
+      );
+      const baseRate = currentLevel.treeSpawnRate;
+      const minRate = currentLevel.treeSpawnRateMin;
+      const spawnRate = Math.max(minRate, baseRate - game.distance * 0.0003);
+      game.spawnTimer = spawnRate;
+    }
+
+    // Despawn + collisions
+    for (let i = trees.length - 1; i >= 0; i--) {
+      const t = trees[i];
+      if (t.position.z > game.sledZ + 15) {
+        scene.remove(t);
+        trees.splice(i, 1);
+        continue;
+      }
+      const dx = t.position.x - game.sledX;
+      const dz = t.position.z - game.sledZ;
+      const r = t.userData.collisionRadius || 1.0;
+      if (Math.abs(dz) < r + 1.2 && Math.abs(dx) < r + 0.8) {
+        startTreeCrash();
+        break;
+      }
+    }
+
+    // HUD
+    document.getElementById('dist-value').textContent = Math.floor(game.distance) + ' M';
+    document.getElementById('speed-value').textContent = Math.floor(game.speed);
+    const pct = Math.min(100, (game.distance / currentLevel.goal) * 100);
+    document.getElementById('goal-fill').style.width = pct + '%';
+  } else if (game.state === 'gameover') {
+    updateCrash(dt);
+  }
+
+  // Camera
+  let camTargetX, camTargetZ;
+  if (game.state === 'playing' || game.state === 'gameover') {
+    camTargetX = game.sledX * 0.4;
+    camTargetZ = game.sledZ + 9;
+  } else {
+    camTargetX = Math.sin(now / 3000) * 2;
+    camTargetZ = 10;
+  }
+  camera.position.x += (camTargetX - camera.position.x) * 0.1;
+  camera.position.z += (camTargetZ - camera.position.z) * 0.1;
+  camera.position.y = 5.5;
+  camera.lookAt(game.sledX * 0.2, 1.5, game.sledZ - 15);
+
+  renderer.render(scene, camera);
+  requestAnimationFrame(update);
+}
+
+update();
+</script>
+</body>
+</html>
