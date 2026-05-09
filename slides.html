@@ -213,27 +213,27 @@
   <div class="orb" style="width:500px;height:500px;background:rgba(167,139,250,0.13);top:-100px;right:-80px"></div>
   <div class="orb" style="width:300px;height:300px;background:rgba(74,222,128,0.08);bottom:80px;left:-60px"></div>
   <style>
-    .lvl{display:grid;grid-template-columns:54px 1fr;gap:14px;align-items:center;background:rgba(255,255,255,0.025);border:1px solid var(--border);border-radius:14px;padding:12px 14px;animation:fadeUp 0.4s ease-out both}
+    .lvl{display:grid;grid-template-columns:48px 1fr 1.4fr;gap:18px;align-items:center;background:rgba(255,255,255,0.025);border:1px solid var(--border);border-radius:10px;padding:7px 16px;animation:fadeUp 0.4s ease-out both}
     .lvl:nth-child(1){animation-delay:.04s}.lvl:nth-child(2){animation-delay:.08s}.lvl:nth-child(3){animation-delay:.12s}.lvl:nth-child(4){animation-delay:.16s}
     .lvl:nth-child(5){animation-delay:.20s}.lvl:nth-child(6){animation-delay:.24s}.lvl:nth-child(7){animation-delay:.28s}.lvl:nth-child(8){animation-delay:.32s}
-    .lvl-num{font-family:var(--fd);font-size:18px;font-weight:800;width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;letter-spacing:-1px}
-    .lvl-name{font-family:var(--fd);font-size:14px;font-weight:800;color:var(--text);letter-spacing:-0.3px}
-    .lvl-hint{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4}
-    .grid-tree{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+    .lvl-num{font-family:var(--fd);font-size:17px;font-weight:800;width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;letter-spacing:-1px}
+    .lvl-name{font-family:var(--fd);font-size:clamp(13px,1.5vw,16px);font-weight:800;color:var(--text);letter-spacing:-0.3px}
+    .lvl-hint{font-size:clamp(13px,1.4vw,15px);color:#c8c8e0;line-height:1.4;font-weight:500}
+    .grid-tree{display:flex;flex-direction:column;gap:6px;margin-top:12px}
   </style>
   <div class="sc">
-    <div class="tag" style="background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.3);color:var(--pl)">🎮 SKILL TREE</div>
-    <div class="headline" style="margin-bottom:6px;font-size:clamp(32px,5vw,56px)">Sube de nivel <span class="gp">a tu ritmo</span></div>
-    <div class="body" style="margin-bottom:6px;font-size:clamp(13px,1.5vw,16px)">No hay carrera. Cada uno avanza hasta donde llegue. <span style="color:var(--pl)">¿Hasta qué nivel desbloqueas hoy?</span></div>
+    <div class="tag" style="background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.3);color:var(--pl);margin-bottom:14px">🎮 SKILL TREE</div>
+    <div class="headline" style="margin-bottom:4px;font-size:clamp(28px,4vw,46px)">Sube de nivel <span class="gp">a tu ritmo</span></div>
+    <div class="body" style="margin-bottom:0;font-size:clamp(12px,1.3vw,15px)">No hay carrera. Cada uno avanza hasta donde llegue. <span style="color:var(--pl)">¿Hasta qué nivel desbloqueas hoy?</span></div>
     <div class="grid-tree">
-      <div class="lvl"><div class="lvl-num" style="background:rgba(74,222,128,0.15);color:var(--green);border:1px solid rgba(74,222,128,0.4)">1</div><div><div class="lvl-name">🟢 IT WORKS</div><div class="lvl-hint">Algo se mueve en pantalla</div></div></div>
-      <div class="lvl"><div class="lvl-num" style="background:rgba(74,222,128,0.15);color:var(--green);border:1px solid rgba(74,222,128,0.4)">2</div><div><div class="lvl-name">🟢 IT'S A GAME</div><div class="lvl-hint">Tiene objetivo y responde a controles</div></div></div>
-      <div class="lvl"><div class="lvl-num" style="background:rgba(251,191,36,0.15);color:var(--yellow);border:1px solid rgba(251,191,36,0.4)">3</div><div><div class="lvl-name">🟡 IT FEELS GOOD</div><div class="lvl-hint">Pantalla de inicio + game over · estilo propio</div></div></div>
-      <div class="lvl"><div class="lvl-num" style="background:rgba(251,191,36,0.15);color:var(--yellow);border:1px solid rgba(251,191,36,0.4)">4</div><div><div class="lvl-name">🟡 IT'S YOURS</div><div class="lvl-hint">Personaje y tema únicos · tu firma</div></div></div>
-      <div class="lvl"><div class="lvl-num" style="background:rgba(251,146,60,0.15);color:var(--orange);border:1px solid rgba(251,146,60,0.4)">5</div><div><div class="lvl-name">🟠 IT REMEMBERS</div><div class="lvl-hint">High score que sobrevive al refresh</div></div></div>
-      <div class="lvl"><div class="lvl-num" style="background:rgba(251,146,60,0.15);color:var(--orange);border:1px solid rgba(251,146,60,0.4)">6</div><div><div class="lvl-name">🟠 IT'S LIVE</div><div class="lvl-hint">Deployado en Vercel con su propia URL</div></div></div>
-      <div class="lvl"><div class="lvl-num" style="background:rgba(244,114,182,0.15);color:var(--pink);border:1px solid rgba(244,114,182,0.4)">7</div><div><div class="lvl-name">🔴 IT EVOLVES</div><div class="lvl-hint">Múltiples niveles · animaciones · sonido</div></div></div>
-      <div class="lvl"><div class="lvl-num" style="background:rgba(124,58,237,0.18);color:var(--pl);border:1px solid rgba(167,139,250,0.5)">8</div><div><div class="lvl-name">🟣 BOSS LEVEL</div><div class="lvl-hint">Multiplayer · AI enemiga · backend leaderboard</div></div></div>
+      <div class="lvl"><div class="lvl-num" style="background:rgba(74,222,128,0.15);color:var(--green);border:1px solid rgba(74,222,128,0.4)">1</div><div class="lvl-name">🟢 IT WORKS</div><div class="lvl-hint">Algo se mueve en pantalla</div></div>
+      <div class="lvl"><div class="lvl-num" style="background:rgba(74,222,128,0.15);color:var(--green);border:1px solid rgba(74,222,128,0.4)">2</div><div class="lvl-name">🟢 IT'S A GAME</div><div class="lvl-hint">Tiene objetivo y responde a controles</div></div>
+      <div class="lvl"><div class="lvl-num" style="background:rgba(251,191,36,0.15);color:var(--yellow);border:1px solid rgba(251,191,36,0.4)">3</div><div class="lvl-name">🟡 IT FEELS GOOD</div><div class="lvl-hint">Pantalla de inicio + game over · estilo propio</div></div>
+      <div class="lvl"><div class="lvl-num" style="background:rgba(251,191,36,0.15);color:var(--yellow);border:1px solid rgba(251,191,36,0.4)">4</div><div class="lvl-name">🟡 IT'S YOURS</div><div class="lvl-hint">Personaje y tema únicos · tu firma</div></div>
+      <div class="lvl"><div class="lvl-num" style="background:rgba(251,146,60,0.15);color:var(--orange);border:1px solid rgba(251,146,60,0.4)">5</div><div class="lvl-name">🟠 IT REMEMBERS</div><div class="lvl-hint">High score que sobrevive al refresh</div></div>
+      <div class="lvl"><div class="lvl-num" style="background:rgba(251,146,60,0.15);color:var(--orange);border:1px solid rgba(251,146,60,0.4)">6</div><div class="lvl-name">🟠 IT'S LIVE</div><div class="lvl-hint">Deployado en Vercel con su propia URL</div></div>
+      <div class="lvl"><div class="lvl-num" style="background:rgba(244,114,182,0.15);color:var(--pink);border:1px solid rgba(244,114,182,0.4)">7</div><div class="lvl-name">🔴 IT EVOLVES</div><div class="lvl-hint">Múltiples niveles · animaciones · sonido</div></div>
+      <div class="lvl"><div class="lvl-num" style="background:rgba(124,58,237,0.18);color:var(--pl);border:1px solid rgba(167,139,250,0.5)">8</div><div class="lvl-name">🟣 BOSS LEVEL</div><div class="lvl-hint">Multiplayer · AI enemiga · backend leaderboard</div></div>
     </div>
   </div>
 </div>
