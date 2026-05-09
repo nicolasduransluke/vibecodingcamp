@@ -1,0 +1,2715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Block Ball — Neighborhood League</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bowlby+One+SC&family=Patrick+Hand&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #f4ead5;
+  --paper-dark: #e8dcbf;
+  --paper-shadow: #c9b890;
+  --ink: #2c2522;
+  --ink-soft: #4a3f38;
+  --sky: #94c4d4;
+  --sky-deep: #5a93a8;
+  --grass: #7a9d63;
+  --grass-shadow: #5a7849;
+  --dirt: #b58658;
+  --dirt-shadow: #8a6845;
+  --orange: #e8743c;
+  --brick: #b8453a;
+  --gold: #f0b649;
+  --plum: #7c4d8a;
+  --cream: #fbf3df;
+  --display: 'Bowlby One SC', sans-serif;
+  --hand: 'Patrick Hand', cursive;
+  --serif: 'Fraunces', serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: var(--serif);
+  color: var(--ink);
+  background: var(--paper);
+  overflow: hidden;
+}
+
+body {
+  background-image:
+    radial-gradient(ellipse at 20% 10%, rgba(232,116,60,0.08), transparent 60%),
+    radial-gradient(ellipse at 80% 90%, rgba(124,77,138,0.07), transparent 60%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.17 0 0 0 0 0.14 0 0 0 0 0.13 0 0 0 0.18 0'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");
+  background-size: auto, auto, 240px 240px;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scene {
+  width: 100%;
+  height: 100%;
+  display: none;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+.scene.active { display: flex; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  font-family: var(--display);
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  background: var(--ink);
+  color: var(--cream);
+  border: 3px solid var(--ink);
+  padding: 14px 28px;
+  cursor: pointer;
+  position: relative;
+  text-transform: uppercase;
+  transition: transform 0.08s, box-shadow 0.08s;
+  box-shadow: 4px 4px 0 var(--ink-soft);
+  border-radius: 2px;
+}
+.btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink-soft); }
+.btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink-soft); }
+.btn.gold { background: var(--gold); color: var(--ink); }
+.btn.brick { background: var(--brick); color: var(--cream); }
+.btn.sky { background: var(--sky-deep); color: var(--cream); }
+.btn.small { font-size: 14px; padding: 8px 16px; box-shadow: 3px 3px 0 var(--ink-soft); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ---------- TITLE SCREEN ---------- */
+#title-scene {
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.title-stack {
+  text-align: center;
+  position: relative;
+}
+
+.title-headline {
+  font-family: var(--display);
+  font-size: clamp(60px, 12vw, 160px);
+  line-height: 0.85;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  position: relative;
+  display: inline-block;
+}
+.title-headline .word1 {
+  display: block;
+  color: var(--brick);
+  text-shadow: 4px 4px 0 var(--ink), 8px 8px 0 var(--gold);
+  transform: rotate(-3deg);
+}
+.title-headline .word2 {
+  display: block;
+  color: var(--ink);
+  text-shadow: 4px 4px 0 var(--orange);
+  transform: rotate(2deg) translateY(-8px);
+  margin-top: 6px;
+}
+
+.title-sub {
+  font-family: var(--hand);
+  font-size: clamp(20px, 3vw, 32px);
+  margin-top: 30px;
+  color: var(--ink-soft);
+  transform: rotate(-1deg);
+}
+.title-sub::before { content: "✶ "; color: var(--brick); }
+.title-sub::after { content: " ✶"; color: var(--brick); }
+
+.title-decor {
+  position: absolute;
+  pointer-events: none;
+  font-family: var(--hand);
+}
+.title-decor.ball-1 { top: -40px; right: -60px; transform: rotate(15deg); font-size: 80px; }
+.title-decor.bat-1 { bottom: -30px; left: -80px; transform: rotate(-30deg); font-size: 90px; }
+
+.title-actions {
+  margin-top: 50px;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.title-credits {
+  position: absolute;
+  bottom: 24px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--hand);
+  font-size: 16px;
+  color: var(--ink-soft);
+  opacity: 0.7;
+}
+
+/* ---------- TEAM SELECT ---------- */
+#select-scene { padding: 24px 32px; gap: 16px; }
+
+.select-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.select-header h2 {
+  font-family: var(--display);
+  font-size: 36px;
+  color: var(--ink);
+  letter-spacing: 0.5px;
+}
+.select-header h2 small {
+  font-family: var(--hand);
+  font-size: 22px;
+  color: var(--brick);
+  letter-spacing: 0;
+  margin-left: 12px;
+}
+.select-status {
+  font-family: var(--hand);
+  font-size: 22px;
+  color: var(--ink);
+  background: var(--gold);
+  padding: 6px 14px;
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink-soft);
+  transform: rotate(-1deg);
+}
+
+.select-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+  min-height: 0;
+}
+
+.roster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+  overflow-y: auto;
+  padding: 8px 8px 16px 4px;
+  align-content: start;
+}
+
+.player-card {
+  background: var(--cream);
+  border: 2.5px solid var(--ink);
+  padding: 12px;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.12s, box-shadow 0.12s;
+  box-shadow: 3px 3px 0 var(--ink-soft);
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 180px;
+}
+.player-card:nth-child(3n)   { transform: rotate(-0.6deg); }
+.player-card:nth-child(3n+1) { transform: rotate(0.4deg); }
+.player-card:nth-child(3n+2) { transform: rotate(-0.2deg); }
+.player-card:hover {
+  transform: rotate(0deg) translate(-2px, -2px);
+  box-shadow: 5px 5px 0 var(--ink-soft);
+}
+.player-card.picked {
+  background: var(--gold);
+  border-color: var(--brick);
+  transform: rotate(0deg) scale(0.97);
+}
+.player-card.picked::after {
+  content: "PICKED";
+  position: absolute;
+  top: 8px;
+  right: -8px;
+  background: var(--brick);
+  color: var(--cream);
+  font-family: var(--display);
+  font-size: 11px;
+  padding: 3px 8px;
+  letter-spacing: 1px;
+  transform: rotate(8deg);
+}
+.player-card.cpu-picked { opacity: 0.45; cursor: not-allowed; }
+.player-card.cpu-picked::after {
+  content: "OPPONENT";
+  position: absolute;
+  top: 8px;
+  right: -8px;
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--display);
+  font-size: 10px;
+  padding: 3px 8px;
+  letter-spacing: 1px;
+  transform: rotate(-6deg);
+}
+
+.pc-portrait {
+  height: 60px;
+  background: var(--paper-dark);
+  border: 2px solid var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.pc-name {
+  font-family: var(--display);
+  font-size: 14px;
+  line-height: 1.1;
+  letter-spacing: 0.3px;
+}
+.pc-tag {
+  font-family: var(--hand);
+  font-size: 14px;
+  color: var(--ink-soft);
+  margin-top: -2px;
+}
+.pc-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 10px;
+  margin-top: auto;
+  font-family: var(--serif);
+  font-size: 13px;
+  font-weight: 600;
+}
+.pc-stat {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px dashed var(--ink-soft);
+  padding-bottom: 1px;
+}
+.pc-stat span:first-child { color: var(--ink-soft); font-weight: 400; }
+.pc-special {
+  font-family: var(--hand);
+  font-size: 13px;
+  color: var(--brick);
+  line-height: 1.15;
+  border-top: 2px dotted var(--ink-soft);
+  padding-top: 4px;
+  margin-top: 4px;
+}
+
+/* Picked panel */
+.picked-panel {
+  background: var(--cream);
+  border: 3px solid var(--ink);
+  box-shadow: 5px 5px 0 var(--ink-soft);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+.picked-panel h3 {
+  font-family: var(--display);
+  font-size: 22px;
+  color: var(--brick);
+  border-bottom: 2px dashed var(--ink);
+  padding-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+.picked-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--hand);
+  font-size: 18px;
+}
+.picked-list .empty {
+  color: var(--ink-soft);
+  font-style: italic;
+  opacity: 0.6;
+}
+.picked-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: var(--paper);
+  border-left: 4px solid var(--brick);
+}
+.picked-line .pos { color: var(--ink-soft); font-size: 14px; }
+.picked-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Scrollbars */
+.roster-grid::-webkit-scrollbar,
+.picked-list::-webkit-scrollbar { width: 10px; }
+.roster-grid::-webkit-scrollbar-track,
+.picked-list::-webkit-scrollbar-track { background: var(--paper-dark); }
+.roster-grid::-webkit-scrollbar-thumb,
+.picked-list::-webkit-scrollbar-thumb { background: var(--ink); border: 2px solid var(--paper-dark); }
+
+/* ---------- GAME SCENE ---------- */
+#game-scene {
+  flex-direction: column;
+  padding: 12px;
+  gap: 10px;
+}
+
+.scoreboard {
+  background: var(--ink);
+  color: var(--cream);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink-soft);
+  padding: 12px 18px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
+  align-items: center;
+  font-family: var(--display);
+  position: relative;
+}
+.scoreboard::after {
+  content: "";
+  position: absolute;
+  top: 4px; left: 4px; right: 4px; bottom: 4px;
+  border: 1px solid var(--cream);
+  pointer-events: none;
+  opacity: 0.4;
+}
+.sb-team {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sb-team.cpu { justify-content: flex-end; }
+.sb-name { font-size: 18px; letter-spacing: 1px; line-height: 1; }
+.sb-tag { font-family: var(--hand); font-size: 14px; color: var(--gold); letter-spacing: 0; line-height: 1; }
+.sb-score {
+  font-family: var(--display);
+  font-size: 38px;
+  background: var(--brick);
+  color: var(--cream);
+  padding: 4px 14px;
+  min-width: 60px;
+  text-align: center;
+  border: 2px solid var(--cream);
+}
+.sb-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.sb-inning {
+  background: var(--gold);
+  color: var(--ink);
+  padding: 4px 14px;
+  font-size: 18px;
+  letter-spacing: 1px;
+}
+.sb-outs { font-family: var(--hand); font-size: 16px; color: var(--cream); display: flex; gap: 8px; }
+.sb-outs .o {
+  width: 14px; height: 14px;
+  border: 2px solid var(--cream);
+  border-radius: 50%;
+}
+.sb-outs .o.on { background: var(--brick); border-color: var(--brick); }
+
+.field-area {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 12px;
+  min-height: 0;
+}
+
+.field-stage {
+  background: var(--cream);
+  border: 3px solid var(--ink);
+  box-shadow: 5px 5px 0 var(--ink-soft);
+  position: relative;
+  overflow: hidden;
+}
+
+.field-svg, .atbat-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.atbat-svg { display: none; }
+.field-stage.atbat-mode .field-svg { display: none; }
+.field-stage.atbat-mode .atbat-svg { display: block; }
+
+/* Right panel */
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.panel-card {
+  background: var(--cream);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink-soft);
+  padding: 12px 14px;
+}
+.panel-card h4 {
+  font-family: var(--display);
+  font-size: 14px;
+  letter-spacing: 1px;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+}
+.panel-card.batter h4 { color: var(--brick); }
+
+.batter-card .name { font-family: var(--display); font-size: 22px; line-height: 1; }
+.batter-card .tag { font-family: var(--hand); font-size: 16px; color: var(--ink-soft); margin-top: 2px; }
+.batter-card .stat-row { display: flex; gap: 10px; margin-top: 8px; font-family: var(--serif); font-size: 13px; }
+.batter-card .stat-pill {
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  padding: 2px 8px;
+  font-weight: 600;
+}
+.batter-card .special {
+  font-family: var(--hand);
+  font-size: 14px;
+  color: var(--brick);
+  margin-top: 6px;
+  border-top: 1px dashed var(--ink-soft);
+  padding-top: 4px;
+}
+
+.controls-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.swing-instruction {
+  font-family: var(--hand);
+  font-size: 18px;
+  line-height: 1.25;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+.pitch-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.pitch-buttons .btn { font-size: 13px; padding: 8px 6px; box-shadow: 3px 3px 0 var(--ink-soft); }
+.swing-btn {
+  width: 100%;
+  font-size: 24px;
+  padding: 16px;
+  background: var(--brick);
+  color: var(--cream);
+  border-color: var(--ink);
+  letter-spacing: 2px;
+}
+.swing-btn:disabled { background: var(--paper-shadow); color: var(--ink-soft); }
+
+.event-log {
+  font-family: var(--hand);
+  font-size: 16px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  padding: 10px;
+  max-height: 150px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 80px;
+}
+.event-log .ev { padding: 2px 0; border-bottom: 1px dashed var(--ink-soft); }
+.event-log .ev:last-child { border-bottom: none; }
+.event-log .ev.big { color: var(--brick); font-weight: bold; font-family: var(--display); font-size: 14px; letter-spacing: 0.5px; }
+
+/* Bases display */
+.bases-mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.b-diamond {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.b-base {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  transform: rotate(45deg);
+}
+.b-base.on { background: var(--brick); }
+.b-base.first { right: 0; top: 32px; }
+.b-base.second { left: 32px; top: 0; }
+.b-base.third { left: 0; top: 32px; }
+.b-base.home { left: 32px; bottom: 0; }
+.b-base.runnable {
+  box-shadow: 0 0 0 3px var(--gold), 0 0 12px var(--gold);
+  animation: pulse-base 0.9s ease-in-out infinite;
+}
+@keyframes pulse-base {
+  0%, 100% { box-shadow: 0 0 0 3px var(--gold), 0 0 8px var(--gold); }
+  50%      { box-shadow: 0 0 0 5px var(--gold), 0 0 18px var(--gold); }
+}
+
+/* Toast */
+.toast {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-3deg) scale(0.8);
+  background: var(--gold);
+  color: var(--ink);
+  border: 4px solid var(--ink);
+  padding: 18px 34px;
+  font-family: var(--display);
+  font-size: 38px;
+  letter-spacing: 1.5px;
+  box-shadow: 8px 8px 0 var(--ink-soft);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s, transform 0.18s;
+  z-index: 50;
+  text-align: center;
+  line-height: 1;
+}
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) rotate(-3deg) scale(1);
+}
+.toast.bad { background: var(--brick); color: var(--cream); }
+.toast.great { background: var(--orange); color: var(--cream); }
+.toast.huge { background: var(--plum); color: var(--cream); font-size: 46px; }
+
+/* Results */
+#results-scene {
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 24px;
+}
+.result-headline {
+  font-family: var(--display);
+  font-size: clamp(60px, 11vw, 120px);
+  text-align: center;
+  color: var(--ink);
+  line-height: 0.9;
+}
+.result-headline.win { color: var(--brick); text-shadow: 4px 4px 0 var(--gold); }
+.result-headline.lose { color: var(--ink-soft); }
+
+.result-score {
+  font-family: var(--display);
+  font-size: 72px;
+  background: var(--ink);
+  color: var(--cream);
+  padding: 12px 40px;
+  border: 4px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--ink-soft);
+}
+.result-stats {
+  font-family: var(--hand);
+  font-size: 22px;
+  color: var(--ink-soft);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.results-actions { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+
+/* Animations */
+@keyframes pop-in {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+.shake { animation: shake 0.3s ease-in-out; }
+
+/* Responsive: stacked panel under field if narrow */
+@media (max-width: 900px) {
+  .select-body { grid-template-columns: 1fr; }
+  .picked-panel { max-height: 280px; }
+  .field-area { grid-template-columns: 1fr; }
+  .side-panel { max-height: 320px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- TITLE -->
+  <section id="title-scene" class="scene active">
+    <div class="title-stack">
+      <div class="title-decor ball-1">⚾</div>
+      <div class="title-decor bat-1">🏏</div>
+      <h1 class="title-headline">
+        <span class="word1">Block</span>
+        <span class="word2">Ball</span>
+      </h1>
+      <p class="title-sub">A Neighborhood League Showdown</p>
+      <div class="title-actions">
+        <button class="btn gold" id="play-btn">Play Ball</button>
+        <button class="btn small" id="how-btn">How to Play</button>
+      </div>
+    </div>
+    <div class="title-credits">An original sandlot game · No copyrighted likenesses</div>
+  </section>
+
+  <!-- TEAM SELECT -->
+  <section id="select-scene" class="scene">
+    <div class="select-header">
+      <h2>Pick Your Team <small id="select-progress">choose 9 kids</small></h2>
+      <div class="select-status" id="select-status">0 of 9 picked</div>
+    </div>
+    <div class="select-body">
+      <div class="roster-grid" id="roster-grid"></div>
+      <aside class="picked-panel">
+        <h3>Your Lineup</h3>
+        <div class="picked-list" id="picked-list">
+          <div class="empty">No kids picked yet — click cards to draft.</div>
+        </div>
+        <div class="picked-actions">
+          <button class="btn small" id="autopick-btn">Auto-Fill</button>
+          <button class="btn small" id="clear-btn">Clear</button>
+          <button class="btn brick" id="start-btn" disabled>Start Game ▶</button>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- GAME -->
+  <section id="game-scene" class="scene">
+    <div class="scoreboard">
+      <div class="sb-team home">
+        <div>
+          <div class="sb-name" id="sb-home-name">HOME</div>
+          <div class="sb-tag">you</div>
+        </div>
+        <div class="sb-score" id="sb-home-score">0</div>
+      </div>
+      <div class="sb-center">
+        <div class="sb-inning" id="sb-inning">TOP 1</div>
+        <div class="sb-outs" id="sb-outs">
+          <div class="o"></div><div class="o"></div><div class="o"></div>
+        </div>
+      </div>
+      <div class="sb-team cpu">
+        <div class="sb-score" id="sb-away-score">0</div>
+        <div>
+          <div class="sb-name" id="sb-away-name">AWAY</div>
+          <div class="sb-tag" style="text-align:right">CPU</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field-area">
+      <div class="field-stage" id="field-stage">
+        <!-- Top-down field -->
+        <svg class="field-svg" id="field-svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet"></svg>
+        <!-- At-bat side view -->
+        <svg class="atbat-svg" id="atbat-svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="toast" id="toast"></div>
+      </div>
+
+      <div class="side-panel">
+        <div class="panel-card batter batter-card" id="batter-card">
+          <h4 id="batter-label">AT BAT</h4>
+          <div class="name" id="batter-name">—</div>
+          <div class="tag" id="batter-tag">—</div>
+          <div class="stat-row" id="batter-stats"></div>
+          <div class="special" id="batter-special"></div>
+          <div class="bases-mini">
+            <div class="b-diamond">
+              <div class="b-base second" id="b-2"></div>
+              <div class="b-base first" id="b-1"></div>
+              <div class="b-base third" id="b-3"></div>
+              <div class="b-base home"></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-card controls-card">
+          <h4 id="ctrl-title">YOUR TURN</h4>
+          <div class="swing-instruction" id="ctrl-instruction">Pick a pitch type, then choose where to throw.</div>
+          <div class="pitch-buttons" id="pitch-buttons"></div>
+          <button class="swing-btn btn" id="swing-btn" style="display:none">SWING</button>
+          <div class="event-log" id="event-log"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="results-scene" class="scene">
+    <h1 class="result-headline" id="result-headline">GAME OVER</h1>
+    <div class="result-score" id="result-score">0 — 0</div>
+    <div class="result-stats" id="result-stats"></div>
+    <div class="results-actions">
+      <button class="btn gold" id="rematch-btn">Rematch</button>
+      <button class="btn" id="newteams-btn">Pick New Teams</button>
+      <button class="btn small" id="title-btn">Title Screen</button>
+    </div>
+  </section>
+</div>
+
+<script>
+/* =========================================================================
+   BLOCK BALL — NEIGHBORHOOD LEAGUE
+   Original arcade-style sandlot baseball game.
+   ========================================================================= */
+
+/* ----- AUDIO (synthesized via WebAudio so the file is fully self-contained) -- */
+const Audio = (() => {
+  let ctx = null;
+  function ensure() {
+    if (!ctx) {
+      try { ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch (e) { ctx = null; }
+    }
+    return ctx;
+  }
+  function tone(freq, dur, type='sine', vol=0.2, slide=0) {
+    const c = ensure(); if (!c) return;
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.type = type;
+    o.frequency.value = freq;
+    if (slide) o.frequency.linearRampToValueAtTime(freq + slide, c.currentTime + dur);
+    g.gain.value = 0;
+    g.gain.linearRampToValueAtTime(vol, c.currentTime + 0.01);
+    g.gain.linearRampToValueAtTime(0, c.currentTime + dur);
+    o.connect(g); g.connect(c.destination);
+    o.start(); o.stop(c.currentTime + dur);
+  }
+  function noise(dur, vol=0.2) {
+    const c = ensure(); if (!c) return;
+    const buf = c.createBuffer(1, c.sampleRate * dur, c.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+      data[i] = (Math.random() * 2 - 1) * (1 - i/data.length);
+    }
+    const src = c.createBufferSource(); src.buffer = buf;
+    const g = c.createGain(); g.gain.value = vol;
+    src.connect(g); g.connect(c.destination);
+    src.start();
+  }
+  return {
+    crack: () => { tone(180, 0.05, 'square', 0.35); noise(0.12, 0.18); },
+    whiff: () => { noise(0.12, 0.12); },
+    pitch: () => { tone(620, 0.12, 'sine', 0.08, -200); },
+    cheer: () => {
+      tone(523, 0.18, 'square', 0.08);
+      setTimeout(() => tone(659, 0.18, 'square', 0.08), 100);
+      setTimeout(() => tone(784, 0.3, 'square', 0.08), 220);
+    },
+    boo:   () => { tone(220, 0.4, 'sawtooth', 0.1, -80); },
+    blip:  () => { tone(880, 0.05, 'square', 0.07); },
+    wood:  () => { tone(280, 0.07, 'triangle', 0.15); },
+    ding:  () => { tone(1200, 0.12, 'sine', 0.1); },
+  };
+})();
+
+/* ============== ROSTER (original characters) =============================== */
+const ROSTER = [
+  { id: 1,  name: "Tomás Vega",        nick: "Tank",      pos: "1B", bat: 9, pit: 2, run: 2, fld: 6,
+    color: "#b8453a", accent: "#e8743c", bio: "Eats two lunches before the first pitch.",
+    special: "Earthquake — extra power on contact." },
+  { id: 2,  name: "Jojo Greer",        nick: "Lightning", pos: "CF", bat: 6, pit: 4, run: 10, fld: 7,
+    color: "#3a7d6b", accent: "#94c4d4", bio: "Has yet to be tagged out at second.",
+    special: "Wind Sprint — singles often turn into doubles." },
+  { id: 3,  name: "Beatrice Okonkwo",  nick: "Bea",       pos: "P",  bat: 4, pit: 10, run: 5, fld: 6,
+    color: "#7c4d8a", accent: "#f0b649", bio: "Throws a knuckler that flat refuses to behave.",
+    special: "Knuckler — first pitch nearly unhittable." },
+  { id: 4,  name: "Wendell Park",      nick: "Wen",       pos: "C",  bat: 7, pit: 6, run: 1, fld: 9,
+    color: "#8a6845", accent: "#b58658", bio: "Slow as a Sunday but sees every pitch coming.",
+    special: "Read the Pitch — bonus contact accuracy." },
+  { id: 5,  name: "Priya Raman",       nick: "Pri",       pos: "SS", bat: 7, pit: 6, run: 7, fld: 8,
+    color: "#e8743c", accent: "#f0b649", bio: "Switch hitter. Reads box scores for fun.",
+    special: "Switch Hit — never at a platoon disadvantage." },
+  { id: 6,  name: "Marco Trentino",    nick: "Trent",     pos: "P",  bat: 5, pit: 9, run: 4, fld: 6,
+    color: "#5a93a8", accent: "#94c4d4", bio: "His screwball makes adults question reality.",
+    special: "El Tornillo — devastating screwball." },
+  { id: 7,  name: "Hazel Beaumont",    nick: "Haze",      pos: "2B", bat: 6, pit: 5, run: 8, fld: 9,
+    color: "#7a9d63", accent: "#5a7849", bio: "Has more bandaids than baseball cards.",
+    special: "Dirt Diver — saves balls headed up the middle." },
+  { id: 8,  name: "Devon Walker",      nick: "Dub",       pos: "1B", bat: 8, pit: 7, run: 3, fld: 7,
+    color: "#2c2522", accent: "#8a6845", bio: "Tallest kid on the block. Speaks softly.",
+    special: "Big Reach — never drops a throw at first." },
+  { id: 9,  name: "Lila Sokolov",      nick: "Lily",      pos: "P",  bat: 4, pit: 8, run: 5, fld: 6,
+    color: "#b8453a", accent: "#7c4d8a", bio: "Lefty. Practiced against a brick wall for three years.",
+    special: "Lefty Loop — confuses right-handed batters." },
+  { id: 10, name: "Chip Brennan",      nick: "Hot Dog",   pos: "RF", bat: 6, pit: 5, run: 7, fld: 5,
+    color: "#f0b649", accent: "#e8743c", bio: "Calls his shot. Sometimes correctly.",
+    special: "Walk-off Mood — clutch in the final inning." },
+  { id: 11, name: "Akira Tanabe",      nick: "Aki",       pos: "CF", bat: 5, pit: 4, run: 7, fld: 10,
+    color: "#5a7849", accent: "#7a9d63", bio: "Quietly catches absolutely everything.",
+    special: "Web Gem — has a chance to rob extra-base hits." },
+  { id: 12, name: "Felicity Brown",    nick: "Fel",       pos: "LF", bat: 8, pit: 3, run: 6, fld: 5,
+    color: "#e8743c", accent: "#b8453a", bio: "Eight years old, enormous swing.",
+    special: "Don't Underestimate — surprise pop power." },
+  { id: 13, name: "Kwame Adjei",       nick: "Kwa",       pos: "CF", bat: 6, pit: 5, run: 10, fld: 8,
+    color: "#7c4d8a", accent: "#5a93a8", bio: "Track team in winter, baseball in summer.",
+    special: "Burner — takes the extra base on every hit." },
+  { id: 14, name: "Roxana Esposito",   nick: "Rox",       pos: "P",  bat: 5, pit: 9, run: 6, fld: 6,
+    color: "#5a93a8", accent: "#7c4d8a", bio: "Curveball drops off a table.",
+    special: "La Curva — breaking pitches break harder." },
+  { id: 15, name: "Tucker Bly",        nick: "Tuck",      pos: "3B", bat: 7, pit: 8, run: 5, fld: 7,
+    color: "#b58658", accent: "#8a6845", bio: "Drove the tractor when he was nine.",
+    special: "Hay Bale Arm — heavy heater from the mound." },
+  { id: 16, name: "Mei-Lin Wong",      nick: "Cap",       pos: "3B", bat: 7, pit: 6, run: 6, fld: 8,
+    color: "#b8453a", accent: "#f0b649", bio: "Brings orange slices and a clipboard.",
+    special: "Rally Cry — boosts the next hitter." },
+  { id: 17, name: "Otis Reardon",      nick: "Doc",       pos: "P",  bat: 3, pit: 9, run: 4, fld: 5,
+    color: "#3a7d6b", accent: "#94c4d4", bio: "Reads physics books in the dugout.",
+    special: "Calculated — adapts to each batter." },
+  { id: 18, name: "Vicky Patel",       nick: "Vic",       pos: "2B", bat: 6, pit: 4, run: 9, fld: 7,
+    color: "#f0b649", accent: "#e8743c", bio: "Has stolen home twice in one game.",
+    special: "Slip & Slide — chance to swipe a base." },
+  { id: 19, name: "Bram Holt",         nick: "Boom",      pos: "LF", bat: 8, pit: 5, run: 4, fld: 5,
+    color: "#2c2522", accent: "#b8453a", bio: "Either he hits it to the moon or strikes out.",
+    special: "Boom or Bust — feast-or-famine swing." },
+  { id: 20, name: "Yusra Al-Mahdi",    nick: "Yus",       pos: "3B", bat: 5, pit: 6, run: 5, fld: 10,
+    color: "#7c4d8a", accent: "#94c4d4", bio: "Builds infield walls out of pure intent.",
+    special: "Stone Wall — almost nothing gets through." },
+  { id: 21, name: "Cole Henning",      nick: "Coyote",    pos: "2B", bat: 5, pit: 6, run: 8, fld: 6,
+    color: "#b58658", accent: "#f0b649", bio: "Made up the hidden-ball trick. Or so he says.",
+    special: "Trickster — opposing fielders get rattled." },
+  { id: 22, name: "Daisy Quinn",       nick: "Tiny",      pos: "RF", bat: 4, pit: 3, run: 7, fld: 5,
+    color: "#7a9d63", accent: "#94c4d4", bio: "Smallest strike zone in the neighborhood.",
+    special: "Tiny Zone — tougher to strike out." },
+  { id: 23, name: "Peyton Garrison",   nick: "Pey",       pos: "SS", bat: 7, pit: 7, run: 7, fld: 7,
+    color: "#5a93a8", accent: "#e8743c", bio: "Solid at literally everything.",
+    special: "Mr. Reliable — never makes errors." },
+  { id: 24, name: "Nikolai Voss",      nick: "Nik",       pos: "3B", bat: 6, pit: 8, run: 5, fld: 8,
+    color: "#3a7d6b", accent: "#7a9d63", bio: "Throws a fastball that hisses.",
+    special: "Schnell — rocket throws across the diamond." },
+];
+
+/* ============== STATE ====================================================== */
+const State = {
+  myTeam: [],
+  cpuTeam: [],
+  myLineupIdx: 0,
+  cpuLineupIdx: 0,
+  inning: 1,
+  half: 'top', // top: cpu bats; bot: me bats
+  outs: 0,
+  bases: [null, null, null], // 1B, 2B, 3B
+  homeScore: 0,
+  awayScore: 0,
+  totalInnings: 3,
+  history: [],
+  selectedPitch: null,
+  swingArmed: false,
+  pitchInFlight: false,
+  hitsHome: 0,
+  hitsAway: 0,
+  errors: 0,
+  finished: false,
+};
+
+/* ============== UTILS ====================================================== */
+const $ = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+const rand = (min, max) => Math.random() * (max - min) + min;
+const ri = (min, max) => Math.floor(rand(min, max + 1));
+const choose = arr => arr[Math.floor(Math.random() * arr.length)];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function showScene(id) {
+  $$('.scene').forEach(s => s.classList.remove('active'));
+  $('#' + id).classList.add('active');
+}
+
+function toast(text, kind='', ms=1100) {
+  const t = $('#toast');
+  t.textContent = text;
+  t.className = 'toast show ' + kind;
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+function logEvent(text, kind='') {
+  const log = $('#event-log');
+  const div = document.createElement('div');
+  div.className = 'ev ' + kind;
+  div.textContent = text;
+  log.prepend(div);
+  // Keep a max
+  while (log.children.length > 60) log.lastChild.remove();
+  State.history.push(text);
+}
+
+/* ============== TITLE SCREEN HANDLERS ====================================== */
+$('#play-btn').addEventListener('click', () => {
+  Audio.ding();
+  beginTeamSelect();
+});
+$('#how-btn').addEventListener('click', () => {
+  alert(
+    "BLOCK BALL — How to Play\n\n" +
+    "1) Pick 9 kids for your lineup. Each has unique stats: BAT (hitting), PIT (pitching), RUN (speed), FLD (defense).\n\n" +
+    "2) When YOU bat: choose a pitch-style guess, watch the ball, and click SWING (or press SPACE) right when it crosses the plate.\n\n" +
+    "3) When YOU pitch: pick a pitch type and aim. Better pitches = harder to hit.\n\n" +
+    "4) 3 innings. Most runs wins.\n\n" +
+    "Each kid has a SPECIAL ABILITY that triggers in the right moment. Watch the play log!\n"
+  );
+});
+
+/* ============== TEAM SELECT ================================================ */
+const PICKED = new Set();
+const CPU_RESERVED = new Set();
+
+function beginTeamSelect() {
+  PICKED.clear();
+  CPU_RESERVED.clear();
+  renderRosterGrid();
+  renderPickedList();
+  showScene('select-scene');
+}
+
+function renderRosterGrid() {
+  const grid = $('#roster-grid');
+  grid.innerHTML = '';
+  ROSTER.forEach(k => {
+    const card = document.createElement('div');
+    card.className = 'player-card';
+    if (PICKED.has(k.id)) card.classList.add('picked');
+    if (CPU_RESERVED.has(k.id)) card.classList.add('cpu-picked');
+    card.innerHTML = `
+      <div class="pc-portrait">${portraitSVG(k, 90, 60)}</div>
+      <div>
+        <div class="pc-name">${k.name}</div>
+        <div class="pc-tag">"${k.nick}" · ${k.pos}</div>
+      </div>
+      <div class="pc-stats">
+        <div class="pc-stat"><span>BAT</span><span>${k.bat}</span></div>
+        <div class="pc-stat"><span>PIT</span><span>${k.pit}</span></div>
+        <div class="pc-stat"><span>RUN</span><span>${k.run}</span></div>
+        <div class="pc-stat"><span>FLD</span><span>${k.fld}</span></div>
+      </div>
+      <div class="pc-special">${k.special}</div>
+    `;
+    card.addEventListener('click', () => togglePick(k.id));
+    grid.appendChild(card);
+  });
+}
+
+function togglePick(id) {
+  if (CPU_RESERVED.has(id)) return;
+  if (PICKED.has(id)) PICKED.delete(id);
+  else if (PICKED.size < 9) PICKED.add(id);
+  Audio.blip();
+  renderRosterGrid();
+  renderPickedList();
+}
+
+function renderPickedList() {
+  const ul = $('#picked-list');
+  const status = $('#select-status');
+  status.textContent = `${PICKED.size} of 9 picked`;
+  $('#start-btn').disabled = PICKED.size !== 9;
+
+  if (PICKED.size === 0) {
+    ul.innerHTML = '<div class="empty">No kids picked yet — click cards to draft.</div>';
+    return;
+  }
+  ul.innerHTML = '';
+  Array.from(PICKED).forEach(id => {
+    const k = ROSTER.find(p => p.id === id);
+    const div = document.createElement('div');
+    div.className = 'picked-line';
+    div.innerHTML = `<span>${k.nick}</span><span class="pos">${k.pos}</span>`;
+    ul.appendChild(div);
+  });
+}
+
+$('#autopick-btn').addEventListener('click', () => {
+  PICKED.clear();
+  // Smart auto-pick: try to fill positions
+  const wanted = ['P','C','1B','2B','SS','3B','LF','CF','RF'];
+  const used = new Set();
+  for (const pos of wanted) {
+    const cands = ROSTER.filter(k => k.pos === pos && !used.has(k.id));
+    let pick = cands[0];
+    if (!pick) {
+      const any = ROSTER.filter(k => !used.has(k.id));
+      pick = any[Math.floor(Math.random() * any.length)];
+    }
+    if (pick) { used.add(pick.id); PICKED.add(pick.id); }
+  }
+  // Top up if missing
+  while (PICKED.size < 9) {
+    const any = ROSTER.filter(k => !used.has(k.id));
+    const pick = any[Math.floor(Math.random() * any.length)];
+    if (!pick) break;
+    used.add(pick.id); PICKED.add(pick.id);
+  }
+  Audio.cheer();
+  renderRosterGrid();
+  renderPickedList();
+});
+
+$('#clear-btn').addEventListener('click', () => {
+  PICKED.clear();
+  Audio.boo();
+  renderRosterGrid();
+  renderPickedList();
+});
+
+$('#start-btn').addEventListener('click', () => {
+  if (PICKED.size !== 9) return;
+  // Build my team list
+  State.myTeam = Array.from(PICKED).map(id => ROSTER.find(k => k.id === id));
+  // CPU picks 9 from the rest
+  const remaining = ROSTER.filter(k => !PICKED.has(k.id));
+  // Pick a balanced 9
+  const cpu = [];
+  const cpuUsed = new Set();
+  for (const pos of ['P','C','1B','2B','SS','3B','LF','CF','RF']) {
+    const cands = remaining.filter(k => k.pos === pos && !cpuUsed.has(k.id));
+    if (cands.length) {
+      const pick = cands[Math.floor(Math.random() * cands.length)];
+      cpu.push(pick); cpuUsed.add(pick.id);
+    }
+  }
+  while (cpu.length < 9) {
+    const cands = remaining.filter(k => !cpuUsed.has(k.id));
+    if (!cands.length) break;
+    const pick = cands[Math.floor(Math.random() * cands.length)];
+    cpu.push(pick); cpuUsed.add(pick.id);
+  }
+  State.cpuTeam = cpu;
+  Audio.ding();
+  startGame();
+});
+
+/* ============== PORTRAIT SVG (procedural per-kid avatar) ==================== */
+function portraitSVG(k, w=90, h=60) {
+  // Hash from id for stable randomness
+  const seed = k.id * 31 + 7;
+  const r = (n) => {
+    const x = Math.sin(seed + n) * 10000;
+    return x - Math.floor(x);
+  };
+  const skin = ['#f0c8a0', '#d8a878', '#a87850', '#704830', '#e8b888'][k.id % 5];
+  const hair = ['#2c2522', '#553a26', '#8a4a26', '#cc8844', '#d8c298'][Math.floor(r(1)*5)];
+  const cap = k.color;
+  const stripe = k.accent;
+  const eyeY = 26;
+  return `<svg viewBox="0 0 90 60" width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background sky -->
+    <rect width="90" height="60" fill="#94c4d4"/>
+    <rect y="40" width="90" height="20" fill="#7a9d63"/>
+    <!-- Head -->
+    <ellipse cx="45" cy="34" rx="18" ry="20" fill="${skin}" stroke="#2c2522" stroke-width="1.5"/>
+    <!-- Hair under cap -->
+    <path d="M 28 30 Q 45 18 62 30 Q 60 22 45 18 Q 30 22 28 30 Z" fill="${hair}"/>
+    <!-- Cap -->
+    <path d="M 27 26 Q 45 12 63 26 Q 64 22 45 14 Q 26 22 27 26 Z" fill="${cap}" stroke="#2c2522" stroke-width="1.5"/>
+    <path d="M 27 26 Q 45 30 63 26 L 63 28 Q 45 32 27 28 Z" fill="${stripe}" stroke="#2c2522" stroke-width="1"/>
+    <!-- Brim -->
+    <ellipse cx="45" cy="29" rx="22" ry="3" fill="${cap}" stroke="#2c2522" stroke-width="1.5"/>
+    <!-- Eyes -->
+    <circle cx="${39 + r(2)*1}" cy="${eyeY + 9}" r="1.6" fill="#2c2522"/>
+    <circle cx="${51 - r(3)*1}" cy="${eyeY + 9}" r="1.6" fill="#2c2522"/>
+    <!-- Cheeks -->
+    <circle cx="35" cy="42" r="2" fill="#e8743c" opacity="0.5"/>
+    <circle cx="55" cy="42" r="2" fill="#e8743c" opacity="0.5"/>
+    <!-- Mouth -->
+    ${r(4) > 0.5
+      ? `<path d="M 40 47 Q 45 ${49 + r(5)*2} 50 47" stroke="#2c2522" stroke-width="1.5" fill="none" stroke-linecap="round"/>`
+      : `<path d="M 41 48 L 49 48" stroke="#2c2522" stroke-width="1.5" fill="none" stroke-linecap="round"/>`
+    }
+    <!-- Number badge -->
+    <rect x="6" y="6" width="16" height="14" fill="${cap}" stroke="#2c2522" stroke-width="1"/>
+    <text x="14" y="17" text-anchor="middle" font-family="Bowlby One SC, sans-serif" font-size="10" fill="#fbf3df">${k.id}</text>
+  </svg>`;
+}
+
+/* ============== START GAME ================================================= */
+function startGame() {
+  State.myLineupIdx = 0;
+  State.cpuLineupIdx = 0;
+  State.inning = 1;
+  State.half = 'top';  // CPU bats first (away)
+  State.outs = 0;
+  State.bases = [null, null, null];
+  State.homeScore = 0;
+  State.awayScore = 0;
+  State.history = [];
+  State.finished = false;
+
+  $('#sb-home-name').textContent = pickTeamName(State.myTeam) || "HOME";
+  $('#sb-away-name').textContent = pickTeamName(State.cpuTeam, true) || "AWAY";
+  updateScoreboard();
+
+  $('#event-log').innerHTML = '';
+  logEvent('Play ball!', 'big');
+
+  drawField();
+  showScene('game-scene');
+  setTimeout(() => nextAtBat(), 600);
+}
+
+function pickTeamName(team, away=false) {
+  const tags = away
+    ? ["The Outsiders", "Cross-Town Crew", "Visiting 9", "The Ringers", "Out-of-Towners"]
+    : ["The Lot Rats", "Block Mob", "Backstreet 9", "The Sandlot Crew", "Home Squad"];
+  return tags[(team[0]?.id || 0) % tags.length];
+}
+
+function updateScoreboard() {
+  $('#sb-home-score').textContent = State.homeScore;
+  $('#sb-away-score').textContent = State.awayScore;
+  $('#sb-inning').textContent = (State.half === 'top' ? 'TOP ' : 'BOT ') + State.inning;
+  const outs = $$('#sb-outs .o');
+  outs.forEach((o, i) => o.classList.toggle('on', i < State.outs));
+  // Bases mini
+  $('#b-1').classList.toggle('on', !!State.bases[0]);
+  $('#b-2').classList.toggle('on', !!State.bases[1]);
+  $('#b-3').classList.toggle('on', !!State.bases[2]);
+}
+
+/* ============== AT-BAT FLOW ================================================ */
+function currentBatter() {
+  if (State.half === 'top') return State.cpuTeam[State.cpuLineupIdx % 9];
+  return State.myTeam[State.myLineupIdx % 9];
+}
+function currentPitcher() {
+  // Use first kid with PIT >= 7 as the pitcher; else slot[0]
+  const team = State.half === 'top' ? State.myTeam : State.cpuTeam;
+  return team.find(k => k.pos === 'P') || team.find(k => k.pit >= 7) || team[0];
+}
+function advanceBatter() {
+  if (State.half === 'top') State.cpuLineupIdx++;
+  else State.myLineupIdx++;
+}
+
+function showFieldMode(mode) {
+  // mode: 'field' or 'atbat'
+  const stage = $('#field-stage');
+  stage.classList.toggle('atbat-mode', mode === 'atbat');
+}
+
+async function nextAtBat() {
+  if (State.finished) return;
+  // Check inning end
+  if (State.outs >= 3) {
+    State.outs = 0;
+    State.bases = [null, null, null];
+    if (State.half === 'top') {
+      State.half = 'bot';
+      logEvent(`End of top ${ord(State.inning)}.`, 'big');
+    } else {
+      logEvent(`End of bottom ${ord(State.inning)}.`, 'big');
+      State.inning++;
+      State.half = 'top';
+    }
+    updateScoreboard();
+    if (State.inning > State.totalInnings) {
+      // Don't end early if home is leading after top of last? Standard rule.
+      // Simplification: play full game
+      return endGame();
+    }
+    await sleep(800);
+  }
+
+  const batter = currentBatter();
+  renderBatterCard(batter);
+  updateScoreboard();
+
+  if (State.half === 'top') {
+    // CPU at bat - YOU are pitching
+    showFieldMode('field');
+    drawField();
+    setupPitcherUI(batter);
+  } else {
+    // YOU at bat
+    showFieldMode('atbat');
+    drawAtBatScene(batter);
+    setupBatterUI(batter);
+  }
+}
+
+function ord(n) { return n + (['st','nd','rd'][((n+90)%100-10)%10-1] || 'th'); }
+
+/* Where on the field a ball lands based on hit type */
+function pickHitTarget(outcome) {
+  const sideRoll = Math.random();
+  if (outcome === 'homer')    return sideRoll < 0.4 ? { x: 120, y: 60 }  : sideRoll > 0.6 ? { x: 680, y: 60 }  : { x: 400, y: 30 };
+  if (outcome === 'triple')   return sideRoll < 0.5 ? { x: 130, y: 130 } : { x: 670, y: 130 };
+  if (outcome === 'double')   return sideRoll < 0.5 ? { x: 200, y: 200 } : { x: 600, y: 200 };
+  if (outcome === 'single')   return sideRoll < 0.5 ? { x: 280, y: 290 } : { x: 520, y: 290 };
+  if (outcome === 'flyout')   return sideRoll < 0.5 ? { x: 250, y: 240 } : { x: 550, y: 240 };
+  if (outcome === 'foul')     return sideRoll < 0.5 ? { x: 80, y: 350 }  : { x: 720, y: 350 };
+  return { x: 380 + (Math.random()*120 - 60), y: 380 };
+}
+
+/* For interactive fielding: shift outcome up/down a base based on fielding speed */
+function downgradeOutcome(o) {
+  return ({ single: 'groundout', double: 'single', triple: 'double',
+            flyout: 'flyout', groundout: 'groundout' })[o] || o;
+}
+function upgradeOutcome(o) {
+  return ({ groundout: 'single', flyout: 'single', single: 'double',
+            double: 'triple', triple: 'triple' })[o] || o;
+}
+
+/* Get the ordered fielder placements for a team (matches renderFielders logic) */
+function placeFielders(team) {
+  const used = new Set();
+  const placed = [];
+  const order = ['P','C','1B','2B','SS','3B','LF','CF','RF'];
+  for (const slot of order) {
+    let cand = team.find(k => k.pos === slot && !used.has(k.id));
+    if (!cand) cand = team.find(k => !used.has(k.id));
+    if (!cand) continue;
+    used.add(cand.id);
+    placed.push({ kid: cand, slot });
+  }
+  return placed;
+}
+
+function renderBatterCard(batter) {
+  $('#batter-label').textContent = State.half === 'top' ? 'CPU AT BAT' : 'YOU ARE BATTING';
+  $('#batter-name').textContent = batter.name;
+  $('#batter-tag').textContent = `"${batter.nick}" · ${batter.pos} · #${batter.id}`;
+  $('#batter-stats').innerHTML = `
+    <div class="stat-pill">BAT ${batter.bat}</div>
+    <div class="stat-pill">RUN ${batter.run}</div>
+    <div class="stat-pill">FLD ${batter.fld}</div>`;
+  $('#batter-special').textContent = '✶ ' + batter.special;
+}
+
+/* ============== PITCH SELECTION (when CPU is batting) ====================== */
+const PITCH_TYPES = [
+  { id: 'fast',   name: 'Fastball', color: '#b8453a', speedFactor: 1.20, breakAmt: 0,    deceptive: 0 },
+  { id: 'curve',  name: 'Curve',    color: '#3a7d6b', speedFactor: 0.85, breakAmt: 0.4,  deceptive: 0.15 },
+  { id: 'change', name: 'Change',   color: '#f0b649', speedFactor: 0.70, breakAmt: 0.1,  deceptive: 0.30 },
+  { id: 'screw',  name: 'Screwball',color: '#7c4d8a', speedFactor: 0.90, breakAmt: 0.5,  deceptive: 0.20 },
+];
+const ZONES = [
+  { id: 'high-in',  label: 'High In',  x: -0.7, y: -0.6 },
+  { id: 'high-out', label: 'High Out', x: 0.7,  y: -0.6 },
+  { id: 'mid-in',   label: 'Mid In',   x: -0.6, y: 0 },
+  { id: 'mid-mid',  label: 'Middle',   x: 0,    y: 0 },
+  { id: 'mid-out',  label: 'Mid Out',  x: 0.6,  y: 0 },
+  { id: 'low-in',   label: 'Low In',   x: -0.6, y: 0.6 },
+  { id: 'low-mid',  label: 'Low Mid',  x: 0,    y: 0.6 },
+  { id: 'low-out',  label: 'Low Out',  x: 0.6,  y: 0.6 },
+];
+
+function setupPitcherUI(batter) {
+  $('#ctrl-title').textContent = 'YOU PITCH';
+  $('#ctrl-instruction').textContent = `Pick a pitch type and a target zone. ${currentPitcher().nick} on the mound.`;
+  const pb = $('#pitch-buttons');
+  pb.innerHTML = '';
+  PITCH_TYPES.forEach(pt => {
+    const b = document.createElement('button');
+    b.className = 'btn small';
+    b.style.background = pt.color;
+    b.style.color = '#fbf3df';
+    b.style.borderColor = '#2c2522';
+    b.textContent = pt.name;
+    b.addEventListener('click', () => choosePitchAndAim(pt, batter));
+    pb.appendChild(b);
+  });
+  $('#swing-btn').style.display = 'none';
+}
+
+function choosePitchAndAim(pt, batter) {
+  // Step 2: pick zone
+  $('#ctrl-instruction').textContent = `${pt.name} selected — now pick where to throw.`;
+  const pb = $('#pitch-buttons');
+  pb.innerHTML = '';
+  ZONES.forEach(z => {
+    const b = document.createElement('button');
+    b.className = 'btn small';
+    b.textContent = z.label;
+    b.addEventListener('click', () => throwPitch(pt, z, batter));
+    pb.appendChild(b);
+  });
+}
+
+async function throwPitch(pt, zone, batter) {
+  const pitcher = currentPitcher();
+  Audio.pitch();
+  $('#ctrl-instruction').textContent = `${pitcher.nick}: ${pt.name} ${zone.label.toLowerCase()}.`;
+  $('#pitch-buttons').innerHTML = '';
+  // Resolve pitch outcome (simulation)
+  await sleep(400);
+  // Animate ball as a quick top-down line from mound to plate
+  await animatePitchOnField(pt);
+  resolveCpuSwing(pt, zone, batter, pitcher);
+}
+
+function resolveCpuSwing(pt, zone, batter, pitcher) {
+  // Strike-zone gradient: middle is unambiguous strike, edges are borderline
+  const distFromCenter = Math.hypot(zone.x, zone.y);
+  const isStrike = distFromCenter < 0.75; // overall strike call
+  const inMiddle = distFromCenter < 0.4;
+  const onEdge   = distFromCenter >= 0.4 && distFromCenter < 0.8;
+
+  // Discipline scales with BAT — better hitters work the count
+  const discipline = clamp(0.30 + batter.bat * 0.04, 0.30, 0.85);
+  // Pitcher's deception confuses the batter
+  const deception = pt.deceptive || 0;
+  const fooled = Math.random() < deception * 0.55;
+
+  // Probability of swinging
+  let pSwing;
+  if (inMiddle)      pSwing = 0.88 - discipline * 0.08;       // hammer it
+  else if (onEdge)   pSwing = fooled ? 0.78 : (0.72 - discipline * 0.35);
+  else /* off plate*/pSwing = fooled ? 0.50 : (0.30 - discipline * 0.25);
+
+  // Tougher pitchers freeze the batter more
+  pSwing -= (pitcher.pit - 5) * 0.025;
+  // Some characters are aggressive sluggers (Tank, Boom, Felicity, Hot Dog)
+  if ([1, 19, 12, 10].includes(batter.id)) pSwing += 0.10;
+  // Daisy has a tiny zone — laid-back
+  if (batter.id === 22) pSwing -= 0.18;
+  pSwing = clamp(pSwing, 0.08, 0.95);
+
+  const swung = Math.random() < pSwing;
+
+  if (!swung) {
+    if (isStrike) {
+      Audio.whiff();
+      addOut(`${batter.nick} watches strike three.`, batter, pitcher);
+    } else {
+      logEvent(`${batter.nick} lays off — ball.`);
+      // Walks: more likely if pitcher has poor command (low PIT)
+      const walkChance = 0.10 + (10 - pitcher.pit) * 0.018;
+      if (Math.random() < walkChance) {
+        logEvent(`${batter.nick} draws a walk!`);
+        addBaseRunner(batter, true);
+        advanceBatter();
+        return setTimeout(nextAtBat, 1500);
+      }
+      // Otherwise simplification: a follow-up pitch results in groundout
+      logEvent(`${batter.nick} grounds out on the next pitch.`);
+      addOut('Grounded out.', batter, pitcher);
+    }
+    return;
+  }
+
+  // Swung — calculate quality of contact
+  const pitchQuality = (pitcher.pit / 10) * (1 - pt.deceptive * 0.3);
+  const batterQuality = batter.bat / 10 + (batter.id === 23 ? 0.05 : 0); // Mr Reliable bonus
+  // Fooled batters have weaker contact
+  const foolPenalty = fooled ? 0.20 : 0;
+  const contactRoll = batterQuality - pitchQuality * 0.7 - foolPenalty + (Math.random() * 0.5 - 0.15);
+  resolveContact(contactRoll, batter, pitcher, pt);
+}
+
+/* ============== USER BATTING (timing-based swing) ========================== */
+const SwingState = {
+  active: false,
+  startedAt: 0,
+  pitch: null,
+  perfectAt: 1100, // ms — when ball reaches plate
+  windowMs: 220,   // swing forgiveness window
+  swung: false,
+  pitchRaf: null,
+};
+
+/* Interactive fielding state: when CPU hits, user controls a fielder */
+const FieldState = {
+  active: false,
+  fielder: null,
+  fielderX: 0, fielderY: 0,
+  fielderSpeed: 200,
+  resolved: false,
+};
+
+/* Base-running state: after user hits, click bases (or press 1-4) to direct runner */
+const RunningState = {
+  active: false,
+  batter: null,
+  natural: 0,        // natural ending base from contact (1=1B, 2=2B, 3=3B)
+  resolved: false,
+  resolveFn: null,
+  timeoutId: null,
+};
+
+/* Movement-key tracker (WASD + arrows) and base-running shortcuts (1-4) */
+const KeyState = {};
+document.addEventListener('keydown', (e) => {
+  KeyState[e.code] = true;
+  if (FieldState.active && [
+    'ArrowUp','ArrowDown','ArrowLeft','ArrowRight',
+    'KeyW','KeyA','KeyS','KeyD'
+  ].includes(e.code)) {
+    e.preventDefault();
+  }
+  // Base-running shortcuts
+  if (RunningState.active) {
+    if (e.code === 'Digit1' || e.code === 'Numpad1') chooseBase(1);
+    else if (e.code === 'Digit2' || e.code === 'Numpad2') chooseBase(2);
+    else if (e.code === 'Digit3' || e.code === 'Numpad3') chooseBase(3);
+    else if (e.code === 'Digit4' || e.code === 'Numpad4') chooseBase(4);
+  }
+});
+document.addEventListener('keyup', (e) => {
+  KeyState[e.code] = false;
+});
+
+function setupBatterUI(batter) {
+  $('#ctrl-title').textContent = 'YOU BAT';
+  $('#ctrl-instruction').innerHTML = `Watch the pitch. <b>SWING</b> when it crosses the plate (or press <b>SPACE</b>).`;
+  $('#pitch-buttons').innerHTML = '';
+  const swingBtn = $('#swing-btn');
+  swingBtn.style.display = 'block';
+  swingBtn.disabled = false;
+  swingBtn.textContent = 'WAIT...';
+  // Pitcher (CPU) winds up
+  setTimeout(() => userPitchIncoming(batter), 700);
+}
+
+async function userPitchIncoming(batter) {
+  const cpuPitcher = currentPitcher();
+  const ptChoice = pickCpuPitch(cpuPitcher, batter);
+  SwingState.active = true;
+  SwingState.swung = false;
+  SwingState.startedAt = 0; // not yet released — guards early swings during windup
+  SwingState.pitch = ptChoice;
+  // Pitcher quality affects window size
+  SwingState.windowMs = 280 - cpuPitcher.pit * 8; // 280ms at pit=0, 200ms at pit=10
+  SwingState.perfectAt = 1100 - cpuPitcher.pit * 15; // faster pitch with better pitcher
+  if (ptChoice.id === 'change') SwingState.perfectAt += 250;
+  if (ptChoice.id === 'curve') SwingState.perfectAt += 80;
+  $('#swing-btn').disabled = false;
+  $('#swing-btn').textContent = 'SWING';
+  drawAtBatScene(batter, ptChoice);
+  animateAtBatPitch(ptChoice, () => {
+    // Ball reached plate — if no swing, it's a take
+    if (SwingState.active && !SwingState.swung) {
+      SwingState.active = false;
+      Audio.wood();
+      // Was it a strike?
+      const isStrike = Math.abs(ptChoice._endX - 400) < 110 && Math.abs(ptChoice._endY - 380) < 90;
+      if (isStrike) {
+        addOut(`${batter.nick} watches strike three.`, batter, cpuPitcher);
+      } else {
+        logEvent(`${batter.nick} doesn't bite — ball outside.`);
+        // Simplified: chance of walk
+        const walkChance = 0.18;
+        if (Math.random() < walkChance) {
+          logEvent(`Ball four — ${batter.nick} takes a walk!`);
+          addBaseRunner(batter, true);
+          advanceBatter();
+          return setTimeout(nextAtBat, 1300);
+        }
+        logEvent(`${batter.nick} flies out on the next pitch.`);
+        addOut('Flied out.', batter, cpuPitcher);
+      }
+    }
+  });
+}
+
+function pickCpuPitch(pitcher, batter) {
+  // Pool starts with fastball; better pitchers unlock breaking stuff
+  const pool = [{...PITCH_TYPES[0]}]; // fastball always available
+  if (pitcher.pit >= 4) pool.push({...PITCH_TYPES[2]});  // changeup
+  if (pitcher.pit >= 5) pool.push({...PITCH_TYPES[1]});  // curve
+  if (pitcher.pit >= 6) pool.push({...PITCH_TYPES[3]});  // screwball
+
+  // Specialty pitches — heavily weighted
+  if (pitcher.id === 3)  { pool.push({...PITCH_TYPES[2]}, {...PITCH_TYPES[2]}, {...PITCH_TYPES[3]}); } // Bea: knuckler-style
+  if (pitcher.id === 6)  { pool.push({...PITCH_TYPES[3]}, {...PITCH_TYPES[3]}); }                     // Marco: screwball
+  if (pitcher.id === 9)  { pool.push({...PITCH_TYPES[1]}, {...PITCH_TYPES[1]}); }                     // Lila: lefty curve
+  if (pitcher.id === 14) { pool.push({...PITCH_TYPES[1]}, {...PITCH_TYPES[1]}, {...PITCH_TYPES[1]}); } // Roxana: curve
+  if (pitcher.id === 15) { pool.push({...PITCH_TYPES[0]}, {...PITCH_TYPES[0]}); }                     // Tucker: fastball
+  if (pitcher.id === 17) { pool.push({...PITCH_TYPES[2]}, {...PITCH_TYPES[1]}); }                     // Otis: calculated mix
+  if (pitcher.id === 24) { pool.push({...PITCH_TYPES[0]}); }                                          // Nik: heater
+
+  // Adapt to batter
+  if (batter) {
+    if (batter.bat >= 8) {
+      // Power hitters: more breaking stuff, fewer fastballs in middle
+      if (pitcher.pit >= 5) pool.push({...PITCH_TYPES[1]}, {...PITCH_TYPES[3]});
+    } else if (batter.bat <= 5) {
+      // Weak hitters: more fastballs in zone (challenge them)
+      pool.push({...PITCH_TYPES[0]});
+    }
+    // Boom-or-bust types: change-ups eat them up
+    if ([1, 12, 19].includes(batter.id) && pitcher.pit >= 4) {
+      pool.push({...PITCH_TYPES[2]});
+    }
+  }
+  return choose(pool);
+}
+
+function userSwing() {
+  if (!SwingState.active || SwingState.swung) return;
+  // Ignore swings during windup — ball hasn't been released yet
+  if (!SwingState.startedAt) return;
+  SwingState.swung = true;
+  const elapsed = performance.now() - SwingState.startedAt;
+  const error = Math.abs(elapsed - SwingState.perfectAt);
+  const inWindow = error < SwingState.windowMs;
+  const batter = currentBatter();
+  const pitcher = currentPitcher();
+
+  if (!inWindow) {
+    // Swing and miss
+    SwingState.active = false;
+    Audio.whiff();
+    if (elapsed < SwingState.perfectAt) {
+      logEvent(`${batter.nick} swings early — strike!`);
+    } else {
+      logEvent(`${batter.nick} swings late — strike!`);
+    }
+    addOut('Strikeout swinging.', batter, pitcher);
+    return;
+  }
+  // Quality based on timing
+  const timingScore = 1 - error / SwingState.windowMs;
+  const batterBonus = batter.bat / 10;
+  const pitcherPenalty = pitcher.pit / 14;
+  const contactRoll = timingScore * 0.85 + batterBonus * 0.45 - pitcherPenalty * 0.5 + (Math.random() * 0.2 - 0.1);
+  Audio.crack();
+  SwingState.active = false;
+  resolveContact(contactRoll, batter, pitcher, SwingState.pitch);
+}
+
+$('#swing-btn').addEventListener('click', () => {
+  if ($('#swing-btn').disabled) return;
+  userSwing();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && SwingState.active) {
+    e.preventDefault();
+    userSwing();
+  }
+});
+
+/* ============== CONTACT RESOLUTION (shared) ================================ */
+async function resolveContact(roll, batter, pitcher, pt) {
+  // Map roll [-0.5..1.5] to outcome bands
+  let outcome;
+  // Specials
+  const isFinalInning = State.inning === State.totalInnings;
+  if (batter.id === 10 && isFinalInning) roll += 0.10; // Hot Dog late-game
+  if (batter.id === 12 && Math.random() < 0.18) roll += 0.25; // Felicity surprise
+  if (batter.id === 19) {
+    // Boom or bust — push to extremes
+    roll = roll > 0.5 ? roll + 0.25 : roll - 0.25;
+  }
+  if (batter.id === 1 && pt && pt.id === 'fast') roll += 0.18; // Tank vs fastball
+  if (batter.id === 23 && Math.random() < 0.2) roll += 0.05; // Mr Reliable
+
+  if (roll < 0.05) outcome = 'foul';
+  else if (roll < 0.25) outcome = 'groundout';
+  else if (roll < 0.42) outcome = 'flyout';
+  else if (roll < 0.6) outcome = 'single';
+  else if (roll < 0.78) outcome = 'double';
+  else if (roll < 0.92) outcome = 'triple';
+  else outcome = 'homer';
+
+  // Defensive specials
+  const fielders = State.half === 'top' ? State.myTeam : State.cpuTeam;
+  // Akira robs homers
+  if (outcome === 'homer' && fielders.find(p => p.id === 11) && Math.random() < 0.18) {
+    outcome = 'flyout';
+    logEvent(`Web Gem! Aki robs a home run!`, 'big');
+    Audio.cheer();
+  }
+  // Yusra wall
+  if ((outcome === 'single' || outcome === 'groundout') && fielders.find(p => p.id === 20) && Math.random() < 0.12) {
+    outcome = 'groundout';
+    logEvent(`Yus shuts the door at third.`);
+  }
+
+  // Branch: top of inning the user fields interactively; bottom auto-resolves the play
+  if (outcome === 'foul' || outcome === 'homer' || State.half === 'bot') {
+    if (State.half === 'bot') {
+      // Switch back to field view to show the play
+      showFieldMode('field');
+      drawField();
+    }
+    await animateHitOnField(outcome, batter);
+    // For user's at-bats with a hit on the ground, let them direct the runner
+    if (State.half === 'bot' && (outcome === 'single' || outcome === 'double' || outcome === 'triple')) {
+      const runResult = await promptBaseRunning(outcome, batter);
+      applyOutcome(runResult, batter);
+    } else {
+      applyOutcome(outcome, batter);
+    }
+    return;
+  }
+
+  // Top of inning: user pitches and now fields the ball with WASD/arrows
+  const adjusted = await interactiveFielding(outcome, batter);
+  applyOutcome(adjusted, batter);
+}
+
+/* Base-running prompt: after user hits, let them pick where to send the runner.
+   Click a base in the side panel, click an option button, or press 1-4. */
+function promptBaseRunning(outcome, batter) {
+  return new Promise(resolve => {
+    // No choice on outs, fouls, or homers — those resolve as-is
+    if (outcome === 'foul' || outcome === 'groundout' || outcome === 'flyout' || outcome === 'homer') {
+      resolve(outcome);
+      return;
+    }
+
+    const natural = outcome === 'single' ? 1 : outcome === 'double' ? 2 : outcome === 'triple' ? 3 : 1;
+
+    RunningState.active = true;
+    RunningState.batter = batter;
+    RunningState.natural = natural;
+    RunningState.resolved = false;
+    RunningState.resolveFn = resolve;
+
+    // Update controls panel
+    const ctrlTitle = $('#ctrl-title');
+    const ctrlInst = $('#ctrl-instruction');
+    if (ctrlTitle) ctrlTitle.textContent = 'DIRECT RUNNER';
+    if (ctrlInst) ctrlInst.innerHTML = `<b>${batter.nick}</b> connected — natural ${baseName(natural)}. Click a base, press <b>1-4</b>, or wait to take what's safe.`;
+
+    // Build option buttons in pitch-buttons area (showing base options)
+    const pb = $('#pitch-buttons');
+    pb.innerHTML = '';
+    const opts = [
+      { tgt: 1, label: 'HOLD 1B (1)' },
+      { tgt: 2, label: 'TAKE 2B (2)' },
+      { tgt: 3, label: 'STRETCH 3B (3)' },
+      { tgt: 4, label: 'GO HOME (4)' },
+    ];
+    opts.forEach(opt => {
+      const b = document.createElement('button');
+      b.className = 'btn small';
+      // Color by risk relative to natural
+      const stretch = opt.tgt - natural;
+      if (stretch <= 0) { b.style.background = '#7a9d63'; b.style.color = '#fbf3df'; }
+      else if (stretch === 1) { b.style.background = '#f0b649'; b.style.color = '#2c2522'; }
+      else { b.style.background = '#b8453a'; b.style.color = '#fbf3df'; }
+      b.style.borderColor = '#2c2522';
+      b.textContent = opt.label;
+      b.addEventListener('click', () => chooseBase(opt.tgt));
+      pb.appendChild(b);
+    });
+
+    // Make the side-panel base mini-diamond clickable too
+    const baseEls = [
+      { id: 'b-1', tgt: 1 },
+      { id: 'b-2', tgt: 2 },
+      { id: 'b-3', tgt: 3 },
+    ];
+    baseEls.forEach(({id, tgt}) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.cursor = 'pointer';
+        el.classList.add('runnable');
+        el._runHandler = () => chooseBase(tgt);
+        el.addEventListener('click', el._runHandler);
+      }
+    });
+    // Home (no id by default — find via class)
+    const homeBase = document.querySelector('.b-base.home');
+    if (homeBase) {
+      homeBase.style.cursor = 'pointer';
+      homeBase.classList.add('runnable');
+      homeBase._runHandler = () => chooseBase(4);
+      homeBase.addEventListener('click', homeBase._runHandler);
+    }
+
+    // Auto-take the safe (natural) outcome after a few seconds
+    RunningState.timeoutId = setTimeout(() => {
+      if (!RunningState.resolved) chooseBase(natural);
+    }, 4500);
+  });
+}
+
+function baseName(t) {
+  return t === 1 ? '1B' : t === 2 ? '2B' : t === 3 ? '3B' : 'home';
+}
+
+/* Resolve a base-running choice. Stretching beyond natural rolls for an out,
+   modulated by the runner's RUN stat. */
+function chooseBase(target) {
+  if (!RunningState.active || RunningState.resolved) return;
+  RunningState.resolved = true;
+  RunningState.active = false;
+  if (RunningState.timeoutId) clearTimeout(RunningState.timeoutId);
+
+  // Clean up base-mini click handlers
+  ['b-1', 'b-2', 'b-3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el._runHandler) {
+      el.removeEventListener('click', el._runHandler);
+      el.style.cursor = '';
+      el.classList.remove('runnable');
+      el._runHandler = null;
+    }
+  });
+  const homeBase = document.querySelector('.b-base.home');
+  if (homeBase && homeBase._runHandler) {
+    homeBase.removeEventListener('click', homeBase._runHandler);
+    homeBase.style.cursor = '';
+    homeBase.classList.remove('runnable');
+    homeBase._runHandler = null;
+  }
+
+  const batter = RunningState.batter;
+  const natural = RunningState.natural;
+  const stretch = target - natural;
+  let result;
+
+  if (stretch <= 0) {
+    // Holding at or below natural — always safe
+    result = target === 1 ? 'single' : target === 2 ? 'double' : target === 3 ? 'triple' : 'single';
+    if (target < natural) {
+      logEvent(`${batter.nick} plays it safe at ${baseName(target)}.`);
+    } else {
+      logEvent(`${batter.nick} takes ${baseName(target)}.`);
+    }
+  } else {
+    // Stretching — risk scales with how much, mitigated by speed
+    let outChance = stretch === 1 ? 0.42 : stretch === 2 ? 0.72 : 0.88;
+    outChance -= (batter.run - 5) * 0.04;
+    // Special: Lightning, Kwa, Vicky, Coyote get speed bonuses
+    if ([2, 13, 18, 21].includes(batter.id)) outChance -= 0.10;
+    outChance = clamp(outChance, 0.05, 0.92);
+
+    if (Math.random() < outChance) {
+      logEvent(`${batter.nick} thrown out trying for ${baseName(target)}!`, 'big');
+      toast('THROWN OUT!', 'bad', 1600);
+      Audio.boo();
+      result = 'thrownout';
+    } else {
+      logEvent(`${batter.nick} beats the throw to ${baseName(target)}!`, 'big');
+      toast('SAFE!', 'great', 1500);
+      Audio.cheer();
+      result = target === 4 ? 'homer' : target === 3 ? 'triple' : target === 2 ? 'double' : 'single';
+    }
+  }
+
+  setTimeout(() => RunningState.resolveFn(result), 600);
+}
+
+function applyOutcome(outcome, batter) {
+  const team = State.half === 'top' ? 'CPU' : 'YOU';
+  const isMine = State.half === 'bot';
+
+  switch (outcome) {
+    case 'foul':
+      logEvent(`${batter.nick} fouls it off.`);
+      // Treat as one extra chance: simplification: count as out if 2 outs
+      if (Math.random() < 0.4) addOut('Foul tip caught — out.', batter);
+      else logEvent(`Strike on the foul.`);
+      return;
+    case 'thrownout':
+      addOut(`Out at the bag.`, batter);
+      return;
+    case 'groundout':
+      addOut(`${batter.nick} grounds out.`, batter);
+      return;
+    case 'flyout':
+      addOut(`${batter.nick} flies out.`, batter);
+      return;
+    case 'single':
+      logEvent(`${batter.nick} singles!`);
+      if (batter.id === 13) {
+        // Kwame burner — try double
+        if (Math.random() < 0.35) {
+          logEvent(`Kwa stretches it into a double!`, 'big');
+          return advanceRunners(batter, 2);
+        }
+      }
+      if (batter.id === 2) {
+        if (Math.random() < 0.25) {
+          logEvent(`Wind sprint — Lightning takes second!`, 'big');
+          return advanceRunners(batter, 2);
+        }
+      }
+      advanceRunners(batter, 1);
+      return;
+    case 'double':
+      logEvent(`${batter.nick} doubles!`, 'big');
+      advanceRunners(batter, 2);
+      return;
+    case 'triple':
+      logEvent(`${batter.nick} TRIPLES!`, 'big');
+      advanceRunners(batter, 3);
+      return;
+    case 'homer':
+      logEvent(`HOME RUN by ${batter.nick}!`, 'big');
+      Audio.cheer();
+      toast('HOME RUN!', 'huge', 2000);
+      advanceRunners(batter, 4);
+      return;
+  }
+}
+
+function advanceRunners(batter, bases) {
+  // Returns the new bases array and runs scored
+  const oldBases = State.bases.slice();
+  let runs = 0;
+  // Move existing runners back-to-front
+  // Compute new positions: each existing runner at base i moves to base i + bases
+  const newBases = [null, null, null];
+  for (let i = 2; i >= 0; i--) {
+    if (oldBases[i]) {
+      const dest = i + 1 + bases; // base 1=>1, etc; runner on base 1 (idx 0) starts at base 1, so dest = 1 + bases
+      // Actually idx 0 is 1B, runner has reached 1st. With +bases more: ends at base (1+bases)
+      // base 4+ = scored
+      const baseDest = (i + 1) + bases;
+      if (baseDest >= 4) { runs++; logEvent(`  ${oldBases[i].nick} scores!`); }
+      else { newBases[baseDest - 1] = oldBases[i]; }
+    }
+  }
+  // Place batter
+  if (bases >= 4) { runs++; }
+  else { newBases[bases - 1] = batter; }
+  State.bases = newBases;
+
+  // Mei-Lin rally cry: bonus when she singles
+  if (batter.id === 16 && bases >= 1) {
+    logEvent(`Cap rallies the team!`);
+  }
+
+  // Score
+  if (runs > 0) {
+    if (State.half === 'top') {
+      State.awayScore += runs;
+    } else {
+      State.homeScore += runs;
+      Audio.cheer();
+    }
+    toast(runs > 1 ? `${runs} RUNS!` : 'RUN!', 'great', 1500);
+  }
+  if (State.half === 'top') State.hitsAway++;
+  else State.hitsHome++;
+
+  updateScoreboard();
+  drawField();
+  advanceBatter();
+  setTimeout(nextAtBat, 2000);
+}
+
+function addBaseRunner(batter, walk=false) {
+  // Force-advance only if needed (walk)
+  const newBases = State.bases.slice();
+  if (walk) {
+    // bases-loaded force
+    let push = true;
+    if (newBases[0] && push) {
+      if (newBases[1] && push) {
+        if (newBases[2] && push) {
+          // Run scored
+          if (State.half === 'top') State.awayScore++;
+          else State.homeScore++;
+          logEvent(`  ${newBases[2].nick} forced home — run!`, 'big');
+        }
+        newBases[2] = newBases[1];
+      }
+      newBases[1] = newBases[0];
+    }
+    newBases[0] = batter;
+    State.bases = newBases;
+    updateScoreboard();
+    drawField();
+  }
+}
+
+function addOut(reason, batter, pitcher) {
+  State.outs++;
+  logEvent(reason);
+  updateScoreboard();
+  if (State.outs >= 3) {
+    toast('THREE OUTS', 'bad', 1500);
+    advanceBatter();
+    setTimeout(nextAtBat, 1800);
+  } else {
+    advanceBatter();
+    setTimeout(nextAtBat, 1400);
+  }
+}
+
+/* ============== FIELD RENDERING (top-down) ================================= */
+function drawField() {
+  const svg = $('#field-svg');
+  const positions = computeFieldPositions();
+  const team = State.half === 'top' ? State.myTeam : State.cpuTeam; // who's fielding
+  const batter = currentBatter();
+
+  svg.innerHTML = `
+    <!-- Sky / outfield grass -->
+    <defs>
+      <pattern id="grass-tex" width="6" height="6" patternUnits="userSpaceOnUse">
+        <rect width="6" height="6" fill="${'#7a9d63'}"/>
+        <path d="M 0 6 L 1 4 M 3 6 L 4 4 M 5 6 L 6 4" stroke="#5a7849" stroke-width="0.7"/>
+      </pattern>
+      <pattern id="dirt-tex" width="8" height="8" patternUnits="userSpaceOnUse">
+        <rect width="8" height="8" fill="#b58658"/>
+        <circle cx="2" cy="3" r="0.5" fill="#8a6845"/>
+        <circle cx="6" cy="6" r="0.5" fill="#8a6845"/>
+      </pattern>
+      <filter id="field-rough">
+        <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="2"/>
+        <feDisplacementMap in="SourceGraphic" scale="2"/>
+      </filter>
+    </defs>
+    <!-- Outfield -->
+    <rect x="0" y="0" width="800" height="600" fill="url(#grass-tex)"/>
+    <!-- Foul-line areas -->
+    <path d="M 400 540 L 60 200 L 0 200 L 0 600 L 400 600 Z" fill="#8a6845" opacity="0.15"/>
+    <path d="M 400 540 L 740 200 L 800 200 L 800 600 L 400 600 Z" fill="#8a6845" opacity="0.15"/>
+    <!-- Outfield arc fence -->
+    <path d="M 60 200 Q 400 -50 740 200" stroke="#2c2522" stroke-width="3" fill="none" stroke-dasharray="2 4"/>
+    <!-- Dirt infield -->
+    <path d="M 400 540 L 220 380 Q 400 240 580 380 Z" fill="url(#dirt-tex)"/>
+    <!-- Diamond (bases) -->
+    <path d="M 400 540 L 540 400 L 400 260 L 260 400 Z" fill="none" stroke="#fbf3df" stroke-width="2"/>
+    <!-- Foul lines -->
+    <line x1="400" y1="540" x2="60" y2="200" stroke="#fbf3df" stroke-width="2"/>
+    <line x1="400" y1="540" x2="740" y2="200" stroke="#fbf3df" stroke-width="2"/>
+    <!-- Pitcher's mound -->
+    <ellipse cx="400" cy="400" rx="22" ry="10" fill="#8a6845" stroke="#2c2522" stroke-width="1.5"/>
+    <rect x="397" y="397" width="6" height="6" fill="#fbf3df" stroke="#2c2522" stroke-width="1"/>
+    <!-- Bases -->
+    <rect x="392" y="532" width="16" height="16" fill="#fbf3df" stroke="#2c2522" stroke-width="2"/>
+    <rect x="532" y="392" width="16" height="16" fill="${State.bases[0] ? '#b8453a' : '#fbf3df'}" stroke="#2c2522" stroke-width="2"/>
+    <rect x="392" y="252" width="16" height="16" fill="${State.bases[1] ? '#b8453a' : '#fbf3df'}" stroke="#2c2522" stroke-width="2"/>
+    <rect x="252" y="392" width="16" height="16" fill="${State.bases[2] ? '#b8453a' : '#fbf3df'}" stroke="#2c2522" stroke-width="2"/>
+
+    <!-- Decorative: sandlot details -->
+    <g opacity="0.85">
+      <!-- Tree (left) -->
+      <ellipse cx="80" cy="180" rx="30" ry="32" fill="#5a7849" stroke="#2c2522" stroke-width="2"/>
+      <ellipse cx="105" cy="170" rx="22" ry="22" fill="#7a9d63" stroke="#2c2522" stroke-width="2"/>
+      <rect x="86" y="195" width="10" height="20" fill="#553a26"/>
+      <!-- Telephone pole (right) -->
+      <rect x="715" y="80" width="6" height="160" fill="#553a26" stroke="#2c2522" stroke-width="1"/>
+      <line x1="690" y1="100" x2="746" y2="100" stroke="#2c2522" stroke-width="2"/>
+      <!-- Parked car (top center distant) -->
+      <rect x="350" y="60" width="100" height="22" fill="${'#5a93a8'}" stroke="#2c2522" stroke-width="1.5" rx="4"/>
+      <rect x="362" y="50" width="70" height="14" fill="${'#94c4d4'}" stroke="#2c2522" stroke-width="1.5" rx="3"/>
+      <circle cx="368" cy="84" r="6" fill="#2c2522"/>
+      <circle cx="432" cy="84" r="6" fill="#2c2522"/>
+      <!-- Chain-link fence stretches -->
+      <line x1="120" y1="180" x2="340" y2="80" stroke="#2c2522" stroke-width="1.2" stroke-dasharray="3 3"/>
+      <line x1="460" y1="80" x2="700" y2="180" stroke="#2c2522" stroke-width="1.2" stroke-dasharray="3 3"/>
+    </g>
+
+    ${renderFielders(team, positions)}
+    ${renderRunners()}
+  `;
+}
+
+function computeFieldPositions() {
+  return {
+    P:  { x: 400, y: 400 },
+    C:  { x: 400, y: 555 },
+    '1B': { x: 540, y: 405 },
+    '2B': { x: 470, y: 350 },
+    SS: { x: 330, y: 350 },
+    '3B': { x: 260, y: 405 },
+    LF: { x: 200, y: 220 },
+    CF: { x: 400, y: 170 },
+    RF: { x: 600, y: 220 },
+  };
+}
+
+function kidSprite(kid, role='fielder') {
+  // role: 'fielder', 'pitcher', 'runner'
+  const showGlove = role !== 'runner';
+  const skinColor = '#f0c8a0';
+  const hairColors = ['#2c2522','#553a26','#8a4a26','#cc8844','#d8c298'];
+  const hair = hairColors[kid.id % hairColors.length];
+  const isPitcher = role === 'pitcher';
+  return `<g class="kid-fig ${role}">
+    <!-- Shadow -->
+    <ellipse cx="0" cy="24" rx="11" ry="3" fill="#000" opacity="0.3"/>
+    <!-- Legs -->
+    <rect x="-5" y="14" width="4" height="10" fill="#3a2818" rx="1"/>
+    <rect x="1"  y="14" width="4" height="10" fill="#3a2818" rx="1"/>
+    <!-- Shoes -->
+    <ellipse cx="-3" cy="24" rx="3" ry="1.5" fill="#2c2522"/>
+    <ellipse cx="3"  cy="24" rx="3" ry="1.5" fill="#2c2522"/>
+    <!-- Body / jersey -->
+    <rect x="-8" y="0" width="16" height="15" fill="${kid.color}" stroke="#2c2522" stroke-width="1.5" rx="2"/>
+    <!-- Jersey accent stripe -->
+    <rect x="-8" y="6" width="16" height="2" fill="${kid.accent}"/>
+    <!-- Number -->
+    <text x="0" y="13" text-anchor="middle" font-family="Bowlby One SC" font-size="8" fill="#fbf3df">${kid.id}</text>
+    <!-- Left arm -->
+    <ellipse cx="-9" cy="6" rx="2.5" ry="5" fill="${kid.color}" stroke="#2c2522" stroke-width="1.2"/>
+    ${showGlove ? `<circle cx="-10" cy="11" r="3.5" fill="#8a6845" stroke="#2c2522" stroke-width="1.2"/><circle cx="-10" cy="11" r="1.3" fill="#553a26"/>` : `<circle cx="-10" cy="11" r="1.8" fill="${skinColor}" stroke="#2c2522" stroke-width="0.8"/>`}
+    <!-- Right (throwing) arm — animatable for pitcher -->
+    <g class="throw-arm" ${isPitcher ? 'id="pitcher-arm"' : ''}>
+      <ellipse cx="9" cy="6" rx="2.5" ry="5" fill="${kid.color}" stroke="#2c2522" stroke-width="1.2"/>
+      <circle cx="10" cy="11" r="1.8" fill="${skinColor}" stroke="#2c2522" stroke-width="0.8"/>
+    </g>
+    <!-- Head -->
+    <circle cx="0" cy="-6" r="7" fill="${skinColor}" stroke="#2c2522" stroke-width="1.5"/>
+    <!-- Hair tuft under cap -->
+    <path d="M -6 -4 Q 0 -2 6 -4 L 6 -2 L -6 -2 Z" fill="${hair}"/>
+    <!-- Cap -->
+    <path d="M -7 -8 Q 0 -16 7 -8 Q 5 -12 0 -13 Q -5 -12 -7 -8 Z" fill="${kid.color}" stroke="#2c2522" stroke-width="1.5"/>
+    <ellipse cx="0" cy="-7" rx="8" ry="2" fill="${kid.color}" stroke="#2c2522" stroke-width="1"/>
+    <ellipse cx="0" cy="-9" rx="6" ry="1" fill="${kid.accent}"/>
+    <!-- Face -->
+    <circle cx="-2.2" cy="-4.5" r="0.9" fill="#2c2522"/>
+    <circle cx="2.2"  cy="-4.5" r="0.9" fill="#2c2522"/>
+    <circle cx="-3.5" cy="-2.5" r="1" fill="#e8743c" opacity="0.4"/>
+    <circle cx="3.5"  cy="-2.5" r="1" fill="#e8743c" opacity="0.4"/>
+    <path d="M -2 -1 Q 0 0.5 2 -1" stroke="#2c2522" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+  </g>`;
+}
+
+function renderFielders(team, pos) {
+  const used = new Set();
+  const placed = [];
+  const order = ['P','C','1B','2B','SS','3B','LF','CF','RF'];
+  for (const slot of order) {
+    let cand = team.find(k => k.pos === slot && !used.has(k.id));
+    if (!cand) cand = team.find(k => !used.has(k.id));
+    if (!cand) continue;
+    used.add(cand.id);
+    placed.push({ kid: cand, slot });
+  }
+  return placed.map(({kid, slot}) => {
+    const p = pos[slot];
+    const role = slot === 'P' ? 'pitcher' : 'fielder';
+    return `<g id="fielder-${slot}" transform="translate(${p.x}, ${p.y})">
+      ${kidSprite(kid, role)}
+      <text x="0" y="38" text-anchor="middle" font-family="Patrick Hand" font-size="12" fill="#2c2522" font-weight="bold" stroke="#fbf3df" stroke-width="2.5" paint-order="stroke">${kid.nick}</text>
+    </g>`;
+  }).join('');
+}
+
+function renderRunners() {
+  const positions = [
+    { x: 540, y: 400 }, // 1B
+    { x: 400, y: 260 }, // 2B
+    { x: 260, y: 400 }, // 3B
+  ];
+  let s = '';
+  State.bases.forEach((kid, i) => {
+    if (!kid) return;
+    const p = positions[i];
+    s += `<g transform="translate(${p.x}, ${p.y}) scale(0.85)">
+      ${kidSprite(kid, 'runner')}
+    </g>`;
+  });
+  return s;
+}
+
+/* ============== AT-BAT (side view) ========================================= */
+function drawAtBatScene(batter, pitch=null) {
+  const svg = $('#atbat-svg');
+  const pitcher = currentPitcher();
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="ab-sky" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%" stop-color="#fbb96f"/>
+        <stop offset="60%" stop-color="#94c4d4"/>
+        <stop offset="100%" stop-color="#cdddc4"/>
+      </linearGradient>
+      <pattern id="grass-ab" width="8" height="8" patternUnits="userSpaceOnUse">
+        <rect width="8" height="8" fill="#7a9d63"/>
+        <path d="M 0 8 L 1 5 M 4 8 L 5 5" stroke="#5a7849" stroke-width="0.6"/>
+      </pattern>
+    </defs>
+    <rect width="800" height="600" fill="url(#ab-sky)"/>
+    <!-- Distant trees -->
+    <ellipse cx="80"  cy="380" rx="60" ry="30" fill="#5a7849"/>
+    <ellipse cx="200" cy="370" rx="50" ry="28" fill="#7a9d63"/>
+    <ellipse cx="700" cy="375" rx="70" ry="32" fill="#5a7849"/>
+    <!-- Fence -->
+    <line x1="0" y1="430" x2="800" y2="430" stroke="#2c2522" stroke-width="2" stroke-dasharray="4 4"/>
+    <!-- Ground -->
+    <rect y="430" width="800" height="170" fill="url(#grass-ab)"/>
+    <!-- Pitcher's mound (left) -->
+    <ellipse cx="220" cy="430" rx="80" ry="14" fill="#8a6845" stroke="#2c2522" stroke-width="2"/>
+    <!-- Home plate area (right) -->
+    <ellipse cx="640" cy="510" rx="120" ry="22" fill="#b58658" stroke="#2c2522" stroke-width="2"/>
+    <polygon points="600,505 680,505 690,520 590,520" fill="#fbf3df" stroke="#2c2522" stroke-width="2"/>
+
+    <!-- Pitcher figure -->
+    <g transform="translate(220, 380)">
+      <ellipse cx="0" cy="55" rx="22" ry="6" fill="#000" opacity="0.25"/>
+      <!-- Body -->
+      <rect x="-12" y="0" width="24" height="40" fill="${pitcher.color}" stroke="#2c2522" stroke-width="2"/>
+      <line x1="0" y1="40" x2="-8" y2="58" stroke="#2c2522" stroke-width="6" stroke-linecap="round"/>
+      <line x1="0" y1="40" x2="8" y2="58" stroke="#2c2522" stroke-width="6" stroke-linecap="round"/>
+      <!-- Arms -->
+      <line x1="-12" y1="10" x2="-22" y2="-6" stroke="${pitcher.color}" stroke-width="6" stroke-linecap="round"/>
+      <line x1="-22" y1="-6" x2="-22" y2="-6" stroke="#2c2522" stroke-width="2"/>
+      <g id="ab-pitcher-arm" style="transform-origin: 12px 10px; transform-box: fill-box;">
+        <line x1="12"  y1="10" x2="22"  y2="14" stroke="${pitcher.color}" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="22" cy="14" r="3.5" fill="#f0c8a0" stroke="#2c2522" stroke-width="1.5"/>
+      </g>
+      <!-- Head -->
+      <circle cx="0" cy="-12" r="13" fill="#f0c8a0" stroke="#2c2522" stroke-width="2"/>
+      <path d="M -13 -16 Q 0 -28 13 -16 L 13 -10 Q 0 -7 -13 -10 Z" fill="${pitcher.color}" stroke="#2c2522" stroke-width="2"/>
+      <ellipse cx="0" cy="-9" rx="14" ry="3" fill="${pitcher.color}" stroke="#2c2522" stroke-width="1.5"/>
+      <circle cx="-4" cy="-10" r="1.4" fill="#2c2522"/>
+      <circle cx="4" cy="-10" r="1.4" fill="#2c2522"/>
+      <text x="0" y="76" text-anchor="middle" font-family="Patrick Hand" font-size="18" fill="#2c2522">${pitcher.nick}</text>
+    </g>
+
+    <!-- Batter figure (right side) -->
+    <g transform="translate(640, 420)">
+      <ellipse cx="0" cy="80" rx="26" ry="6" fill="#000" opacity="0.25"/>
+      <!-- Legs -->
+      <line x1="-6" y1="60" x2="-12" y2="86" stroke="#2c2522" stroke-width="7" stroke-linecap="round"/>
+      <line x1="6" y1="60" x2="14" y2="86" stroke="#2c2522" stroke-width="7" stroke-linecap="round"/>
+      <!-- Body -->
+      <rect x="-14" y="20" width="28" height="44" fill="${batter.color}" stroke="#2c2522" stroke-width="2"/>
+      <!-- Bat (hands at left side) -->
+      <g id="bat-group" transform="rotate(-30, -14, 22)">
+        <line x1="-14" y1="22" x2="-58" y2="-44" stroke="#8a6845" stroke-width="6" stroke-linecap="round"/>
+        <line x1="-14" y1="22" x2="-58" y2="-44" stroke="#553a26" stroke-width="3" stroke-linecap="round"/>
+      </g>
+      <!-- Arms -->
+      <line x1="-14" y1="28" x2="-22" y2="14" stroke="${batter.color}" stroke-width="7" stroke-linecap="round"/>
+      <line x1="14"  y1="28" x2="2"   y2="14" stroke="${batter.color}" stroke-width="7" stroke-linecap="round"/>
+      <!-- Head -->
+      <circle cx="0" cy="6" r="14" fill="#f0c8a0" stroke="#2c2522" stroke-width="2"/>
+      <path d="M -14 0 Q 0 -14 14 0 L 14 6 Q 0 9 -14 6 Z" fill="${batter.color}" stroke="#2c2522" stroke-width="2"/>
+      <ellipse cx="0" cy="7" rx="15" ry="3" fill="${batter.color}" stroke="#2c2522" stroke-width="1.5"/>
+      <circle cx="-5" cy="6" r="1.5" fill="#2c2522"/>
+      <circle cx="5" cy="6" r="1.5" fill="#2c2522"/>
+      <text x="0" y="106" text-anchor="middle" font-family="Patrick Hand" font-size="18" fill="#2c2522">${batter.nick}</text>
+    </g>
+
+    <!-- Strike zone box (subtle) -->
+    <rect x="610" y="430" width="60" height="70" fill="none" stroke="#fbf3df" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6"/>
+
+    <!-- Pitch ball (will be animated) -->
+    <circle id="ab-ball" cx="240" cy="400" r="6" fill="#fbf3df" stroke="#b8453a" stroke-width="1.5"/>
+
+    <!-- Timing meter at bottom -->
+    <g transform="translate(120, 560)">
+      <rect x="0" y="0" width="560" height="22" fill="#fbf3df" stroke="#2c2522" stroke-width="2"/>
+      <rect id="ab-timing-fill" x="0" y="0" width="0" height="22" fill="#e8743c"/>
+      <line id="ab-timing-perfect" x1="450" y1="-4" x2="450" y2="26" stroke="#b8453a" stroke-width="3"/>
+      <text x="-10" y="16" text-anchor="end" font-family="Patrick Hand" font-size="14" fill="#2c2522">timing</text>
+    </g>
+  `;
+}
+
+function animateAtBatPitch(pt, onArrive) {
+  const ball = document.getElementById('ab-ball');
+  const arm = document.getElementById('ab-pitcher-arm');
+  const timingFill = document.getElementById('ab-timing-fill');
+  const timingPerfect = document.getElementById('ab-timing-perfect');
+  if (!ball) return;
+  const startX = 240, startY = 400;
+  // End at strike zone with some variance
+  const inStrike = Math.random() < 0.7;
+  let endX = inStrike ? 640 + (Math.random() * 60 - 30) : 640 + (Math.random() < 0.5 ? -130 : 130);
+  let endY = inStrike ? 470 + (Math.random() * 50 - 25) : (Math.random() < 0.5 ? 410 : 540);
+  pt._endX = endX;
+  pt._endY = endY;
+
+  // Hide ball during windup (it lives in the pitcher's hand)
+  ball.setAttribute('opacity', '0');
+
+  const windupDur = 700;
+  const throwDur  = 200;
+
+  // Phase 1: Pitcher winds up — arm pulls back over shoulder
+  const wStart = performance.now();
+  function windupStep(now) {
+    const t = clamp((now - wStart) / windupDur, 0, 1);
+    const eased = 1 - Math.pow(1 - t, 2);
+    const angle = eased * -120;
+    if (arm) arm.style.transform = `rotate(${angle}deg)`;
+    if (t < 1) requestAnimationFrame(windupStep);
+    else throwPhase();
+  }
+
+  // Phase 2: Snap forward — release ball
+  function throwPhase() {
+    const tStart = performance.now();
+    function step(now) {
+      const t = clamp((now - tStart) / throwDur, 0, 1);
+      const eased = t * t;
+      const angle = -120 + eased * 150;
+      if (arm) arm.style.transform = `rotate(${angle}deg)`;
+      if (t < 1) requestAnimationFrame(step);
+      else { if (arm) arm.style.transform = 'rotate(20deg)'; release(); }
+    }
+    requestAnimationFrame(step);
+  }
+
+  // Phase 3: Ball flight — the original timing-based pitch
+  function release() {
+    Audio.pitch();
+    ball.setAttribute('opacity', '1');
+    ball.setAttribute('cx', String(startX));
+    ball.setAttribute('cy', String(startY));
+
+    const dur = SwingState.perfectAt; // ms — when ball is at plate
+    const meterDur = SwingState.perfectAt + 200;
+    const start = performance.now();
+    SwingState.startedAt = start;
+
+    const perfectFrac = SwingState.perfectAt / meterDur;
+    if (timingPerfect) timingPerfect.setAttribute('x1', String(perfectFrac * 560));
+    if (timingPerfect) timingPerfect.setAttribute('x2', String(perfectFrac * 560));
+
+    // Trail dots for the ball
+    const svg = ball.parentNode;
+
+    function frame(now) {
+      if (!SwingState.active) return;
+      const t = (now - start) / dur;
+      const meterT = (now - start) / meterDur;
+
+      if (t < 1.05) {
+        const ease = t;
+        let cx = startX + (endX - startX) * ease;
+        let cy = startY + (endY - startY) * ease;
+        if (pt.id === 'curve')  { cy += Math.sin(ease * Math.PI) * -30; cx += Math.sin(ease * Math.PI) * -10; }
+        if (pt.id === 'screw')  { cy += Math.sin(ease * Math.PI) * -22; cx += Math.sin(ease * Math.PI) *  18; }
+        if (pt.id === 'change') { cy += Math.sin(ease * Math.PI) *  20; }
+        ball.setAttribute('cx', cx);
+        ball.setAttribute('cy', cy);
+
+        // Drop a fading trail dot
+        if (svg && Math.random() < 0.45 && t > 0.05 && t < 0.95) {
+          const tdot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          tdot.setAttribute('cx', cx);
+          tdot.setAttribute('cy', cy);
+          tdot.setAttribute('r', '4');
+          tdot.setAttribute('fill', '#fbf3df');
+          tdot.setAttribute('opacity', '0.45');
+          tdot.setAttribute('pointer-events', 'none');
+          svg.insertBefore(tdot, ball);
+          tdot.animate(
+            [{ opacity: 0.45, r: 4 }, { opacity: 0, r: 1 }],
+            { duration: 280, fill: 'forwards' }
+          );
+          setTimeout(() => tdot.remove(), 320);
+        }
+
+        // Timing meter
+        if (timingFill) {
+          timingFill.setAttribute('width', Math.min(meterT, 1) * 560);
+        }
+        requestAnimationFrame(frame);
+      } else {
+        ball.setAttribute('cx', endX);
+        ball.setAttribute('cy', endY);
+        onArrive && onArrive();
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  requestAnimationFrame(windupStep);
+}
+
+/* Top-down pitcher windup + ball release (CPU batting) */
+function animatePitchOnField(pt) {
+  return new Promise(res => {
+    const svg = $('#field-svg');
+    if (!svg) return res();
+    const arm = document.getElementById('pitcher-arm');
+
+    const windDur = 650;
+    const throwDur = 240;
+    const ballDur = 550;
+
+    function setArm(angle) {
+      if (arm) arm.setAttribute('transform', `rotate(${angle} 9 2)`);
+    }
+
+    // Phase 1: Windup — arm rotates back over the shoulder
+    const wStart = performance.now();
+    function windupStep(now) {
+      const t = clamp((now - wStart) / windDur, 0, 1);
+      // ease-out
+      const eased = 1 - Math.pow(1 - t, 2);
+      setArm(eased * -130);
+      if (t < 1) requestAnimationFrame(windupStep);
+      else throwPhase();
+    }
+
+    // Phase 2: Throw motion — snap forward
+    function throwPhase() {
+      const tStart = performance.now();
+      function step(now) {
+        const t = clamp((now - tStart) / throwDur, 0, 1);
+        // ease-in (snap)
+        const eased = t * t;
+        setArm(-130 + eased * 180);
+        if (t < 1) requestAnimationFrame(step);
+        else { setArm(0); releaseBall(); }
+      }
+      requestAnimationFrame(step);
+    }
+
+    // Phase 3: Ball flies from mound to plate
+    function releaseBall() {
+      Audio.pitch();
+      const ball = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      ball.setAttribute('r', '6');
+      ball.setAttribute('fill', '#fbf3df');
+      ball.setAttribute('stroke', '#b8453a');
+      ball.setAttribute('stroke-width', '1.8');
+      ball.setAttribute('cx', '400');
+      ball.setAttribute('cy', '395');
+      // tiny motion blur trail
+      const trail = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      trail.setAttribute('stroke', '#fbf3df');
+      trail.setAttribute('stroke-width', '2');
+      trail.setAttribute('opacity', '0.5');
+      svg.appendChild(trail);
+      svg.appendChild(ball);
+      const start = performance.now();
+      function ballFrame(now) {
+        const t = clamp((now - start) / ballDur, 0, 1);
+        const x = 400;
+        const y = 395 + (555 - 395) * t;
+        ball.setAttribute('cx', x);
+        ball.setAttribute('cy', y);
+        // breaking pitch wobble
+        const wobble = pt.id === 'curve' ? Math.sin(t * Math.PI * 4) * 6
+                     : pt.id === 'screw' ? Math.cos(t * Math.PI * 3) * 5
+                     : pt.id === 'change' ? 0
+                     : 0;
+        ball.setAttribute('cx', x + wobble);
+        // trail
+        trail.setAttribute('x1', x + wobble);
+        trail.setAttribute('y1', Math.max(395, y - 14));
+        trail.setAttribute('x2', x + wobble);
+        trail.setAttribute('y2', y);
+        if (t < 1) requestAnimationFrame(ballFrame);
+        else {
+          setTimeout(() => { ball.remove(); trail.remove(); }, 120);
+          res();
+        }
+      }
+      requestAnimationFrame(ballFrame);
+    }
+
+    requestAnimationFrame(windupStep);
+  });
+}
+
+/* Interactive fielding — when CPU hits, user controls a fielder to grab the ball */
+function interactiveFielding(outcome, batter) {
+  return new Promise(resolveOuter => {
+    const svg = $('#field-svg');
+    if (!svg) return resolveOuter(outcome);
+
+    // Pick landing target and timing for this hit
+    const target = pickHitTarget(outcome);
+    const arcHeight = (outcome === 'flyout' || outcome === 'double' || outcome === 'triple') ? 100 : 30;
+    const flightTime = (outcome === 'triple' ? 1700 : outcome === 'double' ? 1500 : outcome === 'flyout' ? 1500 : outcome === 'single' ? 1300 : 1000);
+
+    // Pick the user's fielder closest to the target landing spot
+    const positions = computeFieldPositions();
+    const placed = placeFielders(State.myTeam);
+    let bestSlot = 'CF', bestDist = Infinity;
+    for (const { slot } of placed) {
+      const p = positions[slot];
+      if (!p) continue;
+      const d = Math.hypot(p.x - target.x, p.y - target.y);
+      if (d < bestDist) { bestDist = d; bestSlot = slot; }
+    }
+    const controlled = placed.find(f => f.slot === bestSlot);
+    const startPos = positions[bestSlot];
+
+    // Hide the static fielder we are now controlling
+    const staticEl = document.getElementById(`fielder-${bestSlot}`);
+    if (staticEl) staticEl.style.display = 'none';
+
+    // Set up fielding state
+    FieldState.active = true;
+    FieldState.fielder = controlled.kid;
+    FieldState.fielderX = startPos.x;
+    FieldState.fielderY = startPos.y;
+    FieldState.fielderSpeed = 130 + controlled.kid.run * 18; // px/sec, scales with RUN stat
+    FieldState.resolved = false;
+
+    // Show shadow (where ball will land) and ball
+    const shadow = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+    shadow.setAttribute('rx', '7');
+    shadow.setAttribute('ry', '2.5');
+    shadow.setAttribute('fill', '#000');
+    shadow.setAttribute('opacity', '0.32');
+    shadow.setAttribute('cx', '400');
+    shadow.setAttribute('cy', '540');
+    svg.appendChild(shadow);
+
+    const ball = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    ball.setAttribute('r', '7');
+    ball.setAttribute('fill', '#fbf3df');
+    ball.setAttribute('stroke', '#b8453a');
+    ball.setAttribute('stroke-width', '2');
+    ball.setAttribute('cx', '400');
+    ball.setAttribute('cy', '540');
+    svg.appendChild(ball);
+
+    // Active fielder sprite (movable copy of the controlled kid)
+    const active = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    active.setAttribute('id', 'active-fielder');
+    active.innerHTML = `
+      <circle cx="0" cy="0" r="22" fill="none" stroke="#f0b649" stroke-width="3" opacity="0.85" stroke-dasharray="4 3">
+        <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <text x="0" y="-32" text-anchor="middle" font-family="Bowlby One SC, sans-serif" font-size="11" fill="#b8453a" stroke="#fbf3df" stroke-width="3" paint-order="stroke">YOU</text>
+      ${kidSprite(controlled.kid, 'fielder')}
+    `;
+    active.setAttribute('transform', `translate(${startPos.x}, ${startPos.y})`);
+    svg.appendChild(active);
+
+    // Update controls panel
+    const ctrlInst = $('#ctrl-instruction');
+    const ctrlTitle = $('#ctrl-title');
+    if (ctrlTitle) ctrlTitle.textContent = 'GRAB THE BALL';
+    if (ctrlInst) ctrlInst.innerHTML = `<b>Move ${controlled.kid.nick}</b> with <b>WASD</b> or <b>arrow keys</b>. Catch it in the air for an out!`;
+
+    const start = performance.now();
+    let lastFrame = start;
+
+    function loop(now) {
+      if (FieldState.resolved) return;
+      const elapsed = now - start;
+      const dt = Math.min(0.05, (now - lastFrame) / 1000);
+      lastFrame = now;
+
+      // Ball position
+      const t = clamp(elapsed / flightTime, 0, 1);
+      let bx, by, sx, sy;
+      if (t < 1) {
+        bx = 400 + (target.x - 400) * t;
+        const baseY = 540 + (target.y - 540) * t;
+        by = baseY - Math.sin(t * Math.PI) * arcHeight;
+        sx = 400 + (target.x - 400) * t;
+        sy = 540 + (target.y - 540) * t;
+      } else {
+        bx = target.x;
+        by = target.y;
+        sx = target.x;
+        sy = target.y;
+      }
+      ball.setAttribute('cx', bx);
+      ball.setAttribute('cy', by);
+      shadow.setAttribute('cx', sx);
+      shadow.setAttribute('cy', sy);
+
+      // Fielder movement
+      let dx = 0, dy = 0;
+      if (KeyState.ArrowUp    || KeyState.KeyW) dy -= 1;
+      if (KeyState.ArrowDown  || KeyState.KeyS) dy += 1;
+      if (KeyState.ArrowLeft  || KeyState.KeyA) dx -= 1;
+      if (KeyState.ArrowRight || KeyState.KeyD) dx += 1;
+      const len = Math.hypot(dx, dy);
+      if (len > 0) { dx /= len; dy /= len; }
+      FieldState.fielderX += dx * FieldState.fielderSpeed * dt;
+      FieldState.fielderY += dy * FieldState.fielderSpeed * dt;
+      FieldState.fielderX = clamp(FieldState.fielderX, 30, 770);
+      FieldState.fielderY = clamp(FieldState.fielderY, 60, 580);
+      active.setAttribute('transform', `translate(${FieldState.fielderX}, ${FieldState.fielderY})`);
+
+      // Check distance
+      const distToBall = Math.hypot(FieldState.fielderX - bx, FieldState.fielderY - by);
+      const catchR = 26;
+      if (distToBall < catchR) {
+        FieldState.resolved = true;
+        const caughtInAir = t < 1;
+        const postLand = caughtInAir ? 0 : (elapsed - flightTime);
+        cleanup();
+        finishWithOutcome(caughtInAir, postLand);
+        return;
+      }
+
+      // Hard timeout: 5.5s after landing → it's out of reach
+      if (elapsed > flightTime + 4500) {
+        FieldState.resolved = true;
+        cleanup();
+        finishWithOutcome(false, 5000);
+        return;
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    function cleanup() {
+      FieldState.active = false;
+      ball.remove();
+      shadow.remove();
+      active.remove();
+      if (staticEl) staticEl.style.display = '';
+    }
+
+    function finishWithOutcome(caughtInAir, postLandTime) {
+      let adjusted = outcome;
+      if (caughtInAir) {
+        adjusted = 'flyout';
+        toast('CAUGHT IT!', 'great', 1600);
+        Audio.cheer();
+        logEvent(`${controlled.kid.nick} catches it on the fly!`, 'big');
+      } else if (postLandTime < 900) {
+        adjusted = downgradeOutcome(outcome);
+        if (adjusted !== outcome) {
+          toast('Quick play!', '', 1300);
+          logEvent(`${controlled.kid.nick} fields it cleanly.`);
+        }
+      } else if (postLandTime < 2200) {
+        adjusted = outcome;
+        logEvent(`${controlled.kid.nick} gets to it.`);
+      } else if (postLandTime < 3600) {
+        adjusted = upgradeOutcome(outcome);
+        toast('Slow to it...', 'bad', 1300);
+        logEvent(`${controlled.kid.nick} bobbles the play.`);
+      } else {
+        adjusted = upgradeOutcome(upgradeOutcome(outcome));
+        toast('Lost it!', 'bad', 1500);
+        logEvent(`Ball gets past ${controlled.kid.nick}!`);
+      }
+      // Brief pause so user can read the result
+      setTimeout(() => resolveOuter(adjusted), 700);
+    }
+
+    requestAnimationFrame(loop);
+  });
+}
+
+/* Animate hit on field — ball flies from home into the field */
+function animateHitOnField(outcome, batter) {
+  return new Promise(res => {
+    const svg = $('#field-svg');
+    if (!svg) { setTimeout(res, 200); return; }
+    const ball = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    ball.setAttribute('r', '6');
+    ball.setAttribute('fill', '#fbf3df');
+    ball.setAttribute('stroke', '#b8453a');
+    ball.setAttribute('stroke-width', '1.8');
+    ball.setAttribute('cx', '400');
+    ball.setAttribute('cy', '540');
+    svg.appendChild(ball);
+
+    // Choose target based on outcome
+    let target;
+    const sideRoll = Math.random();
+    if (outcome === 'homer') {
+      target = sideRoll < 0.4 ? { x: 120, y: 60 } : sideRoll > 0.6 ? { x: 680, y: 60 } : { x: 400, y: 30 };
+    } else if (outcome === 'triple') {
+      target = sideRoll < 0.5 ? { x: 130, y: 130 } : { x: 670, y: 130 };
+    } else if (outcome === 'double') {
+      target = sideRoll < 0.5 ? { x: 200, y: 200 } : { x: 600, y: 200 };
+    } else if (outcome === 'single') {
+      target = sideRoll < 0.5 ? { x: 280, y: 290 } : { x: 520, y: 290 };
+    } else if (outcome === 'flyout') {
+      target = sideRoll < 0.5 ? { x: 250, y: 240 } : { x: 550, y: 240 };
+    } else if (outcome === 'foul') {
+      target = sideRoll < 0.5 ? { x: 80, y: 350 } : { x: 720, y: 350 };
+    } else { // groundout
+      target = { x: 380 + (Math.random()*100 - 50), y: 380 };
+    }
+
+    const start = performance.now();
+    const dur = 700;
+    const arcH = (outcome === 'homer' || outcome === 'triple' || outcome === 'flyout' || outcome === 'double') ? 80 : 20;
+
+    function frame(now) {
+      const t = clamp((now - start) / dur, 0, 1);
+      const x = 400 + (target.x - 400) * t;
+      const y = 540 + (target.y - 540) * t - Math.sin(t * Math.PI) * arcH;
+      ball.setAttribute('cx', x);
+      ball.setAttribute('cy', y);
+      if (t < 1) requestAnimationFrame(frame);
+      else {
+        setTimeout(() => ball.remove(), 200);
+        res();
+      }
+    }
+    requestAnimationFrame(frame);
+  });
+}
+
+/* ============== END GAME =================================================== */
+function endGame() {
+  State.finished = true;
+  showScene('results-scene');
+  const home = State.homeScore, away = State.awayScore;
+  const win = home > away;
+  const tie = home === away;
+  const head = $('#result-headline');
+  if (tie) {
+    head.textContent = 'TIE GAME!';
+    head.className = 'result-headline';
+  } else if (win) {
+    head.textContent = 'YOU WIN!';
+    head.className = 'result-headline win';
+    Audio.cheer();
+  } else {
+    head.textContent = 'TOUGH LOSS';
+    head.className = 'result-headline lose';
+    Audio.boo();
+  }
+  $('#result-score').textContent = `${home} — ${away}`;
+  $('#result-stats').innerHTML = `
+    Hits: <b>${State.hitsHome}</b> vs <b>${State.hitsAway}</b><br>
+    ${State.totalInnings} innings played in the vacant lot.<br>
+    <em>"Same time tomorrow?"</em>
+  `;
+}
+
+$('#rematch-btn').addEventListener('click', () => {
+  // Same teams
+  startGame();
+});
+$('#newteams-btn').addEventListener('click', () => {
+  beginTeamSelect();
+});
+$('#title-btn').addEventListener('click', () => {
+  showScene('title-scene');
+});
+
+/* ============== INITIAL ==================================================== */
+// Resume audio on first interaction
+document.addEventListener('click', () => Audio.blip(), { once: true });
+</script>
+</body>
+</html>
