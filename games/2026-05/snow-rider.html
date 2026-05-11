@@ -761,15 +761,34 @@ scene.add(createSideWall(TRACK_WIDTH/2 + 1));
 // === MONTAÑAS DE FONDO ===
 function createBgMountains() {
   const group = new THREE.Group();
-  for (let i = 0; i < 20; i++) {
-    const h = 15 + Math.random()*20;
+  // Montañas SOLO en el horizonte lejano detrás del jugador (lejos en -z)
+  // y bien apartadas de la pista lateralmente
+  for (let i = 0; i < 25; i++) {
+    const h = 18 + Math.random()*22;
     const cone = new THREE.Mesh(
-      new THREE.ConeGeometry(8 + Math.random()*6, h, 6),
+      new THREE.ConeGeometry(10 + Math.random()*8, h, 6),
       new THREE.MeshStandardMaterial({ color: 0xdcecf5, roughness: 0.95 })
     );
-    const angle = (i/20) * Math.PI * 2;
-    const r = 80 + Math.random()*30;
-    cone.position.set(Math.cos(angle)*r, h/2 - 2, -100 + Math.sin(angle)*r*0.5);
+    // Distribución aleatoria pero siempre LEJOS del lado de la pista
+    // Lateral mínimo: TRACK_WIDTH/2 + 30 (bien lejos de los costados)
+    // Profundidad: solo en -z lejano (-180 a -260)
+    const sideOffset = (TRACK_WIDTH/2 + 30) + Math.random() * 50;
+    const x = (Math.random() < 0.5 ? -1 : 1) * sideOffset;
+    const z = -180 - Math.random() * 80;
+    cone.position.set(x, h/2 - 2, z);
+    group.add(cone);
+  }
+  // Una segunda fila de montañas más chicas, aún más lejos al frente lejano
+  for (let i = 0; i < 15; i++) {
+    const h = 12 + Math.random()*15;
+    const cone = new THREE.Mesh(
+      new THREE.ConeGeometry(7 + Math.random()*5, h, 6),
+      new THREE.MeshStandardMaterial({ color: 0xc8dce8, roughness: 0.95 })
+    );
+    // Estas en el horizonte muy lejano frente a la pista
+    const x = (Math.random() - 0.5) * 200;
+    const z = -260 - Math.random() * 40;
+    cone.position.set(x, h/2 - 2, z);
     group.add(cone);
   }
   return group;
